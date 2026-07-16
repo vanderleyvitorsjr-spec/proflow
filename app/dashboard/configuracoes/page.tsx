@@ -1,5 +1,5 @@
-import { ModulePage } from "@/features/workspace/module-page";
+import { ConfigurationCenter } from "./configuracoes-navigation";
 
 export default function ConfiguracoesPage() {
-  return <ModulePage moduleKey="configuracoes" />;
+  return <ConfigurationCenter />;
 }

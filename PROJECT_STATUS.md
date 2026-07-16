@@ -389,3 +389,14 @@ public/              Assets estáticos
 - A exportação CSV usa o dataset filtrado, BOM UTF-8, separador `;`, metadados da geração e status das fontes; a impressão utiliza o fluxo nativo do navegador.
 - O layout de Relatórios foi refinado de forma localizada com cabeçalho e toolbar compactos, faixas de métricas, gráficos, rankings, loading, erro, vazio e status das fontes, preservando os primitives globais existentes.
 - Relatórios não criou storage operacional, não alterou banco, Prisma, autenticação, rotas ou regras de negócio das fontes.
+
+### Fundação funcional — Configurações (16/07/2026)
+
+- Configurações deixou de usar `ModulePage` e passou a seguir `Página → Action → Service → Repository → Storage Adapter`, com acesso ao `localStorage` restrito ao adapter do módulo.
+- O envelope `proflow:configuracoes:v1` possui revisão, validação integral Zod, backup, recuperação, conflito entre abas, histórico append-only e preparação para migrações locais.
+- Empresa, identidade documental, equipe, parâmetros operacionais, Financeiro, Precificação, numeração, aparência e preferências gerais passaram a ser editáveis e persistentes por seção.
+- Integrantes possuem cadastro, edição, arquivamento, reativação, custo/hora, encargos, disponibilidade, especialidades e prevenção de duplicidade por e-mail, telefone e documento.
+- Foi criado contrato público resumido para empresa, equipe, operação, Financeiro, Precificação, numeração e aparência, sem migrar consumidores automaticamente.
+- Aparência utiliza `next-themes` e atributos do documento somente após confirmação, sem alterar o shell ou reescrever `globals.css`.
+- Exportação e importação JSON validam versão e schema, exibem impacto e criam backup antes da gravação; nenhum dado operacional integra o arquivo.
+- Banco, Prisma, autenticação, Supabase, permissões reais, multiempresa, uploads e integrações externas permanecem fora do escopo.
