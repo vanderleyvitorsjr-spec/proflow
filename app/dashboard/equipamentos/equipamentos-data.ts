@@ -37,9 +37,11 @@ export const conditionLabels: Record<AssetCondition, string> = {
 };
 const now = "2026-07-15T12:00:00.000Z";
 export const initialEquipmentState: EquipmentStorageState = {
-  version: 1,
+  version: 3,
   revision: 0,
   nextSequence: 4,
+  maintenanceRecords: [],
+  serviceOrderLinks: [],
   assets: [
     {
       id: "asset-1",

@@ -1,4 +1,8 @@
-import type { ServiceOrderFinancialSnapshot } from "@/lib/contracts/ordens.contract";
+import type {
+  ServiceOrderFinancialSnapshot,
+  ServiceOrderStockReference,
+  ServiceOrderTechnicalReference,
+} from "@/lib/contracts/ordens.contract";
 import { PendingAgendaIntegration } from "./ordens-agenda-port";
 import type { ServiceOrderStatus } from "./ordens-data";
 import { OrdensRepository } from "./ordens-repository";
@@ -45,3 +49,36 @@ export const listServiceOrderFinancialSnapshotsAction = async () =>
   );
 export const serviceOrderExistsPublicAction = async (id: string) =>
   (await ordensStorageAdapter.list()).some((order) => order.id === id);
+const technicalReference = (order: OrdemRecord): ServiceOrderTechnicalReference => ({
+  id: order.id,
+  number: order.orderNumber,
+  title: order.title,
+  clientId: order.clientId || undefined,
+  canceled: Boolean(order.canceledAt) || order.status === "CANCELED",
+  archived: Boolean(order.archivedAt),
+});
+export const getServiceOrderTechnicalReferenceAction = async (id: string) => {
+  const order = (await ordensStorageAdapter.list()).find((item) => item.id === id);
+  return order ? technicalReference(order) : null;
+};
+export const listServiceOrderTechnicalReferencesAction = async () =>
+  (await ordensStorageAdapter.list()).map(technicalReference);
+
+const stockReference = (order: OrdemRecord): ServiceOrderStockReference => ({
+  id: order.id,
+  number: order.orderNumber,
+  title: order.title,
+  clientId: order.clientId,
+  status: order.status,
+  canceled: Boolean(order.canceledAt) || order.status === "CANCELED",
+  archived: Boolean(order.archivedAt),
+  updatedAt: order.updatedAt,
+  stockReservationAllowed:
+    !order.archivedAt && !order.canceledAt && order.status !== "CANCELED",
+});
+export const getServiceOrderStockReferenceAction = async (id: string) => {
+  const order = (await ordensStorageAdapter.list()).find((item) => item.id === id);
+  return order ? stockReference(order) : null;
+};
+export const listServiceOrderStockReferencesAction = async () =>
+  (await ordensStorageAdapter.list()).map(stockReference);

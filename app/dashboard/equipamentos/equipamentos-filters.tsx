@@ -26,6 +26,9 @@ export type EquipmentFilters = {
   status: string;
   condition: string;
   depreciation: string;
+  maintenance: string;
+  warranty: string;
+  critical: string;
 };
 export function EquipamentosFilters({
   view,
@@ -99,7 +102,7 @@ export function EquipamentosFilters({
           </Button>
         </PageHeaderActions>
       </PageHeaderContent>
-      <PageHeaderToolbar className="grid gap-2 lg:grid-cols-4 2xl:grid-cols-7">
+      <PageHeaderToolbar className="grid gap-2 lg:grid-cols-5 2xl:grid-cols-10">
         <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -129,6 +132,9 @@ export function EquipamentosFilters({
           { LINEAR: "Linear", NONE: "Não depreciável" },
           "Toda depreciação",
         )}
+        {select("maintenance", { SCHEDULED: "Programada", IN_PROGRESS: "Em andamento", OVERDUE: "Vencida" }, "Toda manutenção")}
+        {select("warranty", { ACTIVE: "Ativa", EXPIRING_SOON: "A vencer", EXPIRED: "Expirada", NOT_INFORMED: "Não informada" }, "Toda garantia")}
+        {select("critical", { YES: "Somente críticos" }, "Toda criticidade")}
       </PageHeaderToolbar>
     </PageHeader>
   );

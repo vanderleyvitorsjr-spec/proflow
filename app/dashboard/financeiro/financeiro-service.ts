@@ -242,6 +242,7 @@ export class FinancialService {
       ...current,
       ...value,
       totalCents: parseBrazilianMoney(value.total),
+      manuallyModified: current.sourceId ? true : current.manuallyModified,
       updatedAt: new Date().toISOString(),
       history: [...current.history, history("UPDATED", "Lançamento atualizado.")],
     };

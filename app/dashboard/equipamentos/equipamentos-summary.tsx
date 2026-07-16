@@ -7,19 +7,22 @@ export function EquipamentosSummary({
   maintenance,
   available,
   patrimonialValueCents,
+  warrantyAlerts,
 }: {
   total: number;
   critical: number;
   maintenance: number;
   available: number;
   patrimonialValueCents: number;
+  warrantyAlerts: number;
 }) {
   return (
-    <MetricStrip className="sm:grid-cols-2 xl:grid-cols-5">
+    <MetricStrip className="sm:grid-cols-2 xl:grid-cols-6">
       <MetricItem label="Cadastrados" value={String(total)} tone="info" />
       <MetricItem label="Críticos" value={String(critical)} tone="danger" />
       <MetricItem label="Em manutenção" value={String(maintenance)} tone="warning" />
       <MetricItem label="Disponíveis" value={String(available)} tone="success" />
+      <MetricItem label="Alertas de garantia" value={String(warrantyAlerts)} tone="warning" />
       <MetricItem
         label="Valor patrimonial"
         value={money(patrimonialValueCents)}

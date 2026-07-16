@@ -13,6 +13,17 @@ import { FinancialService } from "./financeiro-service";
 import { financialStorageAdapter } from "./financeiro-storage-adapter";
 import { financialRelationsGateway } from "./financeiro-relations-gateway";
 import { reconcileTransaction } from "./financeiro-reconciliation";
+import type {
+  EquipmentFinancialCreateInput,
+  EquipmentFinancialTransactionReference,
+  StockPurchaseFinancialCreateInput,
+  StockPurchaseFinancialTransactionReference,
+} from "@/lib/contracts/financeiro.contract";
+import {
+  transactionOpenCents,
+  transactionPaidCents,
+  transactionStatus,
+} from "./financeiro-status";
 const service = new FinancialService(new FinancialRepository(financialStorageAdapter));
 async function action<T>(operation: () => Promise<T>): Promise<ActionResult<T>> {
   try {
@@ -277,3 +288,240 @@ export const reviewFinancialReconciliationAction = (
       serviceOrderUpdatedAtSnapshot: order.updatedAt,
     });
   });
+
+const equipmentFinancialKey = (input: EquipmentFinancialCreateInput) =>
+  `${input.source.sourceType}:${input.source.sourceId}:${input.source.purpose === "MAINTENANCE" ? "EXPENSE" : "ACQUISITION"}${input.additionalSequence ? `:ADDITIONAL:${input.additionalSequence}` : ""}`;
+const equipmentFinancialReference = async (
+  id: string,
+): Promise<EquipmentFinancialTransactionReference> => {
+  const state = await service.listState(),
+    transaction = state.transactions.find((item) => item.id === id);
+  if (!transaction)
+    throw new FinancialDomainError("NOT_FOUND", "Lançamento financeiro não encontrado.");
+  return {
+    id: transaction.id,
+    number: `FIN-${String(transaction.sequence).padStart(5, "0")}`,
+    nature: transaction.nature === "INVESTMENT" ? "INVESTMENT" : "EXPENSE",
+    totalCents: transaction.totalCents,
+    paidCents: transactionPaidCents(transaction),
+    openCents: transaction.kind === "REALIZED" ? 0 : transactionOpenCents(transaction),
+    status:
+      transaction.kind === "REALIZED"
+        ? transaction.canceledAt
+          ? "CANCELED"
+          : "PAID"
+        : transactionStatus(transaction),
+    accountId: transaction.accountId,
+    accountName:
+      state.accounts.find((item) => item.id === transaction.accountId)?.name ??
+      "Conta indisponível",
+    canceled: Boolean(transaction.canceledAt),
+    archived: Boolean(transaction.archivedAt),
+    manuallyModified: Boolean(transaction.manuallyModified),
+    updatedAt: transaction.updatedAt,
+    idempotencyKey: transaction.idempotencyKey ?? "",
+  };
+};
+export const listEquipmentFinancialAccountsAction = () =>
+  action(async () =>
+    (await service.listState()).accounts
+      .filter((item) => !item.archivedAt)
+      .map(({ id, name }) => ({ id, name })),
+  );
+export const getEquipmentFinancialTransactionAction = (id: string) =>
+  action(() => equipmentFinancialReference(id));
+export const getEquipmentFinancialSummaryAction = (sourceId: string, purpose: string) =>
+  action(async () => {
+    const state = await service.listState(),
+      group = state.transactions.filter(
+        (item) => item.sourceId === sourceId && item.purpose === purpose,
+      );
+    if (!group.length) return null;
+    const primary =
+      group.find((item) => !item.idempotencyKey?.includes(":ADDITIONAL:")) ?? group[0];
+    const reference = await equipmentFinancialReference(primary.id);
+    return {
+      ...reference,
+      totalCents: group
+        .filter((item) => !item.archivedAt && !item.canceledAt)
+        .reduce((sum, item) => sum + item.totalCents, 0),
+      paidCents: group.reduce((sum, item) => sum + transactionPaidCents(item), 0),
+      openCents: group.reduce(
+        (sum, item) => sum + (item.kind === "REALIZED" ? 0 : transactionOpenCents(item)),
+        0,
+      ),
+      canceled: Boolean(primary.canceledAt),
+      archived: Boolean(primary.archivedAt),
+      manuallyModified: group.some((item) => item.manuallyModified),
+    };
+  });
+export const findEquipmentFinancialTransactionAction = (
+  sourceId: string,
+  purpose: string,
+) =>
+  action(async () => {
+    const state = await service.listState();
+    const transaction = state.transactions.find(
+      (item) => item.sourceId === sourceId && item.purpose === purpose,
+    );
+    return transaction ? equipmentFinancialReference(transaction.id) : null;
+  });
+export const createEquipmentFinancialTransactionAction = (
+  input: EquipmentFinancialCreateInput,
+) =>
+  action(async () => {
+    const state = await service.listState(),
+      key = equipmentFinancialKey(input);
+    const existing = state.transactions.find((item) => item.idempotencyKey === key);
+    if (existing)
+      return {
+        transaction: await equipmentFinancialReference(existing.id),
+        existing: true,
+        blocked: Boolean(existing.canceledAt || existing.archivedAt),
+      };
+    const transaction = await service.createObligation(
+      "PAYABLE",
+      {
+        title: input.title,
+        description: input.description,
+        category: input.category,
+        accountId: input.accountId,
+        total: moneyInput(input.totalCents),
+        issueDate: input.issueDate,
+        competenceDate: input.competenceDate,
+        firstDueDate: input.firstDueDate,
+        installmentCount: input.installmentCount,
+        supplier: input.supplier,
+        customerName: "",
+        clientId: "",
+        notes: input.notes,
+      },
+      {
+        nature: input.nature,
+        sourceId: input.source.sourceId,
+        purpose: input.source.purpose,
+        idempotencyKey: key,
+        manuallyModified: false,
+      },
+    );
+    if (input.payNow)
+      for (const installment of transaction.installments)
+        await service.addPayment(transaction.id, installment.id, {
+          amount: moneyInput(installment.amountCents),
+          paidAt: input.issueDate,
+          accountId: input.accountId,
+          method: input.paymentMethod || "Transferência",
+          notes: "Pagamento confirmado na integração com Equipamentos.",
+          reference: key,
+        });
+    return {
+      transaction: await equipmentFinancialReference(transaction.id),
+      existing: false,
+      blocked: false,
+    };
+  });
+export const cancelEquipmentFinancialOpenBalanceAction = (id: string, reason: string) =>
+  action(async () => {
+    let current = await service.getTransaction(id);
+    if (!current)
+      throw new FinancialDomainError(
+        "NOT_FOUND",
+        "Lançamento financeiro não encontrado.",
+      );
+    for (const installment of current.installments) {
+      const paid = installment.payments
+        .filter((item) => !item.reversedAt)
+        .reduce((sum, item) => sum + item.amountCents, 0);
+      if (!installment.canceledAt && installment.amountCents > paid) {
+        if (paid > 0)
+          throw new FinancialDomainError(
+            "CONFLICT",
+            "Existe parcela parcialmente paga. Use o fluxo financeiro para tratar o saldo sem apagar pagamentos.",
+          );
+        current = await service.cancelInstallment(id, installment.id, { reason });
+      }
+    }
+    return equipmentFinancialReference(current.id);
+  });
+const stockPurchaseFinancialReference = (
+  id: string,
+): Promise<StockPurchaseFinancialTransactionReference> => equipmentFinancialReference(id);
+const stockPurchaseKey = (input: StockPurchaseFinancialCreateInput) =>
+  `STOCK_PURCHASE:${input.source.purchaseId}:PAYABLE${input.additionalSequence ? `:ADDITIONAL:${input.additionalSequence}` : ""}`;
+export const listStockPurchaseFinancialAccountsAction = () =>
+  listEquipmentFinancialAccountsAction();
+export const getStockPurchaseFinancialTransactionAction = (id: string) =>
+  action(() => stockPurchaseFinancialReference(id));
+export const getStockPurchaseFinancialSummaryAction = (purchaseId: string) =>
+  action(async () => {
+    const state = await service.listState(),
+      group = state.transactions.filter(
+        (item) => item.sourceId === purchaseId && item.purpose === "PAYABLE",
+      );
+    if (!group.length) return null;
+    const primary =
+        group.find((item) => !item.idempotencyKey?.includes(":ADDITIONAL:")) ?? group[0],
+      reference = await stockPurchaseFinancialReference(primary.id);
+    return {
+      ...reference,
+      totalCents: group
+        .filter((item) => !item.archivedAt && !item.canceledAt)
+        .reduce((s, i) => s + i.totalCents, 0),
+      paidCents: group.reduce((s, i) => s + transactionPaidCents(i), 0),
+      openCents: group.reduce(
+        (s, i) => s + (i.kind === "REALIZED" ? 0 : transactionOpenCents(i)),
+        0,
+      ),
+      canceled: Boolean(primary.canceledAt),
+      archived: Boolean(primary.archivedAt),
+      manuallyModified: group.some((i) => i.manuallyModified),
+    };
+  });
+export const createStockPurchaseFinancialTransactionAction = (
+  input: StockPurchaseFinancialCreateInput,
+) =>
+  action(async () => {
+    const state = await service.listState(),
+      key = stockPurchaseKey(input),
+      existing = state.transactions.find((item) => item.idempotencyKey === key);
+    if (existing)
+      return {
+        transaction: await stockPurchaseFinancialReference(existing.id),
+        existing: true,
+        blocked: Boolean(existing.canceledAt || existing.archivedAt),
+      };
+    const transaction = await service.createObligation(
+      "PAYABLE",
+      {
+        title: input.title,
+        description: input.description,
+        category: "Compra de estoque",
+        accountId: input.accountId,
+        total: moneyInput(input.totalCents),
+        issueDate: input.issueDate,
+        competenceDate: input.competenceDate,
+        firstDueDate: input.firstDueDate,
+        installmentCount: input.installmentCount,
+        supplier: input.supplier,
+        customerName: "",
+        clientId: "",
+        notes: input.notes,
+      },
+      {
+        nature: "EXPENSE",
+        sourceId: input.source.purchaseId,
+        purpose: "PAYABLE",
+        idempotencyKey: key,
+        manuallyModified: false,
+      },
+    );
+    return {
+      transaction: await stockPurchaseFinancialReference(transaction.id),
+      existing: false,
+      blocked: false,
+    };
+  });
+export const cancelStockPurchaseFinancialOpenBalanceAction = (
+  id: string,
+  reason: string,
+) => cancelEquipmentFinancialOpenBalanceAction(id, reason);

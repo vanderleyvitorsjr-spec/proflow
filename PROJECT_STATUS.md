@@ -1,5 +1,17 @@
 # Status do Projeto ProFlow
 
+### Fundação funcional — Estoque Ciclo C (16/07/2026)
+
+- O envelope local do Estoque evoluiu explicitamente da versão 2 para a versão 3, preservando itens, movimentos, reservas, IDs, sequências, preferências, revisões e backups dos Ciclos A e B, com validação Zod integral.
+- Compras passaram a ser agregados persistentes com fornecedor em snapshot, itens e custos em centavos, quantidades na escala da unidade, status, recebimentos, vínculo financeiro, conciliação e histórico append-only.
+- Rascunhos podem ser criados e editados; pedidos confirmados sem recebimento aceitam ajustes controlados, enquanto compras recebidas preservam integralmente entradas e rastreabilidade.
+- Recebimentos totais ou parciais geram movimentos `ENTRY` vinculados e atualizam compra, estoque físico, custo médio e histórico em uma única gravação; o cancelamento da entrada reprocessa a quantidade recebida e o status da compra.
+- Devoluções ao fornecedor geram movimentos `SUPPLIER_RETURN` vinculados ao recebimento original, reutilizam seu custo e reduzem o saldo físico sem alterar pagamentos automaticamente.
+- O Financeiro foi ampliado aditivamente por contrato e actions públicas resumidas; o gateway do Estoque não acessa repository, adapter nem entidades financeiras internas completas.
+- A geração de conta a pagar é explícita e idempotente; aumentos permitem complemento confirmado, enquanto reduções, cancelamentos e alterações manuais apenas sinalizam divergências e preservam pagamentos.
+- A ficha da compra reúne fornecedor, itens, movimentos, resumo financeiro, conciliação, ações seguras e histórico, mantendo `Página → Action → Service → Repository → Storage Adapter`.
+- Fornecedores como módulo, transferências, lotes e validade avançados, Equipamentos, emissão fiscal, conciliação bancária, Event Bus, Prisma, Supabase e autenticação continuam fora deste ciclo.
+
 ## Módulos Implementados
 
 - Login com autenticação fake e sessão em `localStorage`.
@@ -281,3 +293,54 @@ public/              Assets estáticos
 - Aquisição e depreciação usam centavos inteiros; o valor atual linear é derivado por meses completos, respeita o residual e ativos de clientes ou terceiros não compõem o patrimônio próprio.
 - Localização passou a ser estruturada; status operacional e condição técnica são persistidos separadamente, enquanto criticidade e depreciação completa são derivadas.
 - Manutenção, garantia avançada, Clientes, Ordens, Financeiro, upload real, Prisma e Supabase permanecem reservados aos próximos ciclos.
+
+### Fundação funcional — Equipamentos Ciclo B (15/07/2026)
+
+- O envelope local evoluiu explicitamente da versão 1 para a versão 2, preservando ativos, IDs, sequências e históricos do Ciclo A, mantendo o conteúdo anterior em backup e acrescentando coleções próprias para manutenções e vínculos técnicos com Ordens.
+- Equipamentos passou a consumir Clientes e Ordens somente por contratos públicos resumidos e por um gateway interno, sem acessar adapters, repositories ou tipos internos completos desses módulos.
+- Ativos de propriedade de cliente mantêm `clientId` e snapshot histórico do nome; clientes arquivados são bloqueados em novos vínculos e a remoção do vínculo preserva o evento técnico.
+- Vínculos persistentes com Ordens validam existência, cancelamento, arquivamento e duplicidade; a desvinculação é lógica e mantém snapshots e histórico.
+- Manutenções preventivas e corretivas possuem registro, edição enquanto abertas, início, conclusão e cancelamento, com custos em centavos, fornecedor, responsável, próxima manutenção, OS opcional e histórico append-only.
+- O início da manutenção altera o ativo para `UNDER_MAINTENANCE`; conclusão define o novo status e cancelamento restaura o estado anterior quando disponível.
+- A garantia estruturada registra período, fornecedor, descrição, documento e observações; seus estados ativo, próximo do vencimento, expirado ou não informado são derivados pela data atual.
+- Criticidade, garantia, manutenção vencida ou próxima, manutenção em andamento e depreciação completa passaram a ser indicadores derivados, sem alterar automaticamente o status operacional por garantia isolada.
+- A ficha técnica foi ampliada com cliente, Ordens, manutenções, garantia, alertas e histórico técnico, preservando identificação, aquisição, depreciação, localização, fotos e documentos.
+- Financeiro, Estoque, upload real, notificações, Event Bus, Prisma, Supabase e autenticação real permanecem fora deste ciclo.
+
+### Fundação funcional — Equipamentos Ciclo C (16/07/2026)
+
+- O contrato público do Financeiro foi ampliado de forma aditiva com DTOs resumidos para origem técnica, contas, criação e consulta de lançamentos de Equipamentos, sem expor parcelas, pagamentos ou entidades financeiras internas ao módulo consumidor.
+- O gateway financeiro de Equipamentos concentra o consumo das actions públicas; páginas, services e repositories de Equipamentos não acessam o repository nem o storage adapter financeiro.
+- O envelope local de Equipamentos evoluiu da versão 2 para a versão 3 com backup, validação Zod e migração explícita, preservando integralmente ativos, manutenções, vínculos, IDs, sequências, revisões e históricos anteriores.
+- Aquisições podem gerar investimento ou despesa por decisão explícita, com conta, competência, vencimento, parcelas e pagamento integral opcional; nenhum lançamento é criado durante o cadastro do ativo.
+- Manutenções concluídas com custo positivo podem gerar despesas vinculadas, mantendo no equipamento somente ID, finalidade, snapshot resumido, revisão e observações de reconciliação.
+- As chaves `EQUIPMENT:{id}:ACQUISITION` e `EQUIPMENT_MAINTENANCE:{id}:EXPENSE` são validadas pelo service financeiro; repetições retornam o lançamento existente e registros cancelados ou arquivados não são recriados silenciosamente.
+- A reconciliação compara valores técnicos e financeiros, valores pagos, saldo, cancelamento, arquivamento e modificação manual; nenhuma divergência altera automaticamente parcelas ou pagamentos.
+- Aumentos permitem complementos explícitos com chave `:ADDITIONAL:{sequência}`; reduções permitem revisão, atualização de snapshot ou cancelamento seguro do saldo aberto, bloqueando parcelas parcialmente pagas para tratamento no Financeiro.
+- A ficha do equipamento exibe resumo financeiro da aquisição e das manutenções, links para lançamentos, divergências, complementos, revisão e histórico técnico-financeiro append-only.
+- Integração com Estoque, upload real, notificações, Event Bus, Prisma, Supabase e autenticação continuam fora do escopo.
+
+### Fundação funcional — Estoque Ciclo A (16/07/2026)
+
+- Estoque passou a seguir `Página → Action → Service → Repository → Storage Adapter`; somente o adapter local acessa `localStorage`.
+- O envelope `proflow:estoque:v1` possui revisão incremental, validação Zod integral, backup, recuperação explícita e bloqueio quando principal e backup estão corrompidos.
+- A carga demonstrativa foi migrada para itens cadastrais e movimentos `ENTRY` de abertura, eliminando saldos, reservas, compras e status independentes.
+- Quantidades fracionárias são armazenadas como inteiros na menor escala da unidade; `PAIR` passou a integrar o tipo e os labels suportados.
+- Quantidade física, disponível, custo médio ponderado móvel, valor patrimonial e status são derivados por replay cronológico dos movimentos ativos.
+- Cadastro, edição, arquivamento lógico, detalhe, busca, filtros persistentes, tabela e cartões foram conectados à persistência local.
+- Entradas, saídas, perdas, ajustes positivos e negativos e devoluções manuais registram custos em centavos e histórico append-only; cancelamentos reprocessam o ledger e são bloqueados quando causariam saldo histórico inválido.
+- Código interno e código de barras possuem prevenção de duplicidade inclusive contra itens arquivados; nome e unidade semelhantes geram aviso assistido.
+- Reservas, consumo em OS, compras, Financeiro, fornecedores persistentes, transferências complexas, lotes, validade, Prisma, Supabase e autenticação continuam fora deste ciclo.
+
+### Fundação funcional — Estoque Ciclo B (16/07/2026)
+
+- O envelope local evoluiu explicitamente da versão 1 para a versão 2, preservando itens, movimentos, IDs, sequências, custos, históricos, arquivamentos, preferências, revisões e backup do Ciclo A.
+- Estoque passou a consumir Ordens somente pelo contrato público resumido e por `estoque-ordens-gateway.ts`, sem acessar repository, adapter ou registro interno completo de Ordens.
+- Reservas persistentes utilizam chave idempotente `STOCK_RESERVATION:{os}:{item}:{finalidade}`; repetições retornam a reserva existente e reservas encerradas não são recriadas silenciosamente.
+- Quantidade reservada é derivada do saldo das reservas; disponibilidade é quantidade física menos reservado, enquanto a reserva isolada não cria movimento físico.
+- Consumos totais, parciais e administrativos criam movimentos `CONSUMPTION` com custo médio vigente, OS e reserva vinculadas, persistindo reserva e movimento atomicamente.
+- Liberações totais e parciais devolvem disponibilidade sem alterar o físico; devoluções vinculadas reutilizam o custo do consumo original e não reabrem reservas automaticamente.
+- Cancelamentos de consumo ou devolução preservam movimentos, refazem o ledger e recalculam o saldo da reserva, bloqueando inconsistências históricas.
+- Cancelamento, arquivamento, indisponibilidade ou atualização da OS são derivados como divergências, com revisão e atualização explícita do snapshot sem reescrever movimentos antigos.
+- A ficha do item passou a exibir reservas, Ordens vinculadas, consumo, liberação, devoluções, divergências, links e histórico append-only.
+- Compras, Financeiro, fornecedores persistentes, transferências complexas, lotes, validade, Equipamentos, Prisma, Supabase e autenticação continuam fora do escopo.

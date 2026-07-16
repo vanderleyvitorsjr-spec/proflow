@@ -1,5 +1,10 @@
 import type { EquipmentStorageAdapter } from "./equipamentos-storage-adapter";
-import type { EquipmentAsset, EquipmentStorageState } from "./equipamentos-types";
+import type {
+  EquipmentAsset,
+  EquipmentServiceOrderLink,
+  EquipmentStorageState,
+  MaintenanceRecord,
+} from "./equipamentos-types";
 export class EquipmentRepository {
   constructor(private storage: EquipmentStorageAdapter) {}
   read() {
@@ -24,6 +29,26 @@ export class EquipmentRepository {
       assets: exists
         ? state.assets.map((a) => (a.id === asset.id ? asset : a))
         : [asset, ...state.assets],
+    });
+  }
+  async saveMaintenance(record: MaintenanceRecord) {
+    const state = await this.read();
+    const exists = state.maintenanceRecords.some((item) => item.id === record.id);
+    return this.save({
+      ...state,
+      maintenanceRecords: exists
+        ? state.maintenanceRecords.map((item) => (item.id === record.id ? record : item))
+        : [record, ...state.maintenanceRecords],
+    });
+  }
+  async saveServiceOrderLink(link: EquipmentServiceOrderLink) {
+    const state = await this.read();
+    const exists = state.serviceOrderLinks.some((item) => item.id === link.id);
+    return this.save({
+      ...state,
+      serviceOrderLinks: exists
+        ? state.serviceOrderLinks.map((item) => (item.id === link.id ? link : item))
+        : [link, ...state.serviceOrderLinks],
     });
   }
 }

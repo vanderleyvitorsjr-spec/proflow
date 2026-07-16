@@ -12,7 +12,7 @@ import { EquipmentFormDrawer } from "./equipamento-form-drawer";
 import { EquipamentosFilters, type EquipmentFilters } from "./equipamentos-filters";
 import { EquipamentosList } from "./equipamentos-list";
 import { EquipamentosSummary } from "./equipamentos-summary";
-import { depreciation, isCritical } from "./equipamentos-selectors";
+import { depreciation, equipmentIndicators, warrantyStatus } from "./equipamentos-selectors";
 import type { EquipmentFormValues } from "./equipamentos-schema";
 import type {
   EquipmentAsset,
@@ -27,6 +27,9 @@ const initial: EquipmentFilters = {
   status: "ALL",
   condition: "ALL",
   depreciation: "ALL",
+  maintenance: "ALL",
+  warranty: "ALL",
+  critical: "ALL",
 };
 export function EquipamentosPageContent() {
   const [state, setState] = useState<EquipmentStorageState | null>(null),
@@ -59,8 +62,11 @@ export function EquipamentosPageContent() {
     categories = [...new Set(active.map((a) => a.category))].sort(),
     filtered = (() => {
       const q = filters.search.trim().toLocaleLowerCase("pt-BR");
-      return active.filter(
-        (a) =>
+      return active.filter((a) => {
+          const maintenance = state?.maintenanceRecords.filter((item) => item.assetId === a.id) ?? [];
+          const links = state?.serviceOrderLinks.filter((item) => item.assetId === a.id && !item.unlinkedAt) ?? [];
+          const indicators = equipmentIndicators(a, maintenance);
+          return (
           (!q ||
             [
               a.name,
@@ -73,6 +79,9 @@ export function EquipamentosPageContent() {
               a.location.name,
               a.location.room,
               a.location.container,
+              a.clientNameSnapshot,
+              ...maintenance.map((item) => item.supplier),
+              ...links.map((item) => item.serviceOrderNumberSnapshot),
             ].some((x) => x?.toLocaleLowerCase("pt-BR").includes(q))) &&
           (filters.type === "ALL" || a.assetType === filters.type) &&
           (filters.category === "ALL" || a.category === filters.category) &&
@@ -80,8 +89,15 @@ export function EquipamentosPageContent() {
           (filters.status === "ALL" || a.status === filters.status) &&
           (filters.condition === "ALL" || a.condition === filters.condition) &&
           (filters.depreciation === "ALL" ||
-            a.depreciation.mode === filters.depreciation),
-      );
+            a.depreciation.mode === filters.depreciation) &&
+          (filters.warranty === "ALL" || warrantyStatus(a) === filters.warranty) &&
+          (filters.critical === "ALL" || indicators.critical) &&
+          (filters.maintenance === "ALL" ||
+            (filters.maintenance === "OVERDUE"
+              ? indicators.maintenanceOverdue
+              : maintenance.some((item) => item.status === filters.maintenance)))
+          );
+      });
     })();
   const save = async (v: EquipmentFormValues) => {
     setBusy(true);
@@ -141,14 +157,16 @@ export function EquipamentosPageContent() {
       )}
       <EquipamentosSummary
         total={active.length}
-        critical={active.filter(isCritical).length}
+        critical={active.filter((a) => equipmentIndicators(a, state.maintenanceRecords.filter((item) => item.assetId === a.id)).critical).length}
         maintenance={active.filter((a) => a.status === "UNDER_MAINTENANCE").length}
         available={active.filter((a) => a.status === "AVAILABLE").length}
         patrimonialValueCents={patrimonial}
+        warrantyAlerts={active.filter((a) => ["EXPIRED", "EXPIRING_SOON"].includes(warrantyStatus(a))).length}
       />
       <EquipamentosList
         view={view}
         assets={filtered}
+        maintenanceRecords={state.maintenanceRecords}
         onEdit={(a) => {
           setEditing(a);
           setFormError("");

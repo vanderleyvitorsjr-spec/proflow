@@ -11,8 +11,8 @@ import {
   ownershipLabels,
   statusLabels,
 } from "./equipamentos-data";
-import { depreciation, isCritical } from "./equipamentos-selectors";
-import type { EquipmentAsset, EquipmentView } from "./equipamentos-types";
+import { depreciation, equipmentIndicators, warrantyStatus } from "./equipamentos-selectors";
+import type { EquipmentAsset, EquipmentView, MaintenanceRecord } from "./equipamentos-types";
 const money = (c: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(c / 100);
 export function EquipamentosList({
@@ -20,11 +20,13 @@ export function EquipamentosList({
   assets,
   onEdit,
   onArchive,
+  maintenanceRecords,
 }: {
   view: EquipmentView;
   assets: EquipmentAsset[];
   onEdit: (a: EquipmentAsset) => void;
   onArchive: (a: EquipmentAsset) => void;
+  maintenanceRecords: MaintenanceRecord[];
 }) {
   if (!assets.length)
     return (
@@ -38,7 +40,7 @@ export function EquipamentosList({
     return (
       <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {assets.map((a) => {
-          const d = depreciation(a);
+          const d = depreciation(a), indicators = equipmentIndicators(a, maintenanceRecords.filter((item) => item.assetId === a.id));
           return (
             <Card key={a.id} className="p-4">
               <div className="flex justify-between gap-3">
@@ -51,7 +53,7 @@ export function EquipamentosList({
                     {a.manufacturer} {a.model}
                   </p>
                 </div>
-                <Badge variant={isCritical(a) ? "destructive" : "neutral"}>
+                <Badge variant={indicators.critical ? "destructive" : "neutral"}>
                   {statusLabels[a.status]}
                 </Badge>
               </div>
@@ -59,6 +61,8 @@ export function EquipamentosList({
                 <Info l="Propriedade" v={ownershipLabels[a.ownership]} />
                 <Info l="Condição" v={conditionLabels[a.condition]} />
                 <Info l="Localização" v={a.location.name} />
+                <Info l="Cliente" v={a.clientNameSnapshot ?? "Não vinculado"} />
+                <Info l="Garantia" v={warrantyStatus(a)} />
                 <Info
                   l="Valor atual"
                   v={
@@ -106,7 +110,7 @@ export function EquipamentosList({
         </thead>
         <tbody>
           {assets.map((a) => {
-            const d = depreciation(a);
+            const d = depreciation(a), indicators = equipmentIndicators(a, maintenanceRecords.filter((item) => item.assetId === a.id));
             return (
               <tr key={a.id}>
                 <td>
@@ -119,7 +123,7 @@ export function EquipamentosList({
                 <td>{ownershipLabels[a.ownership]}</td>
                 <td>{a.location.name}</td>
                 <td>
-                  <Badge variant="neutral">{statusLabels[a.status]}</Badge>
+                  <Badge variant={indicators.critical ? "destructive" : "neutral"}>{statusLabels[a.status]}</Badge>
                 </td>
                 <td>{conditionLabels[a.condition]}</td>
                 <td>

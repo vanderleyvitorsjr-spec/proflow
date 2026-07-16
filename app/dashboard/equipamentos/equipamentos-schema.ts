@@ -62,3 +62,47 @@ export const equipmentFormSchema = z
       });
   });
 export type EquipmentFormValues = z.infer<typeof equipmentFormSchema>;
+
+export const maintenanceFormSchema = z.object({
+  type: z.enum(["PREVENTIVE", "CORRECTIVE"]),
+  title: z.string().trim().min(2, "Informe o título da manutenção."),
+  description: z.string().trim(),
+  supplier: z.string().trim(),
+  cost: z.string().trim().default("0,00"),
+  scheduledAt: z.string().min(1, "Informe a data programada."),
+  nextMaintenanceAt: z.string().optional().default(""),
+  serviceOrderId: z.string().optional().default(""),
+  responsible: z.string().trim(),
+  notes: z.string().trim(),
+});
+export type MaintenanceFormValues = z.infer<typeof maintenanceFormSchema>;
+
+export const warrantyFormSchema = z
+  .object({
+    startDate: date,
+    endDate: date,
+    supplier: z.string().trim(),
+    description: z.string().trim(),
+    documentReference: z.string().trim(),
+    notes: z.string().trim(),
+  })
+  .superRefine((value, context) => {
+    if (value.startDate && value.endDate && value.endDate < value.startDate)
+      context.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "O fim da garantia deve ser posterior ao início.",
+      });
+  });
+export type WarrantyFormValues = z.infer<typeof warrantyFormSchema>;
+export const equipmentFinancialFormSchema = z.object({
+  nature: z.enum(["INVESTMENT", "EXPENSE"]),
+  accountId: z.string().min(1, "Selecione a conta."),
+  competenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a competência."),
+  firstDueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe o vencimento."),
+  installmentCount: z.coerce.number().int().min(1).max(120),
+  notes: z.string().trim(),
+  payNow: z.boolean().default(false),
+  paymentMethod: z.string().trim().default("Transferência"),
+});
+export type EquipmentFinancialFormValues = z.infer<typeof equipmentFinancialFormSchema>;
