@@ -4,13 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
-  Bell,
   Building2,
   ChevronLeft,
   LogOut,
   Menu,
   Moon,
-  Search,
   Sun,
   Wrench,
   X,
@@ -18,10 +16,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dashboardNavigation } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
+import { GlobalCommandCenter } from "./global-command-center";
 
 const SESSION_KEY = "proflow-session";
 
@@ -242,14 +240,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="ml-auto hidden w-full max-w-md items-center lg:flex">
-            <div className="relative w-full">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                aria-label="Pesquisa global"
-                placeholder="Pesquisar clientes, OS, equipamentos..."
-                className="h-9 bg-surface-subtle pl-9 shadow-none"
-              />
-            </div>
+            <GlobalCommandCenter />
           </div>
 
           <div className="ml-auto flex items-center gap-2 lg:ml-0">
@@ -257,9 +248,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Building2 className="h-4 w-4 text-sky-600 dark:text-sky-400" aria-hidden="true" />
               ProFlow Services
             </div>
-            <Button type="button" variant="ghost" size="icon" aria-label="Notificações">
-              <Bell className="h-5 w-5" aria-hidden="true" />
-            </Button>
+            <div className="flex lg:hidden"><GlobalCommandCenter /></div>
             <Button
               type="button"
               variant="ghost"

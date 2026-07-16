@@ -13,6 +13,8 @@ import type {
   PricingSimulation,
   PricingTemplate,
 } from "./precificacao-types";
+import type { PricingPublicSettings } from "@/lib/contracts/configuracoes.contract";
+import { getPricingConfiguration } from "./precificacao-configuracoes-gateway";
 const categories = [
   "INSTALLATION",
   "MAINTENANCE",
@@ -84,9 +86,13 @@ export function PricingSimulationDialog({
   onSave: (input: PricingSimulationFormValues) => Promise<void>;
 }) {
   const [lines, setLines] = useState<Line[]>([]);
+  const [configuration, setConfiguration] = useState<PricingPublicSettings | null>(null);
+  const [configurationWarning, setConfigurationWarning] = useState("");
   useEffect(() => {
-    if (open)
-      queueMicrotask(() =>
+    if (open) {
+      void getPricingConfiguration().then(({ settings, warning }) => {
+        setConfiguration(settings);
+        setConfigurationWarning(warning ?? "");
         setLines(
           simulation?.costComponents.map((item) => ({
             ...defaultLine(item.type),
@@ -107,8 +113,9 @@ export function PricingSimulationDialog({
                 : item.travelDetails,
             key: item.id,
           })) ?? [defaultLine("MATERIAL"), defaultLine("LABOR"), defaultLine("TRAVEL")],
-        ),
-      );
+        );
+      });
+    }
   }, [open, simulation]);
   useEffect(() => {
     if (!open) return;
@@ -605,7 +612,7 @@ export function PricingSimulationDialog({
               <Field
                 name="taxRate"
                 label="Imposto (%)"
-                value={(simulation?.commercialRules.taxRateBasisPoints ?? 600) / 100}
+                value={(simulation?.commercialRules.taxRateBasisPoints ?? configuration?.taxBasisPoints ?? 600) / 100}
               />
               <div>
                 <Label>Base do imposto</Label>
@@ -622,7 +629,7 @@ export function PricingSimulationDialog({
                 name="commissionRate"
                 label="Comissão (%)"
                 value={
-                  (simulation?.commercialRules.commissionRateBasisPoints ?? 300) / 100
+                  (simulation?.commercialRules.commissionRateBasisPoints ?? configuration?.commissionBasisPoints ?? 300) / 100
                 }
               />
               <Field
@@ -633,20 +640,20 @@ export function PricingSimulationDialog({
               <Field
                 name="minimumMargin"
                 label="Margem mínima (%)"
-                value={(simulation?.commercialRules.minimumMarginBasisPoints ?? 0) / 100}
+                value={(simulation?.commercialRules.minimumMarginBasisPoints ?? configuration?.minimumMarginBasisPoints ?? 0) / 100}
               />
               <Field
                 name="recommendedMargin"
                 label="Margem recomendada (%)"
                 value={
-                  (simulation?.commercialRules.recommendedMarginBasisPoints ?? 3000) / 100
+                  (simulation?.commercialRules.recommendedMarginBasisPoints ?? configuration?.recommendedMarginBasisPoints ?? 3000) / 100
                 }
               />
               <Field
                 name="premiumMargin"
                 label="Margem premium (%)"
                 value={
-                  (simulation?.commercialRules.premiumMarginBasisPoints ?? 4000) / 100
+                  (simulation?.commercialRules.premiumMarginBasisPoints ?? configuration?.premiumMarginBasisPoints ?? 4000) / 100
                 }
               />
               <Field
@@ -669,11 +676,16 @@ export function PricingSimulationDialog({
               <input
                 type="checkbox"
                 name="belowMinimumConfirmed"
-                defaultChecked={simulation?.commercialRules.belowMinimumConfirmed}
+                defaultChecked={simulation?.commercialRules.belowMinimumConfirmed ?? !configuration?.requireBelowMinimumConfirmation}
               />
               Confirmo preço promocional abaixo do mínimo, se houver.
             </label>
           </section>
+          {configurationWarning && (
+            <p role="status" className="text-xs text-amber-700 dark:text-amber-300">
+              {configurationWarning}
+            </p>
+          )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar

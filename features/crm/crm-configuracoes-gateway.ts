@@ -1,0 +1,3 @@
+import { getActiveTeamAction } from "@/app/dashboard/configuracoes/configuracoes-actions"; import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
+const eligible = ["SELLER", "ATTENDANT", "MANAGER", "ADMINISTRATOR"];
+export async function listCrmOwners(): Promise<{ items: TeamMemberPublicReference[]; warning?: string }> { const result = await getActiveTeamAction(); if (!result.ok) return { items: [], warning: "Configurações indisponíveis; informe o responsável manualmente." }; return { items: result.data.filter((item) => eligible.includes(item.role) || item.specialties.some((value) => /venda|comercial|atendimento/i.test(value))) }; }

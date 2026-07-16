@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Save } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -11,14 +11,18 @@ import { Select } from "@/components/ui/select";
 import { crmStages } from "./crm-data";
 import { crmLeadSchema, type CrmLeadFormInput, type CrmLeadFormValues } from "./crm-schema";
 import type { CrmLeadRecord } from "./crm-types";
+import { listCrmOwners } from "./crm-configuracoes-gateway";
+import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
 
 const defaults: CrmLeadFormInput = { name: "", type: "COMPANY", document: "", phone: "", whatsapp: "", email: "", address: "", city: "", state: "BA", zipCode: "", source: "", serviceInterest: "", salesOwner: "", priority: "MEDIUM", estimatedValue: 0, contactDate: new Date().toISOString().slice(0, 10), notes: "", stageId: "new" };
 const valuesFromLead = (lead?: CrmLeadRecord | null): CrmLeadFormInput => lead ? { name: lead.name, type: lead.type, document: lead.document, phone: lead.phone, whatsapp: lead.whatsapp, email: lead.email, address: lead.address, city: lead.city, state: lead.state, zipCode: lead.zipCode, source: lead.source, serviceInterest: lead.serviceInterest, salesOwner: lead.salesOwner, priority: lead.priority, estimatedValue: lead.estimatedValue, contactDate: lead.contactDate, notes: lead.notes, stageId: lead.stageId } : defaults;
 
 type Props = { lead?: CrmLeadRecord | null; saving: boolean; onSubmit: (values: CrmLeadFormValues) => Promise<void>; submitLabel?: string };
 export function CrmLeadForm({ lead, saving, onSubmit, submitLabel = "Salvar lead" }: Props) {
+  const [owners, setOwners] = useState<TeamMemberPublicReference[]>([]), [configurationWarning, setConfigurationWarning] = useState("");
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CrmLeadFormInput, unknown, CrmLeadFormValues>({ resolver: zodResolver(crmLeadSchema), defaultValues: defaults, mode: "onBlur" });
   useEffect(() => { reset(valuesFromLead(lead)); }, [lead, reset]);
+  useEffect(() => { void listCrmOwners().then((result) => { setOwners(result.items); setConfigurationWarning(result.warning ?? ""); }); }, []);
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <fieldset className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"><legend className="col-span-full text-sm font-semibold">Dados e contato</legend>
@@ -38,7 +42,7 @@ export function CrmLeadForm({ lead, saving, onSubmit, submitLabel = "Salvar lead
       <fieldset className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"><legend className="col-span-full text-sm font-semibold">Qualificação comercial</legend>
         <Field label="Origem" htmlFor="lead-source" error={errors.source?.message} required><Input id="lead-source" {...register("source")} /></Field>
         <Field label="Interesse" htmlFor="lead-interest" error={errors.serviceInterest?.message} required><Input id="lead-interest" {...register("serviceInterest")} /></Field>
-        <Field label="Responsável" htmlFor="lead-owner" error={errors.salesOwner?.message} required><Input id="lead-owner" {...register("salesOwner")} /></Field>
+        <Field label="Responsável" htmlFor="lead-owner" error={errors.salesOwner?.message} required><Select id="lead-owner" {...register("salesOwner")}><option value="">Selecione</option>{lead?.salesOwner && !owners.some((item) => item.name === lead.salesOwner) ? <option value={lead.salesOwner}>{lead.salesOwner} (legado)</option> : null}{owners.map((item) => <option key={item.id} value={item.name}>{item.name} · {item.role}</option>)}</Select>{configurationWarning ? <p className="mt-1 text-[11px] text-amber-600">{configurationWarning}</p> : null}</Field>
         <Field label="Prioridade" htmlFor="lead-priority" error={errors.priority?.message}><Select id="lead-priority" {...register("priority")}><option value="LOW">Baixa</option><option value="MEDIUM">Média</option><option value="HIGH">Alta</option><option value="CRITICAL">Crítica</option></Select></Field>
         <Field label="Valor estimado" htmlFor="lead-value" error={errors.estimatedValue?.message}><Input id="lead-value" type="number" min="0" step="0.01" {...register("estimatedValue")} /></Field>
         <Field label="Data de contato" htmlFor="lead-date" error={errors.contactDate?.message}><Input id="lead-date" type="date" {...register("contactDate")} /></Field>

@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { financialCategories, natureLabels } from "./financeiro-data";
+import { natureLabels } from "./financeiro-data";
+import { getFinancialConfiguration } from "./financeiro-configuracoes-gateway";
+import type { FinancialPublicSettings } from "@/lib/contracts/configuracoes.contract";
 import { formatMoneyCents } from "./financeiro-money";
 import {
   financialTransactionSchema,
@@ -63,16 +65,32 @@ export function FinanceiroTransactionFormDrawer({
 }) {
   const [values, setValues] = useState(() => initial(nature, transaction));
   const [validation, setValidation] = useState("");
+  const [configuration, setConfiguration] = useState<FinancialPublicSettings | null>(null);
+  const [configurationWarning, setConfigurationWarning] = useState("");
   useEffect(() => {
-    if (open)
-      queueMicrotask(() => {
+    if (open) {
+      void getFinancialConfiguration().then(({ settings, warning }) => {
         const value = initial(nature, transaction);
-        if (!value.accountId)
-          value.accountId =
-            accounts.find((item) => item.isDefault)?.id ?? accounts[0]?.id ?? "";
+        if (!transaction) {
+          const categories = categoriesForNature(settings, nature);
+          value.category = categories[0] ?? value.category;
+        }
+        if (!value.accountId) {
+          value.accountId = accounts.find((item) => item.id === settings.defaultAccountId)?.id ?? "";
+          if (!value.accountId && !settings.defaultAccountId)
+            value.accountId = accounts.find((item) => item.isDefault)?.id ?? accounts[0]?.id ?? "";
+        }
+        setConfiguration(settings);
+        setConfigurationWarning(
+          warning ??
+            (settings.defaultAccountId && !value.accountId
+              ? "A conta padrão configurada não está disponível. Selecione uma conta manualmente."
+              : ""),
+        );
         setValues(value);
         setValidation("");
       });
+    }
   }, [accounts, nature, open, transaction]);
   useEffect(() => {
     if (!open) return;
@@ -88,6 +106,7 @@ export function FinanceiroTransactionFormDrawer({
       ...values,
       nature: value,
       direction: value === "REVENUE" ? "INCOME" : "EXPENSE",
+      category: configuration ? categoriesForNature(configuration, value)[0] ?? "" : values.category,
     });
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -188,7 +207,7 @@ export function FinanceiroTransactionFormDrawer({
               onChange={(e) => setValues({ ...values, category: e.target.value })}
             />
             <datalist id="financial-categories">
-              {financialCategories.map((item) => (
+              {(configuration ? categoriesForNature(configuration, values.nature) : []).map((item) => (
                 <option key={item} value={item} />
               ))}
             </datalist>
@@ -270,6 +289,11 @@ export function FinanceiroTransactionFormDrawer({
               {validation || error}
             </p>
           )}
+          {configurationWarning && (
+            <p role="status" className="sm:col-span-2 text-xs text-amber-700 dark:text-amber-300">
+              {configurationWarning}
+            </p>
+          )}
         </div>
         <footer className="flex justify-end gap-2 border-t border-border p-5">
           <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
@@ -282,4 +306,10 @@ export function FinanceiroTransactionFormDrawer({
       </form>
     </div>
   );
+}
+
+function categoriesForNature(settings: FinancialPublicSettings, nature: FinancialNature) {
+  if (nature === "REVENUE") return settings.revenueCategories;
+  if (nature === "INVESTMENT") return settings.investmentCategories;
+  return settings.expenseCategories;
 }

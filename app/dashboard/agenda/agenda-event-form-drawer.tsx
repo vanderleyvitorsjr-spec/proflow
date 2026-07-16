@@ -12,6 +12,8 @@ import { Select } from "@/components/ui/select";
 
 import { agendaEventSchema, type AgendaEventFormValues } from "./agenda-schema";
 import type { AgendaDisplayEvent } from "./agenda-types";
+import { getAgendaConfiguration } from "./agenda-configuracoes-gateway";
+import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
 
 type Props = { open: boolean; event?: AgendaDisplayEvent | null; busy?: boolean; error?: string; onClose: () => void; onSubmit: (value: AgendaEventFormValues) => Promise<void> };
 
@@ -27,7 +29,8 @@ export function AgendaEventFormDrawer({ open, event, busy, error, onClose, onSub
   const [values, setValues] = useState<AgendaEventFormValues>(() => initial(event));
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [validation, setValidation] = useState("");
-  useEffect(() => { if (open) { queueMicrotask(() => { setValues(initial(event)); setValidation(""); }); void listClientsAction().then(setClients); } }, [event, open]);
+  const [team, setTeam] = useState<TeamMemberPublicReference[]>([]), [configurationWarning, setConfigurationWarning] = useState("");
+  useEffect(() => { if (open) { queueMicrotask(() => { setValues(initial(event)); setValidation(""); }); void listClientsAction().then(setClients); void getAgendaConfiguration().then((result) => { setTeam(result.team); setConfigurationWarning(result.warning ?? ""); if (!event) setValues((current) => ({ ...current, startTime: result.settings.startTime, endTime: addMinutes(result.settings.startTime, result.settings.defaultDurationMinutes) })); }); } }, [event, open]);
   useEffect(() => { if (!open) return; const listener = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) onClose(); }; window.addEventListener("keydown", listener); return () => window.removeEventListener("keydown", listener); }, [busy, onClose, open]);
   if (!open) return null;
   const set = <K extends keyof AgendaEventFormValues>(key: K, value: AgendaEventFormValues[K]) => setValues((current) => ({ ...current, [key]: value }));
@@ -41,7 +44,7 @@ export function AgendaEventFormDrawer({ open, event, busy, error, onClose, onSub
           <div><Label>Tipo</Label><Select value={values.type} onChange={(e) => set("type", e.target.value as AgendaEventFormValues["type"])}><option value="MEETING">Reunião</option><option value="TECHNICAL_VISIT">Visita técnica</option><option value="BUDGET">Orçamento</option><option value="INSTALLATION">Instalação</option><option value="PREVENTIVE">Preventiva</option><option value="CORRECTIVE">Corretiva</option><option value="ELECTRICAL">Elétrica</option></Select></div>
           <div><Label>Cliente opcional</Label><Select value={values.clientId} onChange={(e) => set("clientId", e.target.value)} disabled={event?.origin === "SERVICE_ORDER"}><option value="">Sem cliente</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</Select></div>
           <div className="sm:col-span-2"><Label>Descrição</Label><textarea className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={values.description} onChange={(e) => set("description", e.target.value)} /></div>
-          <div><Label>Responsável ou equipe</Label><Input value={values.responsible} onChange={(e) => set("responsible", e.target.value)} /></div>
+          <div><Label>Responsável ou equipe</Label><Select value={values.responsible} onChange={(e) => set("responsible", e.target.value)}><option value="">Selecione</option>{event?.technician && !team.some((item) => item.name === event.technician) ? <option value={event.technician}>{event.technician} (legado)</option> : null}{team.map((item) => <option key={item.id} value={item.name}>{item.name} · {item.role}</option>)}</Select>{configurationWarning ? <p className="mt-1 text-[11px] text-amber-600">{configurationWarning}</p> : null}</div>
           <div><Label>Data</Label><Input type="date" value={values.date} onChange={(e) => set("date", e.target.value)} /></div>
           <div><Label>Início</Label><Input type="time" value={values.startTime} onChange={(e) => set("startTime", e.target.value)} /></div><div><Label>Fim</Label><Input type="time" value={values.endTime} onChange={(e) => set("endTime", e.target.value)} /></div>
           <div className="sm:col-span-2"><Label>Localização</Label><Input value={values.address} onChange={(e) => set("address", e.target.value)} /></div><div><Label>Cidade</Label><Input value={values.city} onChange={(e) => set("city", e.target.value)} /></div><div><Label>UF</Label><Input maxLength={2} value={values.state} onChange={(e) => set("state", e.target.value.toUpperCase())} /></div>
@@ -55,3 +58,4 @@ export function AgendaEventFormDrawer({ open, event, busy, error, onClose, onSub
     </section>
   </div>;
 }
+function addMinutes(time: string, minutes: number) { const [hour, minute] = time.split(":").map(Number), total = hour * 60 + minute + minutes; return `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`; }

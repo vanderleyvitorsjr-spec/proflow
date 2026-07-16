@@ -1,0 +1,2 @@
+export type GlobalActivity={id:string;source:string;sourceId:string;sourceLabel:string;type:string;title:string;description?:string;occurredAt:string;actorName?:string;clientId?:string;serviceOrderId?:string;priority?:string;metadata?:Record<string,string|number|boolean>;link?:string};
+export type GlobalSearchResult={id:string;source:string;title:string;description:string;link:string;keywords:string};

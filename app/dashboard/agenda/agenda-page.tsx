@@ -13,6 +13,7 @@ import { AgendaToolbar } from "./agenda-toolbar";
 import type { AgendaEventFormValues } from "./agenda-schema";
 import type { AgendaDisplayEvent } from "./agenda-types";
 import type { AgendaEventType, AgendaTeam, AgendaView } from "./agenda-data";
+import { getAgendaConfiguration } from "./agenda-configuracoes-gateway";
 
 const periodFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" });
 const dayPeriodFormatter = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
@@ -24,12 +25,14 @@ function conflicts(events: AgendaDisplayEvent[]) { return events.filter((event, 
 
 export function AgendaPageContent() {
   const [view, setView] = useState<AgendaView>("week"); const [currentDate, setCurrentDate] = useState(new Date());
+  const [configuredTechnicians, setConfiguredTechnicians] = useState<string[]>([]);
   const [events, setEvents] = useState<AgendaDisplayEvent[]>([]); const [loading, setLoading] = useState(true); const [loadError, setLoadError] = useState("");
   const [searchTerm, setSearchTerm] = useState(""); const [typeFilter, setTypeFilter] = useState("ALL"); const [technicianFilter, setTechnicianFilter] = useState("ALL");
   const [drawer, setDrawer] = useState(false); const [saving, setSaving] = useState(false); const [formError, setFormError] = useState(""); const [notice, setNotice] = useState("");
   const load = useCallback(async () => { setLoading(true); setLoadError(""); try { setEvents(await listAgendaEventsAction()); } catch (error) { setLoadError(error instanceof Error ? error.message : "Não foi possível carregar a Agenda."); } finally { setLoading(false); } }, []);
   useEffect(() => { void listAgendaEventsAction().then(setEvents).catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "Não foi possível carregar a Agenda.")).finally(() => setLoading(false)); }, []);
-  const technicians = useMemo(() => Array.from(new Set(events.map((event) => event.technician))).sort((a, b) => a.localeCompare(b, "pt-BR")), [events]);
+  useEffect(() => { void getAgendaConfiguration().then((result) => { setConfiguredTechnicians(result.team.map((item) => item.name)); if (["day","week","month"].includes(result.settings.initialView)) setView(result.settings.initialView as AgendaView); }); }, []);
+  const technicians = useMemo(() => Array.from(new Set([...configuredTechnicians, ...events.map((event) => event.technician)])).sort((a, b) => a.localeCompare(b, "pt-BR")), [configuredTechnicians, events]);
   const eventTypes = useMemo(() => Object.entries(typeLabels).map(([value, label]) => ({ value, label })), []);
   const filteredEvents = useMemo(() => { const term = searchTerm.trim().toLocaleLowerCase("pt-BR"); return events.filter((event) => (!term || [event.title, event.customer, event.serviceOrderNumber, event.technician, event.city, typeLabels[event.type]].filter(Boolean).some((value) => String(value).toLocaleLowerCase("pt-BR").includes(term))) && (typeFilter === "ALL" || event.type === typeFilter) && (technicianFilter === "ALL" || event.technician === technicianFilter)); }, [events, searchTerm, technicianFilter, typeFilter]);
   const teams = useMemo<AgendaTeam[]>(() => technicians.map((name) => { const active = events.some((event) => event.technician === name && event.status !== "CANCELED" && new Date(event.startAt) <= new Date() && new Date(event.endAt) > new Date()); return { id: `team-${name.toLocaleLowerCase("pt-BR").replaceAll(" ", "-")}`, name, specialty: "Responsável da Agenda", status: active ? "BUSY" : "AVAILABLE" }; }), [events, technicians]);

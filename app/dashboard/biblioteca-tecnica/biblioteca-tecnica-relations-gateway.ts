@@ -1,0 +1,4 @@
+import { listEquipmentPricingReferencesAction } from "@/app/dashboard/equipamentos/equipamentos-actions";
+import { listServiceOrderTechnicalReferencesAction } from "@/app/dashboard/ordens/ordens-actions";
+import { listActiveClientPublicReferencesAction } from "@/app/dashboard/clientes/actions";
+export async function listTechnicalRelations(){ const [equipment,orders,clients]=await Promise.allSettled([listEquipmentPricingReferencesAction(),listServiceOrderTechnicalReferencesAction(),listActiveClientPublicReferencesAction()]); return { equipment:equipment.status==="fulfilled"&&equipment.value.ok?equipment.value.data.filter((item)=>!item.archived):[], orders:orders.status==="fulfilled"?orders.value.filter((item)=>!item.archived&&!item.canceled):[], clients:clients.status==="fulfilled"?clients.value.filter((item)=>!item.archived):[], partial:[equipment,orders,clients].some((item)=>item.status==="rejected") }; }

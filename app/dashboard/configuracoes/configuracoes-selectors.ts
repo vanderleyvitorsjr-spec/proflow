@@ -22,6 +22,7 @@ export const publicSettings = (state: ConfigState): ConfiguracoesPublicSettings 
     specialties: item.specialties,
     hourlyCostCents: item.hourlyCostCents,
     burdenRateBasisPoints: item.burdenRateBasisPoints,
+    availability: item.availability,
     active: item.active,
     archived: Boolean(item.archivedAt),
     updatedAt: item.updatedAt,

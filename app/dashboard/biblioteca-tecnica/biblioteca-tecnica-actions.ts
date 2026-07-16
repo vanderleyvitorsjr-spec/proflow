@@ -1,0 +1,11 @@
+"use client";
+import { technicalBlobAdapter } from "./biblioteca-tecnica-blob-adapter"; import { TechnicalLibraryRepository } from "./biblioteca-tecnica-repository"; import { TechnicalLibraryService } from "./biblioteca-tecnica-service"; import type { TechnicalDocumentInput } from "./biblioteca-tecnica-types";
+const service=new TechnicalLibraryService(new TechnicalLibraryRepository());
+export const listTechnicalDocumentsAction=()=>service.list(); export const getTechnicalDocumentAction=(id:string)=>service.get(id); export const saveTechnicalDocumentAction=(input:TechnicalDocumentInput,id?:string)=>service.save(input,id); export const duplicateTechnicalDocumentAction=(id:string)=>service.duplicate(id);
+export const toggleTechnicalFavoriteAction=(id:string)=>service.mutate(id,"FAVORITE","Favorito alterado.",(item)=>({...item,favorite:!item.favorite}));
+export const archiveTechnicalDocumentAction=(id:string)=>service.mutate(id,"ARCHIVED","Documento arquivado.",(item)=>({...item,status:"ARCHIVED",archivedAt:new Date().toISOString()}));
+export const markTechnicalOutdatedAction=(id:string)=>service.mutate(id,"OUTDATED","Documento marcado como desatualizado.",(item)=>({...item,status:"OUTDATED"}));
+export const registerTechnicalAccessAction=(id:string)=>service.mutate(id,"ACCESSED","Acesso registrado.",(item)=>({...item,accessCount:item.accessCount+1,lastAccessedAt:new Date().toISOString()}));
+export async function attachTechnicalFileAction(id:string,file:File){ const metadata=await technicalBlobAdapter.put(file); const current=await service.get(id); if(current?.fileMetadata) await technicalBlobAdapter.remove(current.fileMetadata.blobId); return service.mutate(id,"FILE_ATTACHED","Arquivo local atualizado.",(item)=>({...item,fileMetadata:metadata})); }
+export async function removeTechnicalFileAction(id:string){ const current=await service.get(id); if(current?.fileMetadata) await technicalBlobAdapter.remove(current.fileMetadata.blobId); return service.mutate(id,"FILE_REMOVED","Arquivo local removido.",(item)=>({...item,fileMetadata:undefined})); }
+export async function openTechnicalFileAction(id:string){ const document=await registerTechnicalAccessAction(id); if(!document.fileMetadata) return null; const blob=await technicalBlobAdapter.get(document.fileMetadata.blobId); return blob?URL.createObjectURL(blob):null; }

@@ -1,0 +1,3 @@
+import { getFinancialSettingsAction } from "@/app/dashboard/configuracoes/configuracoes-actions"; import type { FinancialPublicSettings } from "@/lib/contracts/configuracoes.contract";
+const fallback: FinancialPublicSettings = { currency: "BRL", defaultAccountId: "", revenueCategories: ["Serviços"], expenseCategories: ["Outros"], investmentCategories: ["Equipamentos"], paymentMethods: ["Pix","Dinheiro","Cartão"], defaultDueDays: 30, defaultInstallments: 1, allowOverpayment: false };
+export async function getFinancialConfiguration() { const result = await getFinancialSettingsAction(); return result.ok ? { settings: result.data } : { settings: fallback, warning: "Configurações indisponíveis; usando padrões seguros." }; }

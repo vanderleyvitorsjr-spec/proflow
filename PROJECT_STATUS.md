@@ -400,3 +400,24 @@ public/              Assets estáticos
 - Aparência utiliza `next-themes` e atributos do documento somente após confirmação, sem alterar o shell ou reescrever `globals.css`.
 - Exportação e importação JSON validam versão e schema, exibem impacto e criam backup antes da gravação; nenhum dado operacional integra o arquivo.
 - Banco, Prisma, autenticação, Supabase, permissões reais, multiempresa, uploads e integrações externas permanecem fora do escopo.
+
+### Adoção funcional de Configurações (16/07/2026)
+
+- CRM, Agenda e Ordens passaram a obter integrantes ativos por gateways locais e contrato público resumido; valores históricos continuam visíveis como legados e integrantes arquivados não entram em novos vínculos.
+- Novos eventos da Agenda adotam horário e duração padrão, e a visualização inicial respeita a configuração salva sem alterar eventos existentes.
+- Novas Ordens adotam status inicial, categoria, prioridade e duração configurados, mantendo compatibilidade com enums e registros anteriores.
+- Financeiro passou a consumir categorias, conta padrão validada e métodos de pagamento configurados; conta padrão ausente exige seleção manual e pagamentos continuam limitados ao saldo.
+- Novas simulações de Precificação adotam margens, imposto, comissão e confirmação mínima vigentes, enquanto simulações existentes preservam seus snapshots.
+- Um provider global leve aplica tema, densidade, contraste, tamanho de fonte e redução de movimentos, reagindo às alterações salvas sem acessar o armazenamento diretamente.
+- Todos os consumidores acessam Configurações exclusivamente por actions públicas, contratos resumidos e gateways locais, com defaults seguros e aviso localizado em caso de indisponibilidade.
+
+### Lote integrado — Biblioteca, Dashboard e produtividade global (16/07/2026)
+
+- Biblioteca Técnica passou a seguir `Página → Action → Service → Repository → Storage Adapter`, com envelope `proflow:biblioteca-tecnica:v1`, backup, migração dos documentos demonstrativos e histórico append-only.
+- Arquivos locais permitidos são validados e armazenados isoladamente em IndexedDB; o envelope guarda apenas metadados, URLs temporárias são revogadas e formatos sem preview nativo continuam disponíveis para abertura ou download local.
+- Cadastro, edição, duplicação, arquivamento, favoritos, acessos, validade, busca, filtros, cartões/lista, vínculos e ficha detalhada da Biblioteca foram conectados à persistência.
+- Vínculos da Biblioteca com Equipamentos, Ordens e Clientes usam gateways locais e actions públicas resumidas, preservando snapshots e impedindo novas associações com registros indisponíveis.
+- Dashboard passou a consumir o dataset analítico de Relatórios, com estado parcial explícito e preferências próprias apenas para período, visibilidade, ordem e tamanho dos widgets.
+- Central de Notificações materializa regras derivadas com chave idempotente, leitura, arquivamento, restauração, adiamento e backup, sem Event Bus, push ou envio externo.
+- Timeline Global agrega atividades resumidas por actions públicas e Pesquisa Global consulta Clientes, CRM, Ordens, Equipamentos e Biblioteca com `Ctrl/Cmd + K`, sem copiar os registros de origem.
+- Header passou a exibir pesquisa, timeline e contador de notificações sem ampliar a sidebar ou alterar o shell estrutural.

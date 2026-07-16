@@ -15,6 +15,7 @@ import type {
   FinancialTransaction,
 } from "./financeiro-types";
 import { installmentOpenCents } from "./financeiro-status";
+import { getFinancialConfiguration } from "./financeiro-configuracoes-gateway";
 export function FinanceiroPaymentDialog({
   open,
   transaction,
@@ -43,9 +44,13 @@ export function FinanceiroPaymentDialog({
       reference: "",
     }),
     [validation, setValidation] = useState("");
+  const [methods, setMethods] = useState(["Pix"]);
+  const [configurationWarning, setConfigurationWarning] = useState("");
   useEffect(() => {
-    if (open && installment)
-      queueMicrotask(() =>
+    if (open && installment) {
+      void getFinancialConfiguration().then(({ settings, warning }) => {
+        setMethods(settings.paymentMethods);
+        setConfigurationWarning(warning ?? "");
         setValues((current) => ({
           ...current,
           amount: formatMoneyCents(installmentOpenCents(installment))
@@ -55,8 +60,12 @@ export function FinanceiroPaymentDialog({
             accounts.find((item) => item.id === transaction?.accountId)?.id ??
             accounts[0]?.id ??
             "",
-        })),
-      );
+          method: settings.paymentMethods.includes(current.method)
+            ? current.method
+            : settings.paymentMethods[0] ?? current.method,
+        }));
+      });
+    }
   }, [accounts, installment, open, transaction]);
   useEffect(() => {
     if (!open) return;
@@ -130,11 +139,13 @@ export function FinanceiroPaymentDialog({
           </div>
           <div>
             <Label htmlFor="payment-method">Método</Label>
-            <Input
+            <Select
               id="payment-method"
               value={values.method}
               onChange={(e) => setValues({ ...values, method: e.target.value })}
-            />
+            >
+              {methods.map((method) => <option key={method} value={method}>{method}</option>)}
+            </Select>
           </div>
           <div>
             <Label htmlFor="payment-reference">Referência opcional</Label>
@@ -158,6 +169,11 @@ export function FinanceiroPaymentDialog({
               className="sm:col-span-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
             >
               {validation || error}
+            </p>
+          )}
+          {configurationWarning && (
+            <p role="status" className="sm:col-span-2 text-xs text-amber-700 dark:text-amber-300">
+              {configurationWarning}
             </p>
           )}
         </div>

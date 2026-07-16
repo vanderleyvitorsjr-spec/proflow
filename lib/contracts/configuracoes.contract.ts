@@ -18,6 +18,7 @@ export type TeamMemberPublicReference = {
   specialties: string[];
   hourlyCostCents: number;
   burdenRateBasisPoints: number;
+  availability: string;
   active: boolean;
   archived: boolean;
   updatedAt: string;
