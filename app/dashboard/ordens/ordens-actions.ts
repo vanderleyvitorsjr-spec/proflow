@@ -5,6 +5,7 @@ import type {
   ServiceOrderPricingReference,
   ApplyServiceOrderPricingInput,
 } from "@/lib/contracts/ordens.contract";
+import type { ReportServiceOrder } from "@/lib/contracts/relatorios-ordens.contract";
 import { PendingAgendaIntegration } from "./ordens-agenda-port";
 import type { ServiceOrderStatus } from "./ordens-data";
 import { OrdensRepository } from "./ordens-repository";
@@ -88,3 +89,14 @@ const pricingReference = (order: OrdemRecord): ServiceOrderPricingReference => (
 export const listEligibleServiceOrderPricingReferencesAction = async () => (await service.list()).filter((order) => !order.archivedAt && !order.canceledAt && order.status !== "CANCELED").map(pricingReference);
 export const getServiceOrderPricingReferenceAction = async (id: string) => { const order = await service.get(id); return order ? pricingReference(order) : null; };
 export const applyServiceOrderPricingAction = (input: ApplyServiceOrderPricingInput) => service.applyPricing(input);
+export const listServiceOrdersReportAction = async (): Promise<ReportServiceOrder[]> =>
+  (await service.list()).map((order) => ({
+    id: order.id, clientId: order.clientId, createdAt: order.createdAt,
+    updatedAt: order.updatedAt, canceledAt: order.canceledAt, archivedAt: order.archivedAt,
+    completedAt: order.status === "COMPLETED" ? order.updatedAt : undefined,
+    scheduledAt: `${order.scheduledDate}T${order.scheduledTime}:00`, category: order.category,
+    status: order.status, technician: order.technician, city: order.city, state: order.state,
+    estimatedDurationMinutes: order.estimatedDurationMinutes, estimatedValue: order.estimatedValue,
+    appliedPriceCents: order.appliedPricing?.priceCents, equipmentCount: order.equipment.length,
+    materialCount: order.reservedMaterials.length,
+  }));

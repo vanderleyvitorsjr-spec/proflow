@@ -10,6 +10,7 @@ import type {
 } from "./precificacao-schema";
 import type { PricingPreferences } from "./precificacao-types";
 import type { PricingPriceType } from "./precificacao-types";
+import type { ReportPricingSource } from "@/lib/contracts/relatorios-precificacao.contract";
 const service = new PricingService(new PricingRepository(pricingStorageAdapter));
 async function action<T>(work: () => Promise<T>): Promise<PricingActionResult<T>> {
   try {
@@ -91,3 +92,32 @@ export const reviewPricingSourceAction = (
 export const listPricingCommercialReferencesAction = () => action(() => service.commercialReferences());
 export const linkPricingCommercialAction = (simulationId: string, input: { clientId?: string; crmLeadId?: string; serviceOrderId?: string }) => action(() => service.linkCommercial(simulationId, input));
 export const applyPricingToOrderAction = (simulationId: string, input: { priceType: PricingPriceType; manualPriceCents?: number; reason?: string; belowMinimumConfirmed: boolean }) => action(() => service.applyToOrder(simulationId, input));
+export const listPricingReportAction = () =>
+  action(async (): Promise<ReportPricingSource> => {
+    const state = await service.list();
+    return {
+      activeTemplateCount: state.templates.filter((item) => item.active && !item.archivedAt).length,
+      simulations: state.simulations.map((simulation) => {
+        const result = simulation.revisions.at(-1)?.resultSnapshot;
+        return {
+          id: simulation.id, createdAt: simulation.createdAt, updatedAt: simulation.updatedAt,
+          archivedAt: simulation.archivedAt, status: simulation.status,
+          category: simulation.parameters.category, templateId: simulation.templateId,
+          scenarioGroupId: simulation.scenarioGroupId, versionCount: simulation.revisions.length,
+          currentVersion: simulation.currentVersion, totalCostCents: result?.totalCostCents ?? 0,
+          minimumPriceCents: result?.minimumPriceCents ?? 0,
+          recommendedPriceCents: result?.recommendedPriceCents ?? 0,
+          profitCents: result?.profitCents ?? 0,
+          marginBasisPoints: result?.effectiveMarginBasisPoints ?? 0,
+          applications: simulation.applications.map((item) => ({
+            serviceOrderId: item.serviceOrderId, priceCents: item.priceCents,
+            profitCents: item.profitCents, marginBasisPoints: item.marginBasisPoints,
+            appliedAt: item.appliedAt, superseded: Boolean(item.supersededAt),
+          })),
+          componentTypes: simulation.costComponents.map((item) => item.type),
+          materialIds: simulation.costComponents.filter((item) => item.type === "MATERIAL").map((item) => item.stockItemId ?? item.id),
+          equipmentIds: simulation.costComponents.filter((item) => item.type === "EQUIPMENT").map((item) => item.equipmentId ?? item.id),
+        };
+      }),
+    };
+  });

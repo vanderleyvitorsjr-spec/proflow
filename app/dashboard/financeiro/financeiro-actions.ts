@@ -19,6 +19,8 @@ import type {
   StockPurchaseFinancialCreateInput,
   StockPurchaseFinancialTransactionReference,
 } from "@/lib/contracts/financeiro.contract";
+import type { ReportFinancialSource } from "@/lib/contracts/relatorios-financeiro.contract";
+import { accountsWithBalance } from "./financeiro-selectors";
 import {
   transactionOpenCents,
   transactionPaidCents,
@@ -53,6 +55,32 @@ async function action<T>(operation: () => Promise<T>): Promise<ActionResult<T>> 
   }
 }
 export const listFinancialStateAction = () => action(() => service.listState());
+export const listFinancialReportAction = () =>
+  action(async (): Promise<ReportFinancialSource> => {
+    const state = await service.listState();
+    return {
+      accounts: accountsWithBalance(state).map((account) => ({
+        id: account.id, name: account.name, currentBalanceCents: account.currentBalanceCents,
+        archived: Boolean(account.archivedAt),
+      })),
+      transactions: state.transactions.map((transaction) => ({
+        id: transaction.id, title: transaction.title, nature: transaction.nature,
+        direction: transaction.direction, kind: transaction.kind, category: transaction.category,
+        competenceDate: transaction.competenceDate, issueDate: transaction.issueDate,
+        realizedAt: transaction.realizedAt, totalCents: transaction.totalCents,
+        accountId: transaction.accountId, clientId: transaction.clientId,
+        customerName: transaction.customerName, serviceOrderId: transaction.serviceOrderId,
+        canceled: Boolean(transaction.canceledAt), archived: Boolean(transaction.archivedAt),
+        installments: transaction.installments.map((installment) => ({
+          dueDate: installment.dueDate, amountCents: installment.amountCents,
+          canceled: Boolean(installment.canceledAt),
+          payments: installment.payments.map((payment) => ({
+            amountCents: payment.amountCents, paidAt: payment.paidAt, reversedAt: payment.reversedAt,
+          })),
+        })),
+      })),
+    };
+  });
 export const getFinancialTransactionAction = (id: string) =>
   action(() => service.getTransaction(id));
 export const createFinancialAccountAction = (input: FinancialAccountFormValues) =>

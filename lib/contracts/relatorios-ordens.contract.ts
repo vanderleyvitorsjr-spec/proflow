@@ -1,0 +1,20 @@
+export type ReportServiceOrder = {
+  id: string;
+  clientId: string;
+  createdAt: string;
+  updatedAt: string;
+  canceledAt?: string;
+  archivedAt?: string;
+  completedAt?: string;
+  scheduledAt: string;
+  category: string;
+  status: string;
+  technician: string;
+  city: string;
+  state: string;
+  estimatedDurationMinutes: number;
+  estimatedValue: number;
+  appliedPriceCents?: number;
+  equipmentCount: number;
+  materialCount: number;
+};

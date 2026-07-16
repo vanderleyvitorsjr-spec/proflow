@@ -376,3 +376,16 @@ public/              Assets estáticos
 - Aplicação e atualização de preço na OS exigem confirmação explícita, preservam revisões e mantêm histórico append-only.
 - Envelope local da Precificação evoluído da versão 2 para a versão 3, com migração explícita, backup e preservação dos dados dos ciclos anteriores.
 - Comparação entre versão aplicada e atual, valor manual justificado e divergências comerciais adicionados ao detalhamento.
+
+### Fundação funcional — Relatórios analíticos (16/07/2026)
+
+- Relatórios deixou de consumir os dados demonstrativos da interface e passou a gerar um dataset analítico a partir das fontes persistidas de CRM, Clientes, Ordens, Agenda, Financeiro, Estoque, Equipamentos e Precificação.
+- A integração segue `Página → Action de Relatórios → Service analítico → Engines puras → Gateways locais → Actions públicas`, sem acesso de Relatórios a `localStorage`, repositories, adapters ou registros operacionais completos.
+- Foram adicionados contratos públicos analíticos mínimos e aditivos em `lib/contracts`; cada módulo adapta seu estado interno para DTOs resumidos antes de entregá-lo ao gateway de Relatórios.
+- As oito fontes são consultadas independentemente com tolerância a falhas; indisponibilidade e parcialidade ficam explícitas e uma falha isolada não oculta as demais áreas.
+- Períodos reais, intervalo personalizado, período anterior equivalente, comparação personalizada e filtros compatíveis por área passaram a alimentar métricas, gráficos e rankings.
+- A camada `analytics` centraliza datas, agregações, comparações, tendências e fórmulas, distinguindo zero, ausência, dados insuficientes e base não comparável.
+- Foram implementadas análises comerciais, operacionais, financeiras, de estoque, de equipamentos e de precificação com links para as rotas operacionais e sem promover estimativas a valores realizados.
+- A exportação CSV usa o dataset filtrado, BOM UTF-8, separador `;`, metadados da geração e status das fontes; a impressão utiliza o fluxo nativo do navegador.
+- O layout de Relatórios foi refinado de forma localizada com cabeçalho e toolbar compactos, faixas de métricas, gráficos, rankings, loading, erro, vazio e status das fontes, preservando os primitives globais existentes.
+- Relatórios não criou storage operacional, não alterou banco, Prisma, autenticação, rotas ou regras de negócio das fontes.

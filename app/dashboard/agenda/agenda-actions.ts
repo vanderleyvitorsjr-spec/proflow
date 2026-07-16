@@ -1,5 +1,6 @@
 import { getOrdemAction, listOrdensAction, updateOrdemAction } from "@/app/dashboard/ordens/ordens-actions"; import type { OrdemFormValues } from "@/app/dashboard/ordens/ordens-schema"; import type { OrdemRecord } from "@/app/dashboard/ordens/ordens-types";
 import { AgendaRepository } from "./agenda-repository"; import type { AgendaEventFormValues } from "./agenda-schema"; import { AgendaService } from "./agenda-service"; import { agendaStorageAdapter } from "./agenda-storage-adapter"; import type { AgendaDisplayEvent, AgendaIndependentEvent } from "./agenda-types";
+import type { ReportAgendaEvent } from "@/lib/contracts/relatorios-agenda.contract";
 const service = new AgendaService(new AgendaRepository(agendaStorageAdapter));
 const statusMap = { OPEN: "PENDING", SCHEDULED: "CONFIRMED", IN_TRANSIT: "IN_TRANSIT", IN_PROGRESS: "IN_PROGRESS", WAITING_PART: "PENDING", COMPLETED: "COMPLETED", CANCELED: "CANCELED", OVERDUE: "PENDING" } as const;
 const typeMap = { CLIMATIZATION: "INSTALLATION", ELECTRICAL: "ELECTRICAL", PREVENTIVE: "PREVENTIVE", CORRECTIVE: "CORRECTIVE", INSTALLATION: "INSTALLATION" } as const;
@@ -10,3 +11,9 @@ export async function getAgendaEventAction(id: string) { if (id.startsWith("os-"
 export async function createAgendaEventAction(input: AgendaEventFormValues) { const all = await listAgendaEventsAction(); return independentDisplay(await service.create(input, all)); }
 export async function updateAgendaEventAction(id: string, input: AgendaEventFormValues) { const all = await listAgendaEventsAction(); if (!id.startsWith("os-")) return independentDisplay(await service.update(id, input, all)); service.assertAvailability(input, all, id); const order = await getOrdemAction(id.slice(3)); if (!order) throw new Error("Ordem vinculada não encontrada."); const value: OrdemFormValues = { clientId: order.clientId, crmLeadId: order.crmLeadId ?? "", title: input.title, description: input.description, category: order.category, priority: input.priority, status: order.status, technician: input.responsible, address: input.address, city: input.city, state: input.state, scheduledDate: input.date, scheduledTime: input.startTime, estimatedDurationMinutes: Math.round((new Date(`${input.date}T${input.endTime}:00`).getTime() - new Date(`${input.date}T${input.startTime}:00`).getTime()) / 60000), estimatedValue: order.estimatedValue, notes: input.notes, checklistText: order.checklist.map((item) => item.title).join("\n"), equipmentText: order.equipment.join("\n"), materialsText: order.reservedMaterials.join("\n") }; return orderDisplay(await updateOrdemAction(order.id, value)); }
 export const cancelAgendaEventAction = (id: string) => { if (id.startsWith("os-")) throw new Error("Cancele a Ordem de Serviço vinculada."); return service.cancel(id); }; export const archiveAgendaEventAction = (id: string) => { if (id.startsWith("os-")) throw new Error("Eventos de OS não podem ser arquivados pela Agenda."); return service.archive(id); };
+export const listAgendaReportAction = async (): Promise<ReportAgendaEvent[]> =>
+  (await listAgendaEventsAction()).map((event) => ({
+    id: event.id, origin: event.origin, orderId: event.orderId, createdAt: event.createdAt,
+    startAt: event.startAt, endAt: event.endAt, status: event.status, type: event.type,
+    technician: event.technician, city: event.city, state: event.state,
+  }));

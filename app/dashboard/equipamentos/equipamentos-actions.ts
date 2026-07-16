@@ -14,6 +14,7 @@ import { EquipmentService } from "./equipamentos-service";
 import { equipmentStorageAdapter } from "./equipamentos-storage-adapter";
 import { depreciation } from "./equipamentos-selectors";
 import type { EquipmentPricingReference } from "@/lib/contracts/equipamentos.contract";
+import type { ReportEquipmentSource } from "@/lib/contracts/relatorios-equipamentos.contract";
 const service = new EquipmentService(new EquipmentRepository(equipmentStorageAdapter));
 async function action<T>(fn: () => Promise<T>): Promise<EquipmentActionResult<T>> {
   try {
@@ -164,4 +165,31 @@ export const getEquipmentPricingReferenceAction = (id: string) =>
       state.assets.find((asset) => asset.id === id) ?? null,
       state.maintenanceRecords,
     );
+  });
+export const listEquipmentReportAction = () =>
+  action(async (): Promise<ReportEquipmentSource> => {
+    const state = await service.list();
+    return {
+      assets: state.assets.map((asset) => {
+        const values = depreciation(asset);
+        return {
+          id: asset.id, createdAt: asset.createdAt, updatedAt: asset.updatedAt,
+          archivedAt: asset.archivedAt, category: asset.category, ownership: asset.ownership,
+          status: asset.status, condition: asset.condition,
+          acquisitionDate: asset.acquisition.acquisitionDate,
+          acquisitionValueCents: asset.acquisition.acquisitionValueCents,
+          currentValueCents: values.currentValueCents,
+          accumulatedDepreciationCents: values.accumulatedCents,
+          warrantyEndDate: asset.warranty?.endDate,
+        };
+      }),
+      maintenance: state.maintenanceRecords.map((item) => ({
+        id: item.id, assetId: item.assetId, status: item.status, type: item.type,
+        costCents: item.costCents, scheduledAt: item.scheduledAt, completedAt: item.completedAt,
+        canceledAt: item.canceledAt, serviceOrderId: item.serviceOrderId,
+        hasFinancialLink: Boolean(item.financialTransactionId),
+      })),
+      links: state.serviceOrderLinks.map((item) => ({ assetId: item.assetId,
+        serviceOrderId: item.serviceOrderId, linkedAt: item.linkedAt, unlinkedAt: item.unlinkedAt })),
+    };
   });

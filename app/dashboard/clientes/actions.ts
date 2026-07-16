@@ -1,4 +1,5 @@
 import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
+import type { ReportClient } from "@/lib/contracts/relatorios-clientes.contract";
 import type { ClientFormValues } from "./cliente-schema";
 import { ClientsRepository } from "./clientes-repository";
 import { ClientsService } from "./clientes-service";
@@ -40,3 +41,10 @@ export const clientArchivedPublicAction = async (id: string) =>
   Boolean(
     (await clientsStorageAdapter.list()).find((client) => client.id === id)?.deletedAt,
   );
+export const listClientsReportAction = async (): Promise<ReportClient[]> =>
+  (await clientsService.listClients()).map((client) => ({
+    id: client.id, name: client.name, createdAt: client.createdAt,
+    updatedAt: client.updatedAt, deletedAt: client.deletedAt,
+    lastInteractionAt: client.lastInteractionAt, status: client.status,
+    segment: client.segment, city: client.city, state: client.state,
+  }));

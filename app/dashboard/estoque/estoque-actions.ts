@@ -14,6 +14,7 @@ import { stockStorageAdapter } from "./estoque-storage-adapter";
 import type { StockActionResult } from "./estoque-result";
 import type { StockPreferences } from "./estoque-types";
 import type { StockPricingReference } from "@/lib/contracts/estoque.contract";
+import type { ReportStockSource } from "@/lib/contracts/relatorios-estoque.contract";
 const service = new StockService(new StockRepository(stockStorageAdapter));
 async function action<T>(work: () => Promise<T>): Promise<StockActionResult<T>> {
   try {
@@ -131,3 +132,28 @@ export const listStockPricingReferencesAction = () =>
   action(async () => (await service.list()).map((item) => pricingReference(item)!));
 export const getStockPricingReferenceAction = (id: string) =>
   action(async () => pricingReference(await service.get(id)));
+export const listStockReportAction = () =>
+  action(async (): Promise<ReportStockSource> => {
+    const [snapshots, state] = await Promise.all([service.list(), service.state()]);
+    return {
+      items: snapshots.map(({ item, physicalQuantity, reservedQuantity, averageCostCents }) => ({
+        id: item.id, name: item.name, category: item.category, unit: item.unit,
+        active: item.active, archivedAt: item.archivedAt, createdAt: item.createdAt,
+        updatedAt: item.updatedAt, minimumQuantity: item.minimumQuantity,
+        physicalQuantity, reservedQuantity, averageCostCents,
+      })),
+      movements: state.movements.map((movement) => ({
+        id: movement.id, itemId: movement.itemId, type: movement.type,
+        quantity: movement.quantity, totalCostCents: movement.totalCostCents,
+        date: movement.date, source: movement.source, serviceOrderId: movement.serviceOrderId,
+        purchaseId: movement.purchaseId, canceled: Boolean(movement.canceledAt),
+      })),
+      purchases: state.purchases.map((purchase) => ({
+        id: purchase.id, purchaseDate: purchase.purchaseDate, status: purchase.status,
+        totalCents: purchase.totalCents, receivedTotalCents: purchase.receivedTotalCents,
+        canceled: Boolean(purchase.canceledAt), archived: Boolean(purchase.archivedAt),
+        items: purchase.items.map((item) => ({ itemId: item.stockItemId,
+          quantity: item.orderedQuantity, totalCents: item.totalCents })),
+      })),
+    };
+  });

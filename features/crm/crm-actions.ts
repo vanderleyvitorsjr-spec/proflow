@@ -5,6 +5,7 @@ import { CrmService } from "./crm-service";
 import { crmStorageAdapter } from "./crm-storage-adapter";
 import type { CrmStageId } from "./crm-types";
 import type { CrmPricingReference } from "@/lib/contracts/crm.contract";
+import type { ReportCrmLead } from "@/lib/contracts/relatorios-crm.contract";
 
 const service = new CrmService(new CrmRepository(crmStorageAdapter));
 export const listCrmLeadsAction = () => service.listLeads();
@@ -17,3 +18,11 @@ export const convertCrmLeadAction = (id: string, input: ClientFormValues) => ser
 const pricingReference = (lead: Awaited<ReturnType<typeof service.getLead>>): CrmPricingReference | null => lead ? ({ id: lead.id, title: lead.serviceInterest || lead.name, customerName: lead.name, stage: lead.stageId, converted: Boolean(lead.convertedAt), clientId: lead.convertedClientId, archived: Boolean(lead.archivedAt), updatedAt: lead.updatedAt }) : null;
 export const listActiveCrmPricingReferencesAction = async () => (await service.listLeads()).filter((lead) => !lead.archivedAt).map((lead) => pricingReference(lead) as CrmPricingReference);
 export const getCrmPricingReferenceAction = async (id: string) => pricingReference(await service.getLead(id));
+export const listCrmReportAction = async (): Promise<ReportCrmLead[]> =>
+  (await service.listLeads()).map((lead) => ({
+    id: lead.id, createdAt: lead.createdAt, updatedAt: lead.updatedAt,
+    archivedAt: lead.archivedAt, convertedAt: lead.convertedAt,
+    convertedClientId: lead.convertedClientId, stage: lead.stageId, source: lead.source,
+    serviceInterest: lead.serviceInterest, salesOwner: lead.salesOwner,
+    estimatedValue: lead.estimatedValue, city: lead.city, state: lead.state,
+  }));
