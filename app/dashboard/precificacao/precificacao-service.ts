@@ -18,6 +18,9 @@ import {
 } from "./precificacao-selectors";
 import { pricingStockGateway } from "./precificacao-estoque-gateway";
 import { pricingEquipmentGateway } from "./precificacao-equipamentos-gateway";
+import { pricingClientsGateway } from "./precificacao-clientes-gateway";
+import { pricingCrmGateway } from "./precificacao-crm-gateway";
+import { pricingOrdersGateway } from "./precificacao-ordens-gateway";
 import type {
   LaborProfile,
   PricingComposition,
@@ -25,6 +28,7 @@ import type {
   PricingPreferences,
   PricingSimulation,
   PricingTemplate,
+  PricingPriceType,
 } from "./precificacao-types";
 const event = (type: string, description: string) => ({
   id: crypto.randomUUID(),
@@ -141,7 +145,15 @@ export class PricingService {
       scenarioGroupId: value.scenarioGroupId || undefined,
       scenarioLabel: value.scenarioLabel,
       clientId: current?.clientId,
+      clientSnapshot: current?.clientSnapshot,
+      crmLeadId: current?.crmLeadId,
+      crmSnapshot: current?.crmSnapshot,
       serviceOrderId: current?.serviceOrderId,
+      serviceOrderSnapshot: current?.serviceOrderSnapshot,
+      applications: current?.applications ?? [],
+      appliedRevisionId: current?.appliedRevisionId,
+      appliedVersion: current?.appliedVersion,
+      appliedPrice: current?.appliedPrice,
       parameters,
       costComponents: components,
       commercialRules: rules,
@@ -157,6 +169,7 @@ export class PricingService {
       revisions: [
         ...(current?.revisions ?? []),
         {
+          id: crypto.randomUUID(),
           version,
           parameters,
           costComponents: structuredClone(components),
@@ -192,7 +205,7 @@ export class PricingService {
     const state = await this.repo.read(),
       current = state.simulations.find((item) => item.id === id);
     if (!current) throw new PricingDomainError("NOT_FOUND", "Simulação não encontrada.");
-    if (current.status === "APPLIED")
+    if (current.status === "APPLIED" && current.archivedAt)
       throw new PricingDomainError(
         "CONFLICT",
         "Uma simulação aplicada não pode ser sobrescrita.",
@@ -222,11 +235,22 @@ export class PricingService {
           : "Cenário A",
         currentVersion: 1,
         status: "DRAFT",
+        clientId: undefined,
+        clientSnapshot: undefined,
+        crmLeadId: undefined,
+        crmSnapshot: undefined,
+        serviceOrderId: undefined,
+        serviceOrderSnapshot: undefined,
+        applications: [],
+        appliedRevisionId: undefined,
+        appliedVersion: undefined,
+        appliedPrice: undefined,
         archivedAt: undefined,
         createdAt: now,
         updatedAt: now,
         revisions: [
           {
+            id: crypto.randomUUID(),
             version: 1,
             parameters: structuredClone(current.parameters),
             costComponents: structuredClone(current.costComponents),
@@ -486,6 +510,7 @@ export class PricingService {
         revisions: [
           ...simulation.revisions,
           {
+            id: crypto.randomUUID(),
             version,
             parameters: structuredClone(simulation.parameters),
             costComponents: structuredClone(components),
@@ -768,6 +793,40 @@ export class PricingService {
         ? `Snapshot da origem atualizado. ${notes.trim()}`
         : `Valor da simulação mantido. ${notes.trim()}`,
     );
+  }
+  async commercialReferences() {
+    const [clients, leads, orders] = await Promise.all([pricingClientsGateway.list(), pricingCrmGateway.list(), pricingOrdersGateway.list()]);
+    return { clients, leads, orders };
+  }
+  async linkCommercial(simulationId: string, input: { clientId?: string; crmLeadId?: string; serviceOrderId?: string }) {
+    const state = await this.repo.read(), current = state.simulations.find((item) => item.id === simulationId);
+    if (!current || current.archivedAt) throw new PricingDomainError("NOT_FOUND", "Simulação indisponível.");
+    const [client, lead, order] = await Promise.all([input.clientId ? pricingClientsGateway.get(input.clientId) : null, input.crmLeadId ? pricingCrmGateway.get(input.crmLeadId) : null, input.serviceOrderId ? pricingOrdersGateway.get(input.serviceOrderId) : null]);
+    if (input.clientId && (!client || client.archived)) throw new PricingDomainError("CONFLICT", "O cliente não está ativo.");
+    if (input.crmLeadId && (!lead || lead.archived)) throw new PricingDomainError("CONFLICT", "O lead não está ativo.");
+    if (input.serviceOrderId && (!order || order.archived || order.canceled)) throw new PricingDomainError("CONFLICT", "A Ordem não está elegível.");
+    const clientId = client?.id ?? current.clientId;
+    if (lead?.converted && lead.clientId && lead.clientId !== clientId) throw new PricingDomainError("CONFLICT", "O cliente convertido do lead diverge da simulação.");
+    if (order && order.clientId !== clientId) throw new PricingDomainError("CONFLICT", "O cliente da Ordem diverge da simulação.");
+    if (current.applications.length && current.clientId !== clientId) throw new PricingDomainError("CONFLICT", "O cliente de uma simulação aplicada não pode ser trocado silenciosamente.");
+    const now = new Date().toISOString(), next: PricingSimulation = { ...current, clientId, clientSnapshot: client ? { id: client.id, name: client.name, updatedAt: client.updatedAt ?? now } : current.clientSnapshot, crmLeadId: lead?.id, crmSnapshot: lead ? { id: lead.id, title: lead.title, customerName: lead.customerName, stage: lead.stage, converted: lead.converted, clientId: lead.clientId, updatedAt: lead.updatedAt } : undefined, serviceOrderId: order?.id, serviceOrderSnapshot: order ? { id: order.id, number: order.number, title: order.title, clientId: order.clientId, currentPriceCents: order.currentPriceCents, status: order.status, updatedAt: order.updatedAt } : undefined, updatedAt: now, history: [...current.history, event("COMMERCIAL_LINKS_UPDATED", "Vínculos comerciais atualizados explicitamente.")] };
+    await this.repo.save({ ...state, simulations: state.simulations.map((item) => item.id === simulationId ? next : item) }); return next;
+  }
+  async applyToOrder(simulationId: string, input: { priceType: PricingPriceType; manualPriceCents?: number; reason?: string; belowMinimumConfirmed: boolean }) {
+    const state = await this.repo.read(), current = state.simulations.find((item) => item.id === simulationId);
+    if (!current || !current.serviceOrderId || !current.clientId) throw new PricingDomainError("VALIDATION", "Vincule cliente e Ordem antes de aplicar.");
+    const order = await pricingOrdersGateway.get(current.serviceOrderId); if (!order || order.canceled || order.archived || order.clientId !== current.clientId) throw new PricingDomainError("CONFLICT", "A Ordem vinculada não está elegível ou possui outro cliente.");
+    const calculation = calculatePricing(current.costComponents, current.commercialRules), calculated = input.priceType === "MINIMUM" ? calculation.minimumPriceCents : input.priceType === "RECOMMENDED" ? calculation.recommendedPriceCents : input.priceType === "PREMIUM" ? calculation.premiumPriceCents : calculation.promotionalPriceCents;
+    const price = input.priceType === "MANUAL" ? input.manualPriceCents ?? 0 : calculated;
+    if (input.priceType === "MANUAL" && (!input.reason?.trim() || price <= 0)) throw new PricingDomainError("VALIDATION", "Informe valor manual positivo e justificativa.");
+    if (price < calculation.minimumPriceCents && !input.belowMinimumConfirmed) throw new PricingDomainError("CONFIRMATION_REQUIRED", "O valor está abaixo do mínimo. Confirme explicitamente.");
+    const revision = current.revisions.find((item) => item.version === current.currentVersion); if (!revision) throw new PricingDomainError("CONFLICT", "A revisão atual não foi encontrada.");
+    const now = new Date().toISOString(), profit = price - calculation.totalCostCents - calculation.taxCents - calculation.commissionCents, margin = price ? Math.round((profit * 10000) / price) : 0;
+    await pricingOrdersGateway.apply({ serviceOrderId: order.id, simulationId: current.id, simulationVersion: current.currentVersion, revisionId: revision.id, priceCents: price, priceType: input.priceType, appliedAt: now, pricingUpdatedAtSnapshot: current.updatedAt });
+    const applications = current.applications.map((item) => item.supersededAt ? item : { ...item, supersededAt: now });
+    applications.push({ id: crypto.randomUUID(), serviceOrderId: order.id, serviceOrderNumberSnapshot: order.number, serviceOrderTitleSnapshot: order.title, serviceOrderClientIdSnapshot: order.clientId, serviceOrderUpdatedAtSnapshot: order.updatedAt, simulationVersion: current.currentVersion, revisionId: revision.id, priceType: input.priceType, priceCents: price, calculatedPriceCents: calculated, costCents: calculation.totalCostCents, profitCents: profit, marginBasisPoints: margin, appliedAt: now, reason: input.reason?.trim(), manuallyModified: input.priceType === "MANUAL" });
+    const next: PricingSimulation = { ...current, status: "APPLIED", applications, appliedRevisionId: revision.id, appliedVersion: current.currentVersion, appliedPrice: price, serviceOrderSnapshot: { id: order.id, number: order.number, title: order.title, clientId: order.clientId, currentPriceCents: price, status: order.status, updatedAt: now }, updatedAt: now, history: [...current.history, event("PRICE_APPLIED", `${input.priceType === "MANUAL" ? "Valor manual" : "Preço"} da versão ${current.currentVersion} aplicado à ${order.number}. Aplicação anterior preservada.`)] };
+    await this.repo.save({ ...state, simulations: state.simulations.map((item) => item.id === simulationId ? next : item) }); return next;
   }
   recoverBackup() {
     return this.repo.recoverBackup();

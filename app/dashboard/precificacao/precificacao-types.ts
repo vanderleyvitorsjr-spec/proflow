@@ -45,6 +45,12 @@ export type PricingDivergence =
   | "EQUIPMENT_DEPRECIATION_CHANGED"
   | "EQUIPMENT_MAINTENANCE_COST_CHANGED"
   | "MANUALLY_MODIFIED";
+export type PricingCommercialDivergence = "PRICING_VERSION_NEWER" | "SERVICE_ORDER_PRICE_CHANGED" | "SERVICE_ORDER_CLIENT_CHANGED" | "SERVICE_ORDER_CANCELED" | "SERVICE_ORDER_ARCHIVED" | "SERVICE_ORDER_UNAVAILABLE" | "CRM_LEAD_UPDATED" | "CRM_CLIENT_MISMATCH" | "CLIENT_ARCHIVED" | "SIMULATION_MANUALLY_MODIFIED";
+export type PricingPriceType = "MINIMUM" | "RECOMMENDED" | "PREMIUM" | "FINAL" | "MANUAL";
+export type PricingApplication = { id: string; serviceOrderId: string; serviceOrderNumberSnapshot: string; serviceOrderTitleSnapshot: string; serviceOrderClientIdSnapshot: string; serviceOrderUpdatedAtSnapshot: string; simulationVersion: number; revisionId: string; priceType: PricingPriceType; priceCents: number; calculatedPriceCents: number; costCents: number; profitCents: number; marginBasisPoints: number; appliedAt: string; supersededAt?: string; reason?: string; manuallyModified: boolean };
+export type PricingClientSnapshot = { id: string; name: string; updatedAt: string };
+export type PricingCrmSnapshot = { id: string; title: string; customerName: string; stage: string; converted: boolean; clientId?: string; updatedAt: string };
+export type PricingServiceOrderSnapshot = { id: string; number: string; title: string; clientId: string; currentPriceCents: number; status: string; updatedAt: string };
 export type PricingCostDivergence = {
   componentId: string;
   sourceType: "STOCK" | "EQUIPMENT";
@@ -244,6 +250,7 @@ export type ReversePricingResult = {
   impactComponents: string[];
 };
 export type PricingSimulationRevision = {
+  id: string;
   version: number;
   parameters: PricingParameters;
   costComponents: PricingCostComponent[];
@@ -262,7 +269,17 @@ export type PricingSimulation = {
   scenarioGroupId?: string;
   scenarioLabel: string;
   clientId?: string;
+  clientSnapshot?: PricingClientSnapshot;
+  crmLeadId?: string;
+  crmSnapshot?: PricingCrmSnapshot;
   serviceOrderId?: string;
+  serviceOrderSnapshot?: PricingServiceOrderSnapshot;
+  applications: PricingApplication[];
+  appliedRevisionId?: string;
+  appliedVersion?: number;
+  appliedPrice?: number;
+  divergenceReviewedAt?: string;
+  divergenceNotes?: string;
   parameters: PricingParameters;
   costComponents: PricingCostComponent[];
   commercialRules: CommercialRules;
@@ -289,7 +306,7 @@ export type PricingPreferences = {
   standardMonthlyEquipmentHours: number;
 };
 export type PricingStorageState = {
-  version: 2;
+  version: 3;
   revision: number;
   nextTemplateSequence: number;
   nextSimulationSequence: number;

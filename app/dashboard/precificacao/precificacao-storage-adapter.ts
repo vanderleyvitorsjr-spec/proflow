@@ -187,6 +187,7 @@ const result = z.object({
 });
 const parameters = z.object({ description: z.string(), category: z.string() });
 const revision = z.object({
+  id: z.string(),
   version: z.number().int().positive(),
   parameters,
   costComponents: z.array(component),
@@ -205,7 +206,17 @@ const simulation = z.object({
   scenarioGroupId: z.string().optional(),
   scenarioLabel: z.string(),
   clientId: z.string().optional(),
+  clientSnapshot: z.object({ id: z.string(), name: z.string(), updatedAt: z.string() }).optional(),
+  crmLeadId: z.string().optional(),
+  crmSnapshot: z.object({ id: z.string(), title: z.string(), customerName: z.string(), stage: z.string(), converted: z.boolean(), clientId: z.string().optional(), updatedAt: z.string() }).optional(),
   serviceOrderId: z.string().optional(),
+  serviceOrderSnapshot: z.object({ id: z.string(), number: z.string(), title: z.string(), clientId: z.string(), currentPriceCents: z.number().int(), status: z.string(), updatedAt: z.string() }).optional(),
+  applications: z.array(z.object({ id: z.string(), serviceOrderId: z.string(), serviceOrderNumberSnapshot: z.string(), serviceOrderTitleSnapshot: z.string(), serviceOrderClientIdSnapshot: z.string(), serviceOrderUpdatedAtSnapshot: z.string(), simulationVersion: z.number().int().positive(), revisionId: z.string(), priceType: z.enum(["MINIMUM", "RECOMMENDED", "PREMIUM", "FINAL", "MANUAL"]), priceCents: z.number().int().positive(), calculatedPriceCents: z.number().int().positive(), costCents: z.number().int().nonnegative(), profitCents: z.number().int(), marginBasisPoints: z.number().int(), appliedAt: z.string(), supersededAt: z.string().optional(), reason: z.string().optional(), manuallyModified: z.boolean() })),
+  appliedRevisionId: z.string().optional(),
+  appliedVersion: z.number().int().positive().optional(),
+  appliedPrice: z.number().int().positive().optional(),
+  divergenceReviewedAt: z.string().optional(),
+  divergenceNotes: z.string().optional(),
   parameters,
   costComponents: z.array(component),
   commercialRules: rules,
@@ -260,7 +271,7 @@ const preferences = z.object({
   standardMonthlyEquipmentHours: z.number().positive(),
 });
 const stateSchema = z.object({
-  version: z.literal(2),
+  version: z.literal(3),
   revision: z.number().int().nonnegative(),
   nextTemplateSequence: z.number().int().positive(),
   nextSimulationSequence: z.number().int().positive(),
@@ -405,6 +416,7 @@ function initialState(): PricingStorageState {
       updatedAt: now,
       revisions: [
         {
+          id: crypto.randomUUID(),
           version: 1,
           parameters: { description: item.description, category: item.category },
           costComponents: structuredClone(item.costComponents),
@@ -414,6 +426,7 @@ function initialState(): PricingStorageState {
           createdAt: now,
         },
       ],
+      applications: [],
       history: [
         {
           id: crypto.randomUUID(),
@@ -425,7 +438,7 @@ function initialState(): PricingStorageState {
     };
   });
   return {
-    version: 2,
+    version: 3,
     revision: 0,
     nextTemplateSequence: templates.length + 1,
     nextSimulationSequence: simulations.length + 1,
@@ -522,17 +535,8 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
   private parse(raw: string) {
     try {
       const value = JSON.parse(raw) as Record<string, unknown>;
-      const migrated =
-        value.version === 1
-          ? {
-              ...value,
-              version: 2,
-              preferences: {
-                ...(value.preferences as Record<string, unknown>),
-                standardMonthlyEquipmentHours: 160,
-              },
-            }
-          : value;
+      const v2 = value.version === 1 ? { ...value, version: 2, preferences: { ...(value.preferences as Record<string, unknown>), standardMonthlyEquipmentHours: 160 } } : value;
+      const migrated = v2.version === 2 ? { ...v2, version: 3, simulations: ((v2.simulations as Array<Record<string, unknown>>) ?? []).map((entry) => ({ ...entry, applications: entry.applications ?? [], revisions: ((entry.revisions as Array<Record<string, unknown>>) ?? []).map((revisionEntry) => ({ ...revisionEntry, id: revisionEntry.id ?? crypto.randomUUID() })) })) } : v2;
       const parsed = stateSchema.safeParse(migrated);
       return parsed.success ? (parsed.data as PricingStorageState) : null;
     } catch {
@@ -541,7 +545,7 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
   }
   private isLegacy(raw: string) {
     try {
-      return (JSON.parse(raw) as { version?: number }).version === 1;
+      return (JSON.parse(raw) as { version?: number }).version !== 3;
     } catch {
       return false;
     }

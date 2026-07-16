@@ -30,7 +30,14 @@ import {
   listPricingSourcesAction,
   reviewPricingSourceAction,
   updatePricingSimulationAction,
+  listPricingCommercialReferencesAction,
+  linkPricingCommercialAction,
+  applyPricingToOrderAction,
 } from "../precificacao-actions";
+import { PricingRelationsDialog } from "../precificacao-relations-dialog";
+import { PricingApplicationDialog } from "../precificacao-application-dialog";
+import { PricingVersionComparison } from "../precificacao-version-comparison";
+import { PricingCommercialDivergences } from "../precificacao-commercial-divergences";
 import { PricingMaterialDialog } from "../precificacao-material-dialog";
 import { PricingEquipmentDialog } from "../precificacao-equipment-dialog";
 import { PricingCostDivergences } from "../precificacao-cost-divergences";
@@ -41,6 +48,9 @@ import { PricingSimulationDialog } from "../precificacao-simulation-dialog";
 import type { PricingCostDivergence, PricingSimulation } from "../precificacao-types";
 import type { StockPricingReference } from "@/lib/contracts/estoque.contract";
 import type { EquipmentPricingReference } from "@/lib/contracts/equipamentos.contract";
+import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
+import type { CrmPricingReference } from "@/lib/contracts/crm.contract";
+import type { ServiceOrderPricingReference } from "@/lib/contracts/ordens.contract";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function PricingDetail({ simulationId }: { simulationId: string }) {
   const [simulation, setSimulation] = useState<PricingSimulation | null>(null),
@@ -55,12 +65,14 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
     [divergences, setDivergences] = useState<PricingCostDivergence[]>([]),
     [error, setError] = useState<string | null>(null),
     [success, setSuccess] = useState<string | null>(null);
+  const [relationsOpen, setRelationsOpen] = useState(false), [applicationOpen, setApplicationOpen] = useState(false), [clients, setClients] = useState<ClientPublicReference[]>([]), [leads, setLeads] = useState<CrmPricingReference[]>([]), [orders, setOrders] = useState<ServiceOrderPricingReference[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const [result, sources, divergenceResult] = await Promise.all([
+    const [result, sources, divergenceResult, commercial] = await Promise.all([
       getPricingSimulationAction(simulationId),
       listPricingSourcesAction(),
       getPricingDivergencesAction(simulationId),
+      listPricingCommercialReferencesAction(),
     ]);
     if (result.ok) setSimulation(result.data);
     else setError(result.error.message);
@@ -69,6 +81,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
       setEquipment(sources.data.equipment);
     }
     if (divergenceResult.ok) setDivergences(divergenceResult.data);
+    if (commercial.ok) { setClients(commercial.data.clients); setLeads(commercial.data.leads); setOrders(commercial.data.orders); }
     setLoading(false);
   }, [simulationId]);
   useEffect(() => {
@@ -121,10 +134,12 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
             <Button
               size="sm"
               onClick={() => setEditing(true)}
-              disabled={simulation.status === "APPLIED" || Boolean(simulation.archivedAt)}
+              disabled={Boolean(simulation.archivedAt)}
             >
               Editar
             </Button>
+            <Button size="sm" variant="secondary" onClick={() => setRelationsOpen(true)}>Vínculos</Button>
+            <Button size="sm" onClick={() => setApplicationOpen(true)} disabled={!simulation.serviceOrderId}>{simulation.appliedVersion ? "Atualizar preço da OS" : "Aplicar à OS"}</Button>
             <Button
               size="sm"
               variant="secondary"
@@ -190,6 +205,13 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
           tone={result.differenceToMinimumCents < 0 ? "danger" : "success"}
         />
       </MetricStrip>
+      <section className="grid gap-3 rounded-xl border bg-card p-4 text-sm md:grid-cols-3">
+        <div><p className="text-xs text-muted-foreground">Cliente</p>{simulation.clientSnapshot ? <Link className="font-medium text-primary hover:underline" href={`/dashboard/clientes/${simulation.clientSnapshot.id}`}>{simulation.clientSnapshot.name}</Link> : <p>Não vinculado</p>}</div>
+        <div><p className="text-xs text-muted-foreground">Lead</p>{simulation.crmSnapshot ? <Link className="font-medium text-primary hover:underline" href={`/dashboard/crm/${simulation.crmSnapshot.id}`}>{simulation.crmSnapshot.title}</Link> : <p>Não vinculado</p>}</div>
+        <div><p className="text-xs text-muted-foreground">Ordem de Serviço</p>{simulation.serviceOrderSnapshot ? <Link className="font-medium text-primary hover:underline" href={`/dashboard/ordens/${simulation.serviceOrderSnapshot.id}`}>{simulation.serviceOrderSnapshot.number} · {simulation.serviceOrderSnapshot.title}</Link> : <p>Não vinculada</p>}</div>
+      </section>
+      <PricingCommercialDivergences simulation={simulation} />
+      <PricingVersionComparison simulation={simulation} />
       <div className="grid gap-3 xl:grid-cols-[1.4fr_0.6fr]">
         <section className="rounded-xl border bg-card">
           <div className="border-b p-4">
@@ -383,6 +405,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
           </ol>
         </section>
       </div>
+      {simulation.applications.length ? <section className="rounded-xl border bg-card p-4"><h2 className="text-sm font-semibold">Histórico comercial</h2><ol className="mt-3 space-y-2">{[...simulation.applications].reverse().map((item) => <li key={item.id} className="flex flex-wrap justify-between gap-2 border-b pb-2 text-sm"><span>v{item.simulationVersion} · {item.priceType} · {money.format(item.priceCents / 100)}{item.supersededAt ? " · substituída" : " · vigente"}</span><time className="text-xs text-muted-foreground">{new Date(item.appliedAt).toLocaleString("pt-BR")}</time></li>)}</ol></section> : null}
       <PricingSimulationDialog
         open={editing}
         simulation={simulation}
@@ -441,6 +464,8 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
           setBusy(false);
         }}
       />
+      <PricingRelationsDialog open={relationsOpen} clients={clients} leads={leads} orders={orders} initial={{ clientId: simulation.clientId, crmLeadId: simulation.crmLeadId, serviceOrderId: simulation.serviceOrderId }} busy={busy} onClose={() => setRelationsOpen(false)} onSave={async (value) => { setBusy(true); const response = await linkPricingCommercialAction(simulation.id, value); if (response.ok) { setSimulation(response.data); setRelationsOpen(false); setSuccess("Vínculos comerciais atualizados."); await load(); } else setError(response.error.message); setBusy(false); }} />
+      <PricingApplicationDialog open={applicationOpen} updating={Boolean(simulation.appliedVersion)} result={result} orderPriceCents={simulation.serviceOrderSnapshot?.currentPriceCents ?? 0} busy={busy} onClose={() => setApplicationOpen(false)} onApply={async (input) => { setBusy(true); const response = await applyPricingToOrderAction(simulation.id, input); if (response.ok) { setSimulation(response.data); setApplicationOpen(false); setSuccess("Preço aplicado à Ordem com snapshot imutável."); await load(); } else setError(response.error.message); setBusy(false); }} />
     </div>
   );
 }

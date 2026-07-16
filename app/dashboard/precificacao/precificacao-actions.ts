@@ -9,6 +9,7 @@ import type {
   PricingTemplateFormValues,
 } from "./precificacao-schema";
 import type { PricingPreferences } from "./precificacao-types";
+import type { PricingPriceType } from "./precificacao-types";
 const service = new PricingService(new PricingRepository(pricingStorageAdapter));
 async function action<T>(work: () => Promise<T>): Promise<PricingActionResult<T>> {
   try {
@@ -87,3 +88,6 @@ export const reviewPricingSourceAction = (
   update: boolean,
   notes: string,
 ) => action(() => service.reviewSource(simulationId, componentId, update, notes));
+export const listPricingCommercialReferencesAction = () => action(() => service.commercialReferences());
+export const linkPricingCommercialAction = (simulationId: string, input: { clientId?: string; crmLeadId?: string; serviceOrderId?: string }) => action(() => service.linkCommercial(simulationId, input));
+export const applyPricingToOrderAction = (simulationId: string, input: { priceType: PricingPriceType; manualPriceCents?: number; reason?: string; belowMinimumConfirmed: boolean }) => action(() => service.applyToOrder(simulationId, input));

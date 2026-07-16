@@ -369,3 +369,10 @@ public/              Assets estáticos
 - Cancelamento, arquivamento, indisponibilidade ou atualização da OS são derivados como divergências, com revisão e atualização explícita do snapshot sem reescrever movimentos antigos.
 - A ficha do item passou a exibir reservas, Ordens vinculadas, consumo, liberação, devoluções, divergências, links e histórico append-only.
 - Compras, Financeiro, fornecedores persistentes, transferências complexas, lotes, validade, Equipamentos, Prisma, Supabase e autenticação continuam fora do escopo.
+## 2026-07-16 — Precificação, Ciclo C
+
+- Integração comercial concluída por contratos públicos resumidos de Clientes, CRM e Ordens.
+- Vínculos com cliente, lead e OS passaram a persistir snapshots mínimos na simulação.
+- Aplicação e atualização de preço na OS exigem confirmação explícita, preservam revisões e mantêm histórico append-only.
+- Envelope local da Precificação evoluído da versão 2 para a versão 3, com migração explícita, backup e preservação dos dados dos ciclos anteriores.
+- Comparação entre versão aplicada e atual, valor manual justificado e divergências comerciais adicionados ao detalhamento.

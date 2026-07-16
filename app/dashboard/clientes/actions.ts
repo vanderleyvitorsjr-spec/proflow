@@ -23,6 +23,7 @@ const publicReference = (
         phone: client.phone,
         email: client.email,
         archived: Boolean(client.deletedAt),
+        updatedAt: client.updatedAt,
       }
     : null;
 export const getClientPublicReferenceAction = async (id: string) =>

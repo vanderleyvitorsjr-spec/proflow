@@ -2,6 +2,8 @@ import type {
   ServiceOrderFinancialSnapshot,
   ServiceOrderStockReference,
   ServiceOrderTechnicalReference,
+  ServiceOrderPricingReference,
+  ApplyServiceOrderPricingInput,
 } from "@/lib/contracts/ordens.contract";
 import { PendingAgendaIntegration } from "./ordens-agenda-port";
 import type { ServiceOrderStatus } from "./ordens-data";
@@ -82,3 +84,7 @@ export const getServiceOrderStockReferenceAction = async (id: string) => {
 };
 export const listServiceOrderStockReferencesAction = async () =>
   (await ordensStorageAdapter.list()).map(stockReference);
+const pricingReference = (order: OrdemRecord): ServiceOrderPricingReference => ({ id: order.id, number: order.orderNumber, title: order.title, clientId: order.clientId, currentPriceCents: Math.round(order.estimatedValue * 100), status: order.status, canceled: Boolean(order.canceledAt) || order.status === "CANCELED", archived: Boolean(order.archivedAt), updatedAt: order.updatedAt, appliedPricing: order.appliedPricing });
+export const listEligibleServiceOrderPricingReferencesAction = async () => (await service.list()).filter((order) => !order.archivedAt && !order.canceledAt && order.status !== "CANCELED").map(pricingReference);
+export const getServiceOrderPricingReferenceAction = async (id: string) => { const order = await service.get(id); return order ? pricingReference(order) : null; };
+export const applyServiceOrderPricingAction = (input: ApplyServiceOrderPricingInput) => service.applyPricing(input);

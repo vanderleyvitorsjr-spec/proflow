@@ -4,6 +4,7 @@ export type ClientPublicReference = {
   phone?: string;
   email?: string;
   archived: boolean;
+  updatedAt?: string;
 };
 export interface ClientesPublicContract {
   getReference(id: string): Promise<ClientPublicReference | null>;

@@ -5,6 +5,7 @@ import type { OrdensAgendaPort } from "./ordens-agenda-port";
 import { OrdensRepository } from "./ordens-repository";
 import { ordemSchema, type OrdemFormValues } from "./ordens-schema";
 import type { OrdemChecklistItem, OrdemHistory, OrdemRecord } from "./ordens-types";
+import type { ApplyServiceOrderPricingInput } from "@/lib/contracts/ordens.contract";
 const history = (type: OrdemHistory["type"], description: string): OrdemHistory => ({ id: crypto.randomUUID(), type, description, createdAt: new Date().toISOString() });
 const lines = (value: string) => value.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean);
 export class OrdensService {
@@ -17,5 +18,6 @@ export class OrdensService {
   async updateChecklist(id: string, checklist: OrdemChecklistItem[]) { const current = await this.require(id); return this.repository.save({ ...current, checklist, updatedAt: new Date().toISOString(), history: [...current.history, history("CHECKLIST", "Checklist atualizado.")] }); }
   async cancel(id: string, reason: string) { if (reason.trim().length < 3) throw new Error("Informe o motivo do cancelamento."); const current = await this.require(id), now = new Date().toISOString(); return this.repository.save({ ...current, status: "CANCELED", canceledAt: now, cancellationReason: reason.trim(), updatedAt: now, history: [...current.history, history("CANCELED", `Ordem cancelada: ${reason.trim()}`)] }); }
   async archive(id: string) { const current = await this.require(id), now = new Date().toISOString(); return this.repository.save({ ...current, archivedAt: now, updatedAt: now, history: [...current.history, history("ARCHIVED", "Ordem arquivada.")] }); }
+  async applyPricing(input: ApplyServiceOrderPricingInput) { const current = await this.require(input.serviceOrderId); if (current.archivedAt || current.canceledAt || current.status === "CANCELED") throw new Error("A Ordem de Serviço não está elegível para precificação."); const now = new Date().toISOString(); return this.repository.save({ ...current, estimatedValue: input.priceCents / 100, appliedPricing: { simulationId: input.simulationId, simulationVersion: input.simulationVersion, revisionId: input.revisionId, priceCents: input.priceCents, priceType: input.priceType, appliedAt: input.appliedAt, pricingUpdatedAtSnapshot: input.pricingUpdatedAtSnapshot }, updatedAt: now, history: [...current.history, history("PRICING", `Precificação v${input.simulationVersion} aplicada explicitamente.`)] }); }
   private async require(id: string) { const order = await this.repository.findById(id); if (!order) throw new Error("Ordem de Serviço não encontrada."); return order; }
 }

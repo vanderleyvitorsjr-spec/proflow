@@ -34,3 +34,26 @@ export type ServiceOrderStockReference = {
   updatedAt: string;
   stockReservationAllowed: boolean;
 };
+
+export type ServiceOrderAppliedPricing = {
+  simulationId: string;
+  simulationVersion: number;
+  revisionId: string;
+  priceCents: number;
+  priceType: string;
+  appliedAt: string;
+  pricingUpdatedAtSnapshot: string;
+};
+export type ServiceOrderPricingReference = {
+  id: string;
+  number: string;
+  title: string;
+  clientId: string;
+  currentPriceCents: number;
+  status: string;
+  canceled: boolean;
+  archived: boolean;
+  updatedAt: string;
+  appliedPricing?: ServiceOrderAppliedPricing;
+};
+export type ApplyServiceOrderPricingInput = ServiceOrderAppliedPricing & { serviceOrderId: string };
