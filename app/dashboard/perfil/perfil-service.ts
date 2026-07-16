@@ -1,18 +1,45 @@
 import { ProfileRepository } from "./perfil-repository";
-import type { ProfileState, ProfessionalDocument } from "./perfil-types";
+import type { ProfileState, ProfessionalDocument, UserProfile } from "./perfil-types";
+import { isValidCpf, normalizeProperName, normalizeUpperCode, onlyDigits } from "@/lib/br-formatters";
 const entry = (type: string, description: string) => ({
   id: crypto.randomUUID(),
   type,
   description,
   occurredAt: new Date().toISOString(),
 });
+function normalizeProfile(profile: UserProfile): UserProfile {
+  const document = onlyDigits(profile.document);
+  if (document && !isValidCpf(document)) throw new Error("Informe um CPF válido.");
+  const phone = onlyDigits(profile.phone);
+  const whatsapp = onlyDigits(profile.whatsapp);
+  if (phone && ![10, 11].includes(phone.length)) throw new Error("Informe um telefone com DDD válido.");
+  if (whatsapp && ![10, 11].includes(whatsapp.length)) throw new Error("Informe um WhatsApp com DDD válido.");
+  return {
+    ...profile,
+    fullName: normalizeProperName(profile.fullName),
+    displayName: normalizeProperName(profile.displayName || profile.fullName),
+    preferredName: normalizeProperName(profile.preferredName),
+    role: normalizeProperName(profile.role),
+    specialties: profile.specialties.map(normalizeProperName).filter(Boolean),
+    phone: phone || undefined,
+    whatsapp: whatsapp || undefined,
+    document: document || undefined,
+    professionalRegistration: normalizeUpperCode(profile.professionalRegistration) || undefined,
+    zipCode: onlyDigits(profile.zipCode) || undefined,
+    street: normalizeProperName(profile.street) || undefined,
+    district: normalizeProperName(profile.district) || undefined,
+    city: normalizeProperName(profile.city) || undefined,
+    state: normalizeUpperCode(profile.state).slice(0, 2) || undefined,
+  };
+}
+
 export class ProfileService {
   constructor(private repo: ProfileRepository) {}
   list = () => this.repo.load();
   saveSection<K extends keyof ProfileState>(key: K, value: ProfileState[K]) {
     const state = this.list(),
       expected = state.revision;
-    state[key] = value;
+    state[key] = (key === "profile" ? normalizeProfile(value as UserProfile) : value) as ProfileState[K];
     state.revision++;
     state.history.push(entry("SECTION_UPDATED", `${String(key)} atualizado.`));
     this.repo.save(state, expected);

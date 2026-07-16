@@ -13,6 +13,7 @@ import {
   Users,
   Warehouse,
   Wrench,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ export const dashboardNavigation: NavigationItem[] = [
   { title: "Precificação", href: "/dashboard/precificacao", icon: Calculator },
   { title: "Financeiro", href: "/dashboard/financeiro", icon: CreditCard },
   { title: "Estoque", href: "/dashboard/estoque", icon: Warehouse },
+  { title: "Fornecedores", href: "/dashboard/fornecedores", icon: Handshake },
   { title: "Equipamentos", href: "/dashboard/equipamentos", icon: Wrench },
   { title: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3 },
   { title: "Biblioteca Técnica", href: "/dashboard/biblioteca-tecnica", icon: BookOpen },

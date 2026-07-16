@@ -431,3 +431,14 @@ public/              Assets estáticos
 - Timeline Global, Central de Notificações e Configurações são consumidas por gateways ou actions públicas; Perfil não acessa adapters ou repositories externos.
 - Exportação e importação JSON preservam o envelope versionado e rejeitam versões incompatíveis; blobs não são incorporados ao JSON.
 - A área de segurança deixa explícita a ausência de senha, 2FA e sessões reais, sem simular autenticação.
+
+## Fornecedores funcional
+
+- Módulo criado em `app/dashboard/fornecedores/`.
+- Cadastro, edição, detalhe, arquivamento e reativação persistentes.
+- Persistência local versionada em `proflow:fornecedores:v1`, com backup.
+- CPF/CNPJ, telefones, CEP, nomes, datas e valores seguem os formatadores brasileiros compartilhados.
+- Categorias de fornecimento, condições comerciais, prazo, pedido mínimo e avaliação.
+- Prevenção de duplicidade por documento, telefone e e-mail.
+- Contrato público resumido criado em `lib/contracts/fornecedores.contract.ts`.
+- Entrada adicionada à navegação principal.

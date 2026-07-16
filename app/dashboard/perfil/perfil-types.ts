@@ -22,6 +22,14 @@ export type UserProfile = {
   document?: string;
   professionalRegistration?: string;
   bio?: string;
+  birthDate?: string;
+  zipCode?: string;
+  street?: string;
+  streetNumber?: string;
+  complement?: string;
+  district?: string;
+  city?: string;
+  state?: string;
   avatarMetadata?: ProfileMedia;
   signatureMetadata?: ProfileMedia;
   teamMemberId?: string;

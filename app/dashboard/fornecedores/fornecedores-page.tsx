@@ -1,0 +1,52 @@
+"use client";
+
+import Link from "next/link";
+import { Building2, CircleDollarSign, MapPin, Pencil, Phone, Plus, RotateCcw, Search, Star, Truck, UsersRound } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { MetricItem, MetricStrip } from "@/components/ui/metric-strip";
+import { PageHeader, PageHeaderActions, PageHeaderContent, PageHeaderHeading, PageHeaderIcon, PageHeaderIdentity, PageHeaderToolbar } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatBrazilianPhone, formatCpfCnpj, formatCurrencyBRLFromCents, normalizeSearchText } from "@/lib/br-formatters";
+import { archiveSupplierAction, createSupplierAction, listSuppliersAction, restoreSupplierAction, updateSupplierAction } from "./fornecedores-actions";
+import { SupplierFormDialog } from "./fornecedor-form-dialog";
+import type { SupplierFormValues } from "./fornecedores-schema";
+import type { SupplierCategory, SupplierRecord, SupplierStatus } from "./fornecedores-types";
+
+const categoryLabels: Record<SupplierCategory, string> = { CLIMATIZATION: "Climatização", ELECTRICAL: "Elétrica", REFRIGERATION: "Refrigeração", TOOLS: "Ferramentas", SAFETY: "Segurança e EPI", LOGISTICS: "Logística", SERVICES: "Serviços", OTHER: "Outros" };
+const statusLabels: Record<SupplierStatus, string> = { ACTIVE: "Ativo", ATTENTION: "Requer atenção", INACTIVE: "Inativo", ARCHIVED: "Arquivado" };
+const statusVariants: Record<SupplierStatus, "success" | "warning" | "neutral" | "destructive"> = { ACTIVE: "success", ATTENTION: "warning", INACTIVE: "neutral", ARCHIVED: "destructive" };
+
+export function SuppliersPageContent() {
+  const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState(""), [success, setSuccess] = useState("");
+  const [search, setSearch] = useState(""), [status, setStatus] = useState("CURRENT"), [category, setCategory] = useState("ALL"), [editing, setEditing] = useState<SupplierRecord | undefined>(), [formOpen, setFormOpen] = useState(false);
+  const load = useCallback(async () => { setLoading(true); const result = await listSuppliersAction(); if (result.ok) { setSuppliers(result.data); setError(""); } else setError(result.error.message); setLoading(false); }, []);
+  useEffect(() => { queueMicrotask(() => void load()); }, [load]);
+  const filtered = useMemo(() => { const query = normalizeSearchText(search); return suppliers.filter((item) => {
+    const matchesSearch = !query || [item.code, item.legalName, item.tradeName, item.document, item.contactName, item.phone, item.email, item.city, item.state].some((value) => normalizeSearchText(value).includes(query));
+    const matchesStatus = status === "ALL" || (status === "CURRENT" ? !item.archivedAt : item.status === status);
+    const matchesCategory = category === "ALL" || item.categories.includes(category as SupplierCategory);
+    return matchesSearch && matchesStatus && matchesCategory;
+  }); }, [suppliers, search, status, category]);
+  const active = suppliers.filter((item) => item.status === "ACTIVE" && !item.archivedAt), attention = suppliers.filter((item) => item.status === "ATTENTION" && !item.archivedAt), rated = suppliers.filter((item) => item.rating && !item.archivedAt);
+  const averageRating = rated.length ? rated.reduce((sum, item) => sum + (item.rating ?? 0), 0) / rated.length : 0;
+  const save = async (value: SupplierFormValues, id?: string) => { const result = id ? await updateSupplierAction(id, value) : await createSupplierAction(value); if (!result.ok) return result.error.message; setFormOpen(false); setEditing(undefined); setSuccess(id ? "Fornecedor atualizado com sucesso." : "Fornecedor cadastrado com sucesso."); await load(); return null; };
+  const archive = async (supplier: SupplierRecord) => { if (!confirm(`Arquivar ${supplier.tradeName}?`)) return; const result = await archiveSupplierAction(supplier.id); if (!result.ok) setError(result.error.message); else { setSuccess("Fornecedor arquivado."); await load(); } };
+  const restore = async (supplier: SupplierRecord) => { const result = await restoreSupplierAction(supplier.id); if (!result.ok) setError(result.error.message); else { setSuccess("Fornecedor reativado."); await load(); } };
+
+  return <div className="space-y-4">
+    <PageHeader><PageHeaderContent><PageHeaderIdentity><PageHeaderIcon><Building2 className="size-4" /></PageHeaderIcon><PageHeaderHeading title="Fornecedores" description="Cadastre fornecedores, condições comerciais e categorias de fornecimento." /></PageHeaderIdentity><PageHeaderActions><Button onClick={() => { setEditing(undefined); setFormOpen(true); }}><Plus className="size-4" />Novo fornecedor</Button></PageHeaderActions></PageHeaderContent>
+      <PageHeaderToolbar><div className="grid w-full gap-2 lg:grid-cols-[minmax(16rem,1fr)_13rem_13rem_auto]"><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar por nome, código, documento ou cidade" value={search} onChange={(e) => setSearch(e.target.value)} /></div><Select value={status} onChange={(e) => setStatus(e.target.value)}><option value="CURRENT">Não arquivados</option><option value="ALL">Todos</option><option value="ACTIVE">Ativos</option><option value="ATTENTION">Requer atenção</option><option value="INACTIVE">Inativos</option><option value="ARCHIVED">Arquivados</option></Select><Select value={category} onChange={(e) => setCategory(e.target.value)}><option value="ALL">Todas as categorias</option>{Object.entries(categoryLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</Select><Button variant="secondary" onClick={() => { setSearch(""); setStatus("CURRENT"); setCategory("ALL"); }}>Limpar</Button></div></PageHeaderToolbar>
+    </PageHeader>
+    {error ? <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">{error}</div> : null}
+    {success ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">{success}</div> : null}
+    <MetricStrip><MetricItem label="Fornecedores ativos" value={String(active.length)} icon={<UsersRound className="size-4" />} /><MetricItem label="Requerem atenção" value={String(attention.length)} icon={<Truck className="size-4" />} /><MetricItem label="Avaliação média" value={averageRating ? averageRating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—"} icon={<Star className="size-4" />} /><MetricItem label="Pedido mínimo médio" value={active.some((item) => item.minimumOrderCents) ? formatCurrencyBRLFromCents(Math.round(active.reduce((sum,item) => sum + (item.minimumOrderCents ?? 0), 0) / active.filter((item) => item.minimumOrderCents).length)) : "—"} icon={<CircleDollarSign className="size-4" />} /></MetricStrip>
+    {loading ? <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Carregando fornecedores...</CardContent></Card> : filtered.length === 0 ? <EmptyState size="compact" title={suppliers.length ? "Nenhum fornecedor encontrado" : "Nenhum fornecedor cadastrado"} description={suppliers.length ? "Ajuste a busca ou os filtros." : "Cadastre o primeiro fornecedor para organizar suas compras e abastecimento."} action={<Button onClick={() => setFormOpen(true)}><Plus className="size-4" />Novo fornecedor</Button>} /> : <Table density="compact" scrollHint><TableHeader><TableRow><TableHead>Fornecedor</TableHead><TableHead>Contato</TableHead><TableHead>Localização</TableHead><TableHead>Categorias</TableHead><TableHead>Condições</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{filtered.map((supplier) => <TableRow key={supplier.id}><TableCell><Link href={`/dashboard/fornecedores/${supplier.id}`} className="font-semibold hover:underline">{supplier.tradeName}</Link><div className="mt-0.5 text-xs text-muted-foreground">{supplier.code} · {formatCpfCnpj(supplier.document) || "Documento não informado"}</div></TableCell><TableCell><div className="text-xs"><div>{supplier.contactName ?? "Contato não informado"}</div><div className="mt-1 flex items-center gap-1 text-muted-foreground"><Phone className="size-3" />{formatBrazilianPhone(supplier.phone || supplier.whatsapp) || "Telefone não informado"}</div></div></TableCell><TableCell><div className="flex items-center gap-1 text-xs"><MapPin className="size-3 text-muted-foreground" />{supplier.city ? `${supplier.city}${supplier.state ? `/${supplier.state}` : ""}` : "Não informado"}</div></TableCell><TableCell><div className="flex max-w-60 flex-wrap gap-1">{supplier.categories.slice(0,2).map((item) => <Badge key={item} variant="outline">{categoryLabels[item]}</Badge>)}{supplier.categories.length > 2 ? <Badge variant="neutral">+{supplier.categories.length - 2}</Badge> : null}</div></TableCell><TableCell><div className="text-xs">{supplier.paymentTerms ?? "Não informado"}</div><div className="text-xs text-muted-foreground">{supplier.deliveryLeadTimeDays ? `${supplier.deliveryLeadTimeDays} dias para entrega` : "Prazo não informado"}</div></TableCell><TableCell><Badge variant={statusVariants[supplier.status]}>{statusLabels[supplier.status]}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="sm" variant="ghost" onClick={() => { setEditing(supplier); setFormOpen(true); }}><Pencil className="size-3.5" />Editar</Button>{supplier.archivedAt ? <Button size="sm" variant="ghost" onClick={() => void restore(supplier)}><RotateCcw className="size-3.5" />Reativar</Button> : <Button size="sm" variant="ghost" onClick={() => void archive(supplier)}>Arquivar</Button>}</div></TableCell></TableRow>)}</TableBody></Table>}
+    <SupplierFormDialog open={formOpen} supplier={editing} onClose={() => { setFormOpen(false); setEditing(undefined); }} onSave={save} />
+  </div>;
+}
