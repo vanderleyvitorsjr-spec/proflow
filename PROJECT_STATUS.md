@@ -1,0 +1,283 @@
+# Status do Projeto ProFlow
+
+## Módulos Implementados
+
+- Login com autenticação fake e sessão em `localStorage`.
+- Layout privado compartilhado em `/dashboard`.
+- Sidebar responsiva, recolhível e com destaque de página ativa.
+- Topbar com busca global visual, notificações, alternância de tema, empresa ativa e perfil.
+- Dashboard com cards, gráfico visual, agenda, OS recentes, financeiro e produtividade.
+- Páginas navegáveis:
+  - Dashboard
+  - CRM
+  - Clientes
+  - Agenda
+  - Ordens de Serviço
+  - Precificação
+  - Financeiro
+  - Estoque
+  - Equipamentos
+  - Relatórios
+  - Biblioteca Técnica
+  - IA Assistente
+  - Configurações
+  - Perfil
+- Rota legada `/dashboard/os` redirecionando para `/dashboard/ordens`.
+- Modelagem Prisma multi tenant com schema e migration inicial.
+- Fundação do domínio financeiro adicionada no schema: `FinancialCategory`, `FinancialAccount`, `TransactionType`, `ExpenseClassification` e `AccountType`.
+- Fundação do domínio financeiro adicionada no schema: `FinancialCategory`, `FinancialAccount`, `TransactionType`, `ExpenseClassification` e `AccountType`.
+- Expansão de `ContaReceber` no schema para suportar movimentações financeiras:
+  - Campos monetários adicionais (`grossAmount`, `discountAmount`, `interestAmount`, `penaltyAmount`, `netAmount`)
+  - Campos de parcelamento/opcionais (`installmentNumber`, `installmentCount`, `paymentMethod`)
+  - `financialTransactionId` e `financialAccountId` (opcionais) e `createdById` (opcional)
+  - Relações inversas adicionadas em `Usuario`, `Empresa`, `Cliente`, `OrdemServico`, `Contrato`, `FinancialTransaction` e `FinancialAccount`
+  - Migração criada: `20260711170000_contas_receber_financial_transaction` (não aplicada)
+- Cliente Prisma compartilhado e seguro para uso no servidor, com prevenção de múltiplas instâncias em desenvolvimento.
+- Tema claro/escuro via `next-themes`.
+- Build e lint sem erros.
+
+- Fundação de `Centros de Custo` adicionada ao schema:
+  - `CentroCusto` model expandido para suportar hierarquia (`parentId`, `children`), `color`, `icon` e campo `isActive` (mapeado para a coluna existente `active`).
+  - Restrições únicas e índices garantidos por empresa: `code` (unique), `name` (unique por empresa via índice parcial), `parentId`, `deletedAt`.
+  - Migração criada: `20260711182000_centros_custo_foundation` (não aplicada)
+- Fundação do módulo `Patrimônio` adicionada ao schema:
+- Model `Asset` e `AssetCategory` adicionados (`patrimonios`, `categorias_patrimoniais`)
+- Enums criados: `AssetStatus`, `AssetCondition`
+- Migração criada: `20260711194000_patrimonio_foundation` (não aplicada)
+- Índices e uniqueness por `companyId` para `assetCode` e `name` garantidos
+- Fundação do módulo `Equipamentos Instalados` (histórico técnico) adicionada:
+- Model `EquipmentServiceHistory` adicionado para armazenar eventos técnicos de equipamentos instalados
+- Enum `EquipmentHistoryEventType` criado
+- Migração criada: `20260711212000_equipamento_historico_foundation` (não aplicada)
+- Relações inversas adicionadas em `Empresa`, `EquipamentoInstalado`, `OrdemServico` e `Usuario`
+- Índices e constraints por `companyId` e `installedEquipmentId` garantidos
+
+- Fundação de `Planos de Manutenção Preventiva` adicionada/estendida ao schema:
+  - Model existente `ManutencaoPreventiva` estendido para suportar planejamento de manutenção (frequência, intervalos, datas previstas, estimativas e configurações de auto-criação)
+  - Enum `MaintenanceFrequencyType` criado
+  - Migração criada: `20260711230000_manutencao_preventiva_plans_foundation` (não aplicada)
+  - Índices adicionados: `[companyId, installedEquipmentId]`, `[companyId, nextServiceDate]`, `[companyId, isActive]`, `[companyId, contractId]`, `[companyId, deletedAt]`
+
+- Fundação de `Checklists Técnicos` adicionada ao schema:
+  - Models `ChecklistTemplate` e `ChecklistTemplateItem` criados
+  - Enums `ChecklistCategory` e `ChecklistItemType` criados
+  - Migração criada: `20260711240000_checklist_templates_foundation` (não aplicada)
+  - Índices e constraint de versão única: `[companyId, name, version]` (unique), `[companyId, category]`, `[companyId, isActive]`, `[companyId, name]`, `[companyId, deletedAt]` e índices do lado dos items
+- Fundação do modelo de aceitação/assinatura de cliente para Ordens de Serviço adicionada ao schema:
+  - Model `ServiceOrderAcceptance` criado
+  - Enums `ServiceOrderAcceptanceType` e `ServiceOrderAcceptanceStatus` criados
+  - Relações com `Empresa`, `OrdemServico`, `Cliente` e `ServiceOrderAttachment`
+  - Migração criada: `20260711270000_service_order_acceptances_foundation` (não aplicada)
+  - Índices adicionados: `[companyId, serviceOrderId]`, `[companyId, clientId]`, `[companyId, status]`, `[companyId, acceptanceType]`, `[companyId, acceptedAt]`, `[companyId, rejectedAt]`, `[companyId, deletedAt]`
+
+## Módulos Incompletos
+
+- Autenticação real.
+- Autorização por permissões.
+- CRUD real dos módulos.
+- Integração das telas com Prisma.
+- Integração com Supabase.
+- Upload real de fotos, arquivos e assinaturas.
+- Busca global funcional.
+- Notificações reais.
+- Relatórios exportáveis.
+- Assistente IA integrado a modelo real.
+- Validações completas de formulários.
+- Testes automatizados.
+
+## Estrutura de Pastas
+
+```txt
+app/                 Rotas, layouts e páginas do App Router
+app/dashboard/       Área privada e módulos navegáveis
+components/layout/   Shell principal do dashboard
+components/ui/       Componentes base reutilizáveis
+constants/           Navegação e constantes compartilhadas
+features/dashboard/  Interface do dashboard
+features/workspace/  Dados mockados e página reutilizável dos módulos
+features/crm/        Componentes e dados antigos do CRM
+features/pricing/    Componentes e dados antigos de precificação
+features/service-orders/ Componentes e dados antigos de OS
+lib/                 Utilitários e clientes de infraestrutura
+prisma/              Schema, config e migrations
+providers/           Providers globais
+schemas/             Schemas Zod
+public/              Assets estáticos
+```
+
+## Pendências
+
+- Conectar Prisma Client aos repositories e services.
+- Criar repositories por entidade principal.
+- Substituir dados mockados por consultas reais.
+- Implementar seed inicial para empresa, usuário admin e dados de demonstração.
+- Criar formulários de criação e edição.
+- Aplicar soft delete em operações reais.
+- Validar isolamento multi tenant em todas as queries.
+- Criar middleware de proteção de rotas.
+- Configurar `.env.local` real.
+- Revisar módulos antigos em `features/crm`, `features/pricing` e `features/service-orders`.
+
+## Bugs Conhecidos
+
+- A sessão fake depende apenas de `localStorage`.
+- Rotas privadas são protegidas no client, não no server.
+- Botões de ação dos módulos ainda são visuais.
+- Busca global ainda não executa pesquisa.
+- Notificações não possuem dados reais.
+- O Prisma possui migration gerada, mas ainda não foi aplicada em banco real.
+
+## Próximos Passos
+
+1. Implementar Prisma Client compartilhado.
+2. Criar seed inicial.
+3. Implementar autenticação real.
+4. Criar CRUD de Clientes.
+5. Criar CRUD de Ordens de Serviço.
+6. Conectar Agenda, Estoque e Financeiro ao banco.
+7. Implementar permissões multi tenant.
+8. Adicionar testes de rotas, repositories e services.
+
+## Modernização Visual Global
+
+### Lote 1 — Dashboard, CRM e Clientes (15/07/2026)
+
+- Dashboard consolidado em estrutura executiva densa, com cabeçalho compacto, indicadores financeiros em faixa, blocos Comercial e Operacional horizontais, três painéis analíticos e alertas compactos.
+- CRM padronizado com cabeçalho e toolbar integrados, indicadores em faixa, pipeline horizontal compacto, colunas de 16rem e visualização em lista preservada.
+- Formulário de Novo Lead alinhado à linguagem visual do CRM, com seções compactas e melhor aproveitamento horizontal.
+- Clientes padronizado com cabeçalho e filtros integrados, métricas em faixa, tabela como visualização principal e cartões compactos como alternativa.
+- Funcionalidades, filtros, dados, rotas, autenticação, Prisma e regras de negócio preservados.
+
+### Lote 2 — Agenda e Ordens de Serviço (15/07/2026)
+
+- Agenda padronizada com cabeçalho e toolbar integrados, métricas em faixa, calendário ampliado, visualizações de dia, semana e mês compactadas e painel lateral reduzido.
+- Eventos, equipes, navegação de períodos, botão Hoje, busca e filtros por tipo e responsável preservados.
+- Ordens de Serviço padronizadas com cabeçalho compacto, filtros integrados, cinco métricas em faixa, tabela principal densa e Kanban com colunas de 16rem.
+- Status, prioridades, clientes, técnicos, datas, valores, checklist, busca, filtros e alternância entre tabela e Kanban preservados.
+- Shell, estilos globais, autenticação, Prisma, banco, rotas e demais módulos não foram alterados.
+
+### Lote 3 — Precificação e Financeiro (15/07/2026)
+
+- Precificação padronizada com cabeçalho e toolbar compactos, indicadores em faixa horizontal, calculadora com melhor aproveitamento lateral e resumo de cálculo fixo e denso.
+- Catálogo de serviços preservado em lista e cartões, com filtros integrados, tabela compacta e preços mínimo, sugerido e premium mantidos.
+- Financeiro padronizado com cabeçalho, período, filtros e ações integrados, navegação compacta, indicadores em faixa e grid horizontal para fluxo de caixa e contas.
+- Movimentações mantidas como conteúdo principal, com busca, filtros, status, valores e ações preservados em tabela de maior densidade.
+- Cálculos, dados, handlers, formatação brasileira, responsividade e dark mode foram preservados; shell, estilos globais, autenticação, Prisma, banco, rotas e demais módulos não foram alterados.
+
+### Lote 4 — Estoque e Equipamentos (15/07/2026)
+
+- Estoque padronizado com cabeçalho, ações, busca, filtros e seletor de visualização integrados, seis indicadores em faixa horizontal e tabela principal de maior densidade.
+- Cartões de estoque compactados sem remover códigos, categorias, quantidades, reservas, disponibilidade, estoque mínimo, localização, custos, valor total e compras pendentes.
+- Equipamentos padronizados com cabeçalho e filtros integrados, cinco indicadores em faixa horizontal, tabela principal compacta e cartões como visualização alternativa.
+- Fabricante, modelo, série, patrimônio, propriedade, responsável, localização, status, manutenção, garantia, valores e vínculos existentes foram preservados.
+- Estados críticos, baixo estoque e manutenção continuam destacados de forma discreta; cálculos, dados, handlers, formatação brasileira, responsividade e dark mode foram mantidos.
+- Não foram criados componentes globais neste lote: cabeçalhos e filtros possuem ações específicas, e a futura unificação das faixas de métricas deve ser realizada em lote próprio para abranger os módulos já modernizados sem regressões.
+- Shell, estilos globais, autenticação, Prisma, banco, rotas e demais módulos não foram alterados.
+
+### Lote 5 — Relatórios e Biblioteca Técnica (15/07/2026)
+
+- Relatórios padronizados com cabeçalho, período, área, comparação e ações integrados, indicadores em faixa horizontal contínua e composição analítica de maior densidade.
+- Gráficos financeiros, margem, conversão e produtividade foram reorganizados horizontalmente e tiveram a altura reduzida sem alterar cálculos, filtros ou comparação com o período anterior.
+- Rankings, tabelas de equipes e cidades foram compactados, preservando exportações visuais, valores, percentuais e scroll horizontal.
+- Biblioteca Técnica recebeu cabeçalho e toolbar integrados, organização compacta por categorias, equipamentos, fabricantes e tipos, além de destaques horizontais menores.
+- Cartões, lista, busca, filtros e favoritos foram preservados; documentos mantêm título, descrição, tipo, categoria, fabricante, equipamento, versão, tags, atualização, acessos, favorito, tamanho ou duração e vínculos existentes.
+- Foram reutilizados Card, Button, Input, Badge e tokens globais; nenhuma nova abstração global foi criada por não haver ganho adicional claro dentro do escopo deste lote.
+- Dados neutros e mockados, ações visuais, responsividade e dark mode foram mantidos; shell, estilos globais, autenticação, Prisma, banco, rotas e demais módulos não foram alterados.
+
+### Lote de Refinamento 1 — Fundamentos, Clientes e Estoque (15/07/2026)
+
+- O título contextual do topbar passou a priorizar a rota mais específica e deixou de competir com o título principal semântico de cada página.
+- O conteúdo principal retorna ao topo nas trocas de rota, sem interferir nos scrolls internos horizontais de tabelas e painéis.
+- O carregamento inicial do dashboard recebeu uma estrutura visual estável com skeletons, preservando integralmente a validação de sessão e os redirecionamentos existentes.
+- Foi adicionado suporte global a `prefers-reduced-motion`, reduzindo animações, transições e deslocamentos para usuários que solicitam menos movimento.
+- Foram criados os primitives reutilizáveis `PageHeader`, `MetricStrip` e `MetricItem`; `Table`, `EmptyState` e `SectionHeader` ganharam variações compatíveis com os consumidores anteriores.
+- Clientes e Estoque foram os módulos-piloto: ambos passaram a usar cabeçalho composto, toolbar integrada, faixa contínua de métricas, tabela compacta com indicação de scroll em telas pequenas e estado vazio padronizado.
+- Dados, filtros, handlers, visualizações, cálculos, rotas, autenticação, Prisma e regras de negócio permaneceram inalterados.
+
+### Lote de Refinamento 2 — Agenda, Ordens de Serviço e Equipamentos (15/07/2026)
+
+- Agenda passou a usar `PageHeader`, `MetricStrip`, `MetricItem`, `Select`, `EmptyState` e `SectionHeader` compacto, preservando dia, semana, mês, período, calendário, eventos, filtros e painel lateral.
+- Ordens de Serviço passou a usar cabeçalho e toolbar compostos, métricas globais, tabela compacta com `TableFrame`, selects e estados vazios padronizados; tabela, Kanban, checklist, filtros, valores e handlers foram preservados.
+- Equipamentos passou a compartilhar cabeçalho, toolbar, faixa de métricas, selects, tabela compacta com moldura e estados vazios, mantendo cartões, filtros e todos os dados técnicos e patrimoniais existentes.
+- O primitive `Table` ganhou composição opcional com `TableFrame`, preservando o comportamento anterior como padrão para manter compatibilidade com Clientes, Estoque e demais consumidores.
+- Cada um dos três módulos possui um único título principal semântico; responsividade, dark mode, formatação brasileira e scroll horizontal interno foram mantidos.
+- Nenhum dado, cálculo, regra de negócio, rota, autenticação, Prisma, banco ou módulo fora do escopo foi alterado.
+
+### Fundação funcional — Clientes com persistência desacoplada (15/07/2026)
+
+- O fluxo de Clientes passou a seguir a cadeia `Página → Action → Service → Repository → Storage Adapter`, sem acesso direto da página ou do formulário ao armazenamento do navegador.
+- A persistência local ficou isolada em um adapter substituível, preparando a futura troca por Prisma ou Supabase sem acoplar páginas, formulários, services ou repositories à tecnologia de armazenamento.
+- Cadastro, edição, detalhamento, exclusão lógica, busca e filtros foram conectados ao fluxo completo, com validação, prevenção de duplicidade por CPF/CNPJ, e-mail ou telefone, estados de carregamento e vazio, confirmação e feedback de erro ou sucesso.
+- O detalhamento utiliza a rota existente de Clientes e mantém indicadores operacionais, dados de contato e endereço em formatação brasileira.
+- Os dados demonstrativos existentes continuam sendo a carga inicial local; novos registros começam sem OS, equipamentos, contratos ou valores acumulados até a futura integração funcional dos respectivos módulos.
+- Prisma, migrations, autenticação, Supabase, `companyId`, banco, shell global e módulos externos a Clientes não foram alterados.
+
+### Fundação funcional — CRM persistente e integrado a Clientes (15/07/2026)
+
+- O CRM passou a seguir `Página → Action → Service → Repository → Storage Adapter`, mantendo o acesso ao armazenamento do navegador exclusivamente no adapter local.
+- Pipeline, lista, busca, filtros, criação, edição, mudança persistente de etapa, arquivamento lógico e detalhamento foram conectados aos registros locais.
+- Cada lead mantém histórico de criação, edição, mudança de etapa, conversão e arquivamento.
+- A conversão utiliza a action pública de Clientes, reaproveitando validação e prevenção de duplicidade antes de vincular o cliente criado ao lead.
+- Prisma, migrations, autenticação, Supabase, `companyId`, banco e módulos fora de CRM e da integração autorizada com Clientes permaneceram inalterados.
+
+### Fundação funcional — Ordens de Serviço operacionais (15/07/2026)
+
+- Ordens passou a seguir `Página → Action → Service → Repository → Storage Adapter`, com persistência local isolada no adapter.
+- Cadastro, edição, status, checklist, cancelamento, arquivamento, detalhamento, numeração sequencial e histórico foram conectados a registros persistidos.
+- Clientes são validados pela action pública de Clientes; leads de origem são validados pela action pública do CRM e precisam pertencer ao cliente convertido.
+- A integração com Agenda foi isolada por uma porta provisória; a OS permanece como fonte única de data e horário até a Agenda receber persistência funcional.
+- Prisma, migrations, autenticação, Supabase, banco e módulos fora das integrações públicas autorizadas não foram alterados.
+
+### Fundação funcional — Agenda persistente e integrada a Ordens (15/07/2026)
+
+- A Agenda passou a seguir `Página → Action → Service → Repository → Storage Adapter`; somente o adapter local acessa o armazenamento do navegador.
+- Eventos independentes agora possuem cadastro, edição, recorrência limitada, cancelamento, arquivamento lógico, histórico e detalhamento persistentes.
+- Eventos vinculados são projeções das Ordens de Serviço: a OS permanece como fonte de data, horário, duração, cliente, responsável, localização e estado operacional.
+- A porta de Ordens foi conectada a um vínculo idempotente da Agenda; alterações operacionais feitas pela Agenda utilizam as actions públicas de Ordens.
+- Conflitos incompatíveis do mesmo responsável em horários sobrepostos são identificados antes da gravação, exibidos ao usuário e bloqueados até ajuste de responsável ou horário.
+- Busca, filtros, dia, semana, mês, navegação de período, painel lateral, responsividade e dark mode foram preservados.
+- Prisma, migrations, autenticação, Supabase, banco e demais módulos permaneceram inalterados.
+
+### Fundação funcional — Financeiro Ciclo A (15/07/2026)
+
+- O Financeiro passou a seguir `Página → Action → Service → Repository → Storage Adapter`, com acesso ao armazenamento local restrito ao adapter financeiro.
+- Contas financeiras possuem criação, edição, conta padrão única, saldo inicial, arquivamento confirmado e saldos derivados de lançamentos realizados.
+- Receitas, despesas e investimentos manuais possuem cadastro, edição, duplicação, arquivamento lógico, detalhe, sequência e histórico persistentes.
+- Todos os valores operacionais são armazenados em centavos inteiros; métricas, saldos e fluxo mensal são calculados exclusivamente a partir do estado persistido.
+- O envelope local possui versão, revisão, sequência, validação Zod, backup do último estado válido e recuperação sem sobrescrita silenciosa de dados inválidos.
+- Busca e filtros por natureza, conta, categoria e período foram conectados aos dados persistidos, preservando o layout-base, responsividade e dark mode.
+- Parcelas, pagamentos, estornos, recorrência, conciliação e integrações com Clientes ou Ordens permanecem fora deste ciclo.
+
+### Fundação funcional — Financeiro Ciclo B (15/07/2026)
+
+- O envelope local `proflow:financeiro:v1` evoluiu de forma explícita da versão 1 para a versão 2, preservando IDs, sequências, revisões, contas, lançamentos e históricos do Ciclo A, com cópia anterior mantida no backup e validação Zod antes da gravação.
+- Contas a receber e contas a pagar manuais agora possuem criação persistente, parcelas incorporadas ao agregado, vencimentos mensais, saldo aberto e status derivados, mantendo valores exclusivamente em centavos inteiros.
+- A divisão de parcelas distribui qualquer resto de centavos entre as primeiras parcelas, garantindo que a soma seja exatamente igual ao total e impedindo parcelas nulas ou negativas.
+- Recebimentos e pagamentos parciais ou totais são registrados por parcela e conta ativa, sem exceder o saldo aberto, com trilha histórica e reflexo no saldo apenas enquanto estiverem ativos.
+- Cancelamento de parcela, cancelamento do saldo aberto e estorno exigem motivo; valores já realizados e registros financeiros nunca são apagados, e estornos reabrem o saldo sem permitir duplicidade.
+- Métricas, saldos por conta e fluxo de caixa foram ampliados para separar previsto por vencimento e realizado por data de pagamento, sem contar recebíveis ou pagáveis duas vezes.
+- As visões de movimentações, contas a receber e contas a pagar passaram a ter conteúdos funcionais próprios; o detalhe financeiro exibe parcelas, pagamentos, estornos, cancelamentos e histórico completo com ações compatíveis com o estado atual.
+- Integrações com Clientes, Ordens, Estoque e Equipamentos, geração por OS, recorrência, conciliação bancária e persistência externa permanecem reservadas para ciclos posteriores.
+
+### Fundação funcional — Financeiro Ciclo C (15/07/2026)
+
+- Foram formalizados contratos públicos mínimos para Clientes, Ordens e Financeiro em `lib/contracts`, expondo somente referências cadastrais, snapshots financeiros e resumos necessários aos consumidores.
+- O gateway de relações do Financeiro passou a concentrar validações de existência, arquivamento e elegibilidade sem acessar repositories, adapters ou tipos internos completos de Clientes e Ordens.
+- O envelope financeiro evoluiu explicitamente da versão 2 para a versão 3, preservando contas, lançamentos, parcelas, pagamentos, IDs, sequências, revisões e históricos dos Ciclos A e B.
+- Recebíveis manuais podem ser vinculados a clientes ativos, mantendo `clientId` e snapshot histórico do nome; vínculos antigos permanecem válidos após eventual arquivamento cadastral.
+- Ordens elegíveis podem gerar recebíveis somente por confirmação explícita, com snapshot da OS, cliente, finalidade e chave idempotente persistente `SERVICE_ORDER:{id}:RECEIVABLE:MAIN`.
+- A reconciliação compara valor atual da OS, valor emitido, recebido e saldo, sinalizando aumento, redução, cancelamento, arquivamento, indisponibilidade ou modificação manual sem sobrescrever o Financeiro.
+- Aumentos permitem complemento confirmado com finalidade `ADDITIONAL:{sequência}`; reduções e cancelamentos preservam pagamentos e direcionam para o fluxo seguro de cancelamento do saldo aberto.
+- A visualização de divergências oferece acesso à OS, cliente e recebível, revisão explícita e atualização de snapshot, mantendo o estado real sempre derivado.
+- Event Bus, CQRS, persistência externa, Prisma, Supabase, autenticação, recorrência, conciliação bancária e alterações automáticas de recebíveis continuam fora do escopo.
+
+### Fundação funcional — Equipamentos Ciclo A (15/07/2026)
+
+- Equipamentos passou a representar ativos e patrimônios duráveis por meio de `EquipmentAsset`, separando tipo, categoria, propriedade, status operacional e condição técnica.
+- O módulo passou a seguir `Página → Action → Service → Repository → Storage Adapter`; somente o adapter local acessa `localStorage`.
+- O envelope `proflow:equipamentos:v1` possui versão, revisão incremental, sequência, validação Zod, backup e recuperação sem reinicialização silenciosa.
+- Cadastro, edição, arquivamento lógico, detalhe, busca, filtros, tabela, cartões, histórico append-only e metadados manuais de fotos e documentos foram conectados à persistência.
+- Código interno, número de série e patrimônio possuem prevenção de duplicidade inclusive contra registros arquivados.
+- Aquisição e depreciação usam centavos inteiros; o valor atual linear é derivado por meses completos, respeita o residual e ativos de clientes ou terceiros não compõem o patrimônio próprio.
+- Localização passou a ser estruturada; status operacional e condição técnica são persistidos separadamente, enquanto criticidade e depreciação completa são derivadas.
+- Manutenção, garantia avançada, Clientes, Ordens, Financeiro, upload real, Prisma e Supabase permanecem reservados aos próximos ciclos.

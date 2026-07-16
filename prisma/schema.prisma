@@ -1,0 +1,1835 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  TECHNICIAN
+  FINANCE
+  SALES
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  INVITED
+  BLOCKED
+}
+
+enum AddressType {
+  BILLING
+  SERVICE
+  DELIVERY
+  HEADQUARTER
+  OTHER
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum ServiceOrderStatus {
+  DRAFT
+  OPEN
+  SCHEDULED
+  IN_PROGRESS
+  WAITING_PARTS
+  WAITING_APPROVAL
+  COMPLETED
+  CANCELED
+}
+
+enum ServiceOrderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  TRANSFER
+  RESERVATION
+  RETURN
+}
+
+enum FinancialStatus {
+  OPEN
+  PAID
+  OVERDUE
+  CANCELED
+  PARTIAL
+}
+
+enum ReceivableStatus {
+  PLANNED
+  PENDING
+  PARTIALLY_RECEIVED
+  RECEIVED
+  OVERDUE
+  RENEGOTIATED
+  CANCELED
+  REVERSED
+}
+
+enum CashFlowType {
+  INCOME
+  EXPENSE
+}
+
+enum BudgetStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+  CANCELED
+}
+
+enum ContractStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  CANCELED
+}
+
+enum PreventiveStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELED
+}
+
+enum MaintenanceFrequencyType {
+  DAYS
+  WEEKS
+  MONTHS
+  YEARS
+  OPERATING_HOURS
+  CUSTOM
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+enum FileVisibility {
+  PRIVATE
+  COMPANY
+  PUBLIC
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+enum ToolStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  LOST
+}
+
+enum AssetStatus {
+  ACTIVE
+  IN_MAINTENANCE
+  LOST
+  SOLD
+  DISCARDED
+  INACTIVE
+}
+
+enum AssetCondition {
+  NEW
+  EXCELLENT
+  GOOD
+  REGULAR
+  POOR
+  DAMAGED
+}
+
+model Empresa {
+  id        String    @id @default(cuid())
+  companyId String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name         String
+  legalName    String?
+  document     String? @unique
+  email        String?
+  phone        String?
+  tradeSegment String?
+  active       Boolean @default(true)
+
+  usuarios               Usuario[]
+  permissoes             Permissao[]
+  clientes               Cliente[]
+  enderecos              Endereco[]
+  equipamentos           Equipamento[]
+  equipamentosInstalados EquipamentoInstalado[]
+  fornecedores           Fornecedor[]
+  veiculos               Veiculo[]
+  ferramentas            Ferramenta[]
+  estoques               Estoque[]
+  categorias             Categoria[]
+  produtos               Produto[]
+  movimentacoesEstoque   MovimentacaoEstoque[]
+  ordensServico          OrdemServico[]
+  checklists             Checklist[]
+  fotos                  Foto[]
+  checklistTemplates     ChecklistTemplate[] @relation("ChecklistTemplatesCompany")
+  checklistTemplateItems ChecklistTemplateItem[] @relation("ChecklistTemplateItemsCompany")
+  assinaturas            Assinatura[]
+  materiaisUtilizados    MaterialUtilizado[]
+  equipes                Equipe[]
+  agendas                Agenda[]
+  financeiros            Financeiro[]
+  contasReceber          ContaReceber[]
+  contasPagar            ContaPagar[]
+  fluxosCaixa            FluxoCaixa[]
+  centrosCusto           CentroCusto[]
+  orcamentos             Orcamento[]
+  contratos              Contrato[]
+  manutencoesPreventivas ManutencaoPreventiva[]
+  notificacoes           Notificacao[]
+  logsSistema            LogSistema[]
+  arquivos               Arquivo[]
+  configuracaoEmpresa    ConfiguracaoEmpresa?
+  categoriasFinanceiras  FinancialCategory[]
+  contasFinanceiras      FinancialAccount[]
+  transacoesFinanceiras  FinancialTransaction[]
+  categoriasPatrimoniais AssetCategory[]
+  patrimonios            Asset[]
+  equipamentosHistorico   EquipmentServiceHistory[]
+  serviceOrderChecklists   ServiceOrderChecklist[] @relation("ServiceOrderChecklistsCompany")
+  serviceOrderChecklistItems ServiceOrderChecklistItem[] @relation("ServiceOrderChecklistItemsCompany")
+  serviceOrderAttachments ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsCompany")
+  serviceOrderAcceptances ServiceOrderAcceptance[] @relation("ServiceOrderAcceptancesCompany")
+  warranties               Warranty[]              @relation("CompanyWarranties")
+
+  @@index([name])
+  @@index([deletedAt])
+  @@map("empresas")
+}
+
+enum ChecklistCategory {
+  INSTALLATION
+  PREVENTIVE_MAINTENANCE
+  CORRECTIVE_MAINTENANCE
+  CLEANING
+  ELECTRICAL_INSPECTION
+  SAFETY
+  COMMISSIONING
+  WARRANTY
+  OTHER
+}
+
+enum ChecklistItemType {
+  BOOLEAN
+  TEXT
+  LONG_TEXT
+  NUMBER
+  DECIMAL
+  DATE
+  TIME
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  MEASUREMENT
+  PHOTO_REQUIRED
+  SIGNATURE_REQUIRED
+  SECTION
+  INFORMATION
+}
+
+enum ServiceOrderChecklistStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum ServiceOrderAttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  SIGNATURE
+  RECEIPT
+  INVOICE
+  REPORT
+  OTHER
+}
+
+enum ServiceOrderAttachmentCategory {
+  BEFORE_SERVICE
+  DURING_SERVICE
+  AFTER_SERVICE
+  DIAGNOSIS
+  EQUIPMENT
+  INSTALLATION
+  CHECKLIST
+  CUSTOMER_SIGNATURE
+  TECHNICAL_REPORT
+  WARRANTY
+  PAYMENT
+  GENERAL
+}
+
+enum ServiceOrderAcceptanceType {
+  SERVICE_AUTHORIZATION
+  SERVICE_COMPLETION
+  TECHNICAL_REPORT
+  WARRANTY_TERMS
+  BUDGET_APPROVAL
+  EQUIPMENT_DELIVERY
+  OTHER
+}
+
+enum ServiceOrderAcceptanceStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
+}
+
+enum WarrantyProviderType {
+  COMPANY
+  MANUFACTURER
+  SUPPLIER
+  THIRD_PARTY
+}
+
+enum WarrantyType {
+  INSTALLATION
+  SERVICE
+  LABOR
+  PART
+  EQUIPMENT
+  FULL
+  OTHER
+}
+
+enum WarrantyStatus {
+  ACTIVE
+  EXPIRED
+  VOID
+  CANCELED
+}
+
+enum StorageProvider {
+  SUPABASE
+  LOCAL
+  S3
+  GOOGLE_DRIVE
+  OTHER
+}
+
+model ServiceOrderAttachment {
+  id                        String   @id @default(cuid())
+  companyId                 String
+  serviceOrderId            String
+  serviceOrderChecklistId   String?
+  serviceOrderChecklistItemId String?
+  uploadedByUserId          String?
+  attachmentType            ServiceOrderAttachmentType
+  category                  ServiceOrderAttachmentCategory
+  fileName                  String
+  originalFileName          String?
+  mimeType                  String
+  fileSizeBytes             BigInt?  @db.BigInt
+  storageProvider           StorageProvider
+  storageBucket             String?
+  storagePath               String
+  publicUrl                 String?
+  checksum                  String?
+  title                     String?
+  description               String?
+  capturedAt                DateTime?
+  latitude                  Decimal? @db.Decimal(10,7)
+  longitude                 Decimal? @db.Decimal(10,7)
+  sortOrder                 Int?
+  isCustomerVisible         Boolean  @default(false)
+  isRequiredRecord          Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  company                   Empresa                    @relation("ServiceOrderAttachmentsCompany", fields: [companyId], references: [id])
+  serviceOrder              OrdemServico               @relation("ServiceOrderAttachmentsOrder", fields: [serviceOrderId], references: [id])
+  serviceOrderChecklist     ServiceOrderChecklist?     @relation("ServiceOrderAttachmentsChecklist", fields: [serviceOrderChecklistId], references: [id])
+  serviceOrderChecklistItem ServiceOrderChecklistItem? @relation("ServiceOrderAttachmentsChecklistItem", fields: [serviceOrderChecklistItemId], references: [id])
+  uploadedBy                Usuario?                   @relation("UploadedServiceOrderAttachments", fields: [uploadedByUserId], references: [id])
+  serviceOrderAcceptance   ServiceOrderAcceptance?    @relation("ServiceOrderAcceptanceAttachment")
+
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, serviceOrderChecklistId])
+  @@index([companyId, serviceOrderChecklistItemId])
+  @@index([companyId, uploadedByUserId])
+  @@index([companyId, attachmentType])
+  @@index([companyId, category])
+  @@index([companyId, capturedAt])
+  @@index([companyId, isCustomerVisible])
+  @@index([companyId, deletedAt])
+  @@index([companyId, checksum])
+  @@index([serviceOrderId, sortOrder])
+  @@map("service_order_attachments")
+}
+
+model ServiceOrderAcceptance {
+  id                      String                        @id @default(cuid())
+  companyId               String
+  serviceOrderId          String
+  clientId                String
+  attachmentId            String?
+  acceptanceType          ServiceOrderAcceptanceType  @default(SERVICE_COMPLETION)
+  status                  ServiceOrderAcceptanceStatus @default(PENDING)
+  signerName              String
+  signerDocument          String?
+  signerEmail             String?
+  signerPhone             String?
+  acceptedAt              DateTime?
+  rejectedAt              DateTime?
+  acceptanceTextSnapshot  String
+  termsVersion            String?
+  ipAddress               String?
+  userAgent               String?
+  latitude                Decimal?                     @db.Decimal(10,7)
+  longitude               Decimal?                     @db.Decimal(10,7)
+  rejectionReason         String?
+  notes                   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  company         Empresa                @relation("ServiceOrderAcceptancesCompany", fields: [companyId], references: [id])
+  serviceOrder    OrdemServico           @relation("ServiceOrderAcceptancesOrder", fields: [serviceOrderId], references: [id])
+  client          Cliente                @relation("ServiceOrderAcceptancesClient", fields: [clientId], references: [id])
+  attachment      ServiceOrderAttachment? @relation("ServiceOrderAcceptanceAttachment", fields: [attachmentId], references: [id])
+
+  @@unique([attachmentId])
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, clientId])
+  @@index([companyId, status])
+  @@index([companyId, acceptanceType])
+  @@index([companyId, acceptedAt])
+  @@index([companyId, rejectedAt])
+  @@index([companyId, deletedAt])
+  @@map("service_order_acceptances")
+}
+
+model Warranty {
+  id                   String              @id @default(cuid())
+  companyId            String
+  clientId             String
+  serviceOrderId       String?
+  installedEquipmentId String?
+  technicalReportId    String?
+  providerType         WarrantyProviderType
+  warrantyType         WarrantyType
+  status               WarrantyStatus
+  title                String
+  description          String
+  startDate            DateTime
+  endDate              DateTime
+  coverageDescription  String
+  exclusions           String
+  supplierName         String?
+  manufacturerName     String?
+  invoiceNumber        String?
+  notes                String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  company            Empresa               @relation("CompanyWarranties", fields: [companyId], references: [id])
+  client             Cliente               @relation("ClientWarranties", fields: [clientId], references: [id])
+  serviceOrder       OrdemServico?         @relation("ServiceOrderWarrantiesOrder", fields: [serviceOrderId], references: [id])
+  installedEquipment EquipamentoInstalado? @relation("EquipmentWarrantiesInstalledEquipment", fields: [installedEquipmentId], references: [id])
+
+  /// technicalReportId is a future optional link to a ServiceOrderTechnicalReport model
+
+  @@index([companyId, status])
+  @@index([companyId, warrantyType])
+  @@index([companyId, providerType])
+  @@index([companyId, clientId])
+  @@index([companyId, installedEquipmentId])
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, endDate])
+  @@index([companyId, deletedAt])
+  @@map("warranties")
+}
+
+model ServiceOrderChecklist {
+  id                    String   @id @default(cuid())
+  companyId             String
+  serviceOrderId        String
+  checklistTemplateId   String
+  checklistTemplateVersion Int
+  assignedToUserId      String?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  status                ServiceOrderChecklistStatus @default(PENDING)
+  notes                 String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  deletedAt             DateTime?
+
+  company       Empresa        @relation("ServiceOrderChecklistsCompany", fields: [companyId], references: [id])
+  serviceOrder  OrdemServico   @relation("ServiceOrderChecklistsOrder", fields: [serviceOrderId], references: [id])
+  checklistTemplate ChecklistTemplate @relation("ServiceOrderChecklistsTemplate", fields: [checklistTemplateId], references: [id])
+  assignedTo    Usuario?       @relation("AssignedServiceOrderChecklists", fields: [assignedToUserId], references: [id])
+  items         ServiceOrderChecklistItem[]
+  serviceOrderAttachments ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsChecklist")
+
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, checklistTemplateId])
+  @@index([companyId, status])
+  @@index([companyId, assignedToUserId])
+  @@index([companyId, completedAt])
+  @@index([companyId, deletedAt])
+  @@map("checklists_ordem_servico")
+}
+
+model ServiceOrderChecklistItem {
+  id                          String   @id @default(cuid())
+  companyId                   String
+  serviceOrderChecklistId     String
+  checklistTemplateItemId     String?
+  parentItemId                String?
+
+  titleSnapshot               String
+  descriptionSnapshot         String?
+  itemTypeSnapshot            ChecklistItemType
+  position                    Int
+  isRequired                  Boolean @default(false)
+  expectedValueSnapshot       String?
+  minValueSnapshot            Decimal? @db.Decimal(12,2)
+  maxValueSnapshot            Decimal? @db.Decimal(12,2)
+  unitSnapshot                String?
+  optionsSnapshot             Json?
+
+  responseText                String?
+  responseNumber              Decimal? @db.Decimal(12,2)
+  responseBoolean             Boolean?
+  responseDate                DateTime?
+  responseJson                Json?
+  isCompliant                 Boolean?
+  technicianNotes             String?
+  answeredByUserId            String?
+  answeredAt                  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  company      Empresa                   @relation("ServiceOrderChecklistItemsCompany", fields: [companyId], references: [id])
+  checklist    ServiceOrderChecklist     @relation(fields: [serviceOrderChecklistId], references: [id])
+  templateItem ChecklistTemplateItem?    @relation("ExecutedTemplateItem", fields: [checklistTemplateItemId], references: [id])
+  parentItem   ServiceOrderChecklistItem? @relation("ServiceOrderChecklistItemParent", fields: [parentItemId], references: [id])
+  children     ServiceOrderChecklistItem[] @relation("ServiceOrderChecklistItemParent")
+  serviceOrderAttachments ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsChecklistItem")
+  answeredBy   Usuario?                  @relation("AnsweredServiceOrderChecklistItems", fields: [answeredByUserId], references: [id])
+
+  @@index([companyId, serviceOrderChecklistId])
+  @@index([companyId, checklistTemplateItemId])
+  @@index([serviceOrderChecklistId, position])
+  @@index([companyId, answeredByUserId])
+  @@index([companyId, answeredAt])
+  @@index([companyId, deletedAt])
+  @@map("checklist_execucao_items")
+}
+
+model ChecklistTemplate {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name        String
+  description String?
+  category    ChecklistCategory
+  version     Int      @default(1)
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+
+  company Empresa @relation("ChecklistTemplatesCompany", fields: [companyId], references: [id])
+  items   ChecklistTemplateItem[]
+  serviceOrderChecklists ServiceOrderChecklist[] @relation("ServiceOrderChecklistsTemplate")
+
+  @@unique([companyId, name, version])
+  @@index([companyId, category])
+  @@index([companyId, isActive])
+  @@index([companyId, name])
+  @@index([deletedAt])
+  @@map("checklist_templates")
+}
+
+model ChecklistTemplateItem {
+  id                  String   @id @default(cuid())
+  companyId           String
+  checklistTemplateId String
+  parentItemId        String?
+
+  title       String
+  description String?
+  itemType    ChecklistItemType
+  position    Int
+  isRequired  Boolean  @default(false)
+  expectedValue String?
+  minValue    Decimal? @db.Decimal(12,2)
+  maxValue    Decimal? @db.Decimal(12,2)
+  unit        String?
+  options     Json?
+  helpText    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  company           Empresa              @relation("ChecklistTemplateItemsCompany", fields: [companyId], references: [id])
+  checklistTemplate ChecklistTemplate    @relation(fields: [checklistTemplateId], references: [id])
+  parentItem        ChecklistTemplateItem? @relation("ChecklistItemParent", fields: [parentItemId], references: [id])
+  children          ChecklistTemplateItem[] @relation("ChecklistItemParent")
+  executedItems     ServiceOrderChecklistItem[] @relation("ExecutedTemplateItem")
+
+  @@index([companyId, checklistTemplateId])
+  @@index([companyId, parentItemId])
+  @@index([checklistTemplateId, position])
+  @@index([companyId, itemType])
+  @@index([companyId, deletedAt])
+  @@map("checklist_template_items")
+}
+
+model Usuario {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name         String
+  email        String
+  passwordHash String?
+  phone        String?
+  role         UserRole   @default(VIEWER)
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+
+  company              Empresa               @relation(fields: [companyId], references: [id])
+  permissoes           Permissao[]
+  equipes              Equipe[]              @relation("EquipeUsuarios")
+  ordensResponsavel    OrdemServico[]        @relation("ResponsavelOS")
+  agendas              Agenda[]
+  notificacoes         Notificacao[]
+  logs                 LogSistema[]
+  arquivos             Arquivo[]
+  equipmentServiceHistories EquipmentServiceHistory[]
+  financialTransactionsCreated FinancialTransaction[]
+  contasReceber        ContaReceber[]
+  movimentacoesEstoque MovimentacaoEstoque[]
+  assignedServiceOrderChecklists ServiceOrderChecklist[] @relation("AssignedServiceOrderChecklists")
+  answeredServiceOrderChecklistItems ServiceOrderChecklistItem[] @relation("AnsweredServiceOrderChecklistItems")
+  uploadedServiceOrderAttachments ServiceOrderAttachment[] @relation("UploadedServiceOrderAttachments")
+
+  @@unique([companyId, email])
+  @@index([companyId, status])
+  @@index([companyId, role])
+  @@index([deletedAt])
+  @@map("usuarios")
+}
+
+model Permissao {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  userId    String
+  module    String
+  canRead   Boolean @default(true)
+  canCreate Boolean @default(false)
+  canUpdate Boolean @default(false)
+  canDelete Boolean @default(false)
+  canExport Boolean @default(false)
+
+  company Empresa @relation(fields: [companyId], references: [id])
+  user    Usuario @relation(fields: [userId], references: [id])
+
+  @@unique([companyId, userId, module])
+  @@index([companyId, module])
+  @@index([deletedAt])
+  @@map("permissoes")
+}
+
+model Cliente {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name      String
+  legalName String?
+  document  String?
+  email     String?
+  phone     String?
+  type      ClientType @default(COMPANY)
+  notes     String?
+  active    Boolean    @default(true)
+
+  company                Empresa                @relation(fields: [companyId], references: [id])
+  enderecos              Endereco[]
+  equipamentosInstalados EquipamentoInstalado[]
+  ordensServico          OrdemServico[]
+  agendas                Agenda[]
+  financeiros            Financeiro[]
+  contasReceber          ContaReceber[]
+  orcamentos             Orcamento[]
+  contratos              Contrato[]
+  manutencoesPreventivas ManutencaoPreventiva[]
+  financialTransactions FinancialTransaction[]
+  arquivos               Arquivo[]
+  serviceOrderAcceptances ServiceOrderAcceptance[] @relation("ServiceOrderAcceptancesClient")
+  warranties             Warranty[]              @relation("ClientWarranties")
+
+  @@unique([companyId, document])
+  @@index([companyId, name])
+  @@index([companyId, active])
+  @@index([deletedAt])
+  @@map("clientes")
+}
+
+model Endereco {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId   String?
+  type       AddressType @default(SERVICE)
+  street     String
+  number     String?
+  complement String?
+  district   String?
+  city       String
+  state      String
+  zipCode    String?
+  country    String      @default("Brasil")
+  latitude   Decimal?    @db.Decimal(10, 7)
+  longitude  Decimal?    @db.Decimal(10, 7)
+
+  company Empresa        @relation(fields: [companyId], references: [id])
+  cliente Cliente?       @relation(fields: [clientId], references: [id])
+  ordens  OrdemServico[]
+  agendas Agenda[]
+
+  @@index([companyId, clientId])
+  @@index([companyId, city, state])
+  @@index([deletedAt])
+  @@map("enderecos")
+}
+
+model Equipamento {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name        String
+  brand       String?
+  model       String?
+  category    String?
+  description String?
+  active      Boolean @default(true)
+
+  company    Empresa                @relation(fields: [companyId], references: [id])
+  instalados EquipamentoInstalado[]
+
+  @@index([companyId, name])
+  @@index([companyId, category])
+  @@index([deletedAt])
+  @@map("equipamentos")
+}
+
+model EquipamentoInstalado {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId      String
+  equipmentId   String
+  serialNumber  String?
+  assetTag      String?
+  location      String?
+  installedAt   DateTime?
+  warrantyUntil DateTime?
+  status        String    @default("ACTIVE")
+  notes         String?
+
+  company                Empresa                @relation(fields: [companyId], references: [id])
+  cliente                Cliente                @relation(fields: [clientId], references: [id])
+  equipamento            Equipamento            @relation(fields: [equipmentId], references: [id])
+  ordensServico          OrdemServico[]
+  manutencoesPreventivas ManutencaoPreventiva[]
+  serviceHistories       EquipmentServiceHistory[]
+  warranties             Warranty[]              @relation("EquipmentWarrantiesInstalledEquipment")
+
+  @@unique([companyId, serialNumber])
+  @@index([companyId, clientId])
+  @@index([companyId, equipmentId])
+  @@index([deletedAt])
+  @@map("equipamentos_instalados")
+}
+
+enum EquipmentHistoryEventType {
+  INSTALLATION
+  PREVENTIVE_MAINTENANCE
+  CORRECTIVE_MAINTENANCE
+  CLEANING
+  INSPECTION
+  DIAGNOSIS
+  PART_REPLACEMENT
+  REFRIGERANT_CHARGE
+  ELECTRICAL_REPAIR
+  CALIBRATION
+  WARRANTY_SERVICE
+  REMOVAL
+  REPLACEMENT
+  STATUS_CHANGE
+  OTHER
+}
+
+model EquipmentServiceHistory {
+  id                    String   @id @default(cuid())
+  companyId             String
+  installedEquipmentId  String
+  serviceOrderId        String?
+  technicianUserId      String?
+
+  eventType             EquipmentHistoryEventType
+  title                 String
+  description           String?
+  serviceDate           DateTime
+  operatingHours        Decimal? @db.Decimal(12,2)
+  odometerReading       Decimal? @db.Decimal(12,2)
+  previousStatus        String?
+  resultingStatus       String?
+  diagnosis             String?
+  solution              String?
+  recommendations       String?
+  measurements          Json?
+  partsReplaced         String?
+  refrigerantAdded      Decimal? @db.Decimal(12,2)
+  refrigerantType       String?
+  pressureLowSide       Decimal? @db.Decimal(8,2)
+  pressureHighSide      Decimal? @db.Decimal(8,2)
+  inputVoltage          Decimal? @db.Decimal(8,2)
+  currentDraw           Decimal? @db.Decimal(8,2)
+  temperatureBefore     Decimal? @db.Decimal(6,2)
+  temperatureAfter      Decimal? @db.Decimal(6,2)
+  warrantyUntil         DateTime?
+  nextRecommendedServiceDate DateTime?
+  customerSignatureName String?
+  notes                 String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  deletedAt             DateTime?
+
+  company               Empresa  @relation(fields: [companyId], references: [id])
+  installedEquipment    EquipamentoInstalado @relation(fields: [installedEquipmentId], references: [id])
+  ordemServico          OrdemServico? @relation(fields: [serviceOrderId], references: [id])
+  technician            Usuario? @relation(fields: [technicianUserId], references: [id])
+
+  @@index([companyId, installedEquipmentId])
+  @@index([companyId, serviceDate])
+  @@index([companyId, eventType])
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, technicianUserId])
+  @@index([companyId, nextRecommendedServiceDate])
+  @@index([companyId, deletedAt])
+  @@map("historicos_equipamentos_instalados")
+}
+
+model Fornecedor {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name     String
+  document String?
+  email    String?
+  phone    String?
+  category String?
+  active   Boolean @default(true)
+
+  company     Empresa      @relation(fields: [companyId], references: [id])
+  produtos    Produto[]
+  contasPagar ContaPagar[]
+  financialTransactions FinancialTransaction[]
+
+  @@unique([companyId, document])
+  @@index([companyId, name])
+  @@index([deletedAt])
+  @@map("fornecedores")
+}
+
+model Veiculo {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  plate   String
+  model   String
+  brand   String?
+  year    Int?
+  status  VehicleStatus @default(ACTIVE)
+  mileage Int           @default(0)
+  notes   String?
+
+  company Empresa  @relation(fields: [companyId], references: [id])
+  equipes Equipe[]
+  agendas Agenda[]
+
+  @@unique([companyId, plate])
+  @@index([companyId, status])
+  @@index([deletedAt])
+  @@map("veiculos")
+}
+
+model Ferramenta {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name        String
+  code        String?
+  status      ToolStatus @default(AVAILABLE)
+  location    String?
+  lastCheckAt DateTime?
+  notes       String?
+
+  company Empresa  @relation(fields: [companyId], references: [id])
+  equipes Equipe[] @relation("EquipeFerramentas")
+
+  @@unique([companyId, code])
+  @@index([companyId, status])
+  @@index([companyId, name])
+  @@index([deletedAt])
+  @@map("ferramentas")
+}
+
+model Estoque {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name      String
+  location  String?
+  isDefault Boolean @default(false)
+  active    Boolean @default(true)
+
+  company       Empresa               @relation(fields: [companyId], references: [id])
+  produtos      Produto[]
+  movimentacoes MovimentacaoEstoque[]
+
+  @@index([companyId, name])
+  @@index([companyId, active])
+  @@index([deletedAt])
+  @@map("estoques")
+}
+
+model Categoria {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name        String
+  description String?
+  parentId    String?
+
+  company  Empresa     @relation(fields: [companyId], references: [id])
+  parent   Categoria?  @relation("CategoriaFilhas", fields: [parentId], references: [id])
+  children Categoria[] @relation("CategoriaFilhas")
+  produtos Produto[]
+
+  @@unique([companyId, name])
+  @@index([companyId, parentId])
+  @@index([deletedAt])
+  @@map("categorias")
+}
+
+model Produto {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  categoryId  String?
+  supplierId  String?
+  stockId     String?
+  name        String
+  sku         String?
+  unit        String  @default("UN")
+  costPrice   Decimal @default(0) @db.Decimal(12, 2)
+  salePrice   Decimal @default(0) @db.Decimal(12, 2)
+  quantity    Decimal @default(0) @db.Decimal(12, 3)
+  minQuantity Decimal @default(0) @db.Decimal(12, 3)
+  active      Boolean @default(true)
+
+  company             Empresa               @relation(fields: [companyId], references: [id])
+  categoria           Categoria?            @relation(fields: [categoryId], references: [id])
+  fornecedor          Fornecedor?           @relation(fields: [supplierId], references: [id])
+  estoque             Estoque?              @relation(fields: [stockId], references: [id])
+  movimentacoes       MovimentacaoEstoque[]
+  materiaisUtilizados MaterialUtilizado[]
+
+  @@unique([companyId, sku])
+  @@index([companyId, name])
+  @@index([companyId, categoryId])
+  @@index([companyId, stockId])
+  @@index([deletedAt])
+  @@map("produtos")
+}
+
+model MovimentacaoEstoque {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  productId      String
+  stockId        String
+  userId         String?
+  serviceOrderId String?
+  type           StockMovementType
+  quantity       Decimal           @db.Decimal(12, 3)
+  unitCost       Decimal           @default(0) @db.Decimal(12, 2)
+  notes          String?
+
+  company      Empresa       @relation(fields: [companyId], references: [id])
+  produto      Produto       @relation(fields: [productId], references: [id])
+  estoque      Estoque       @relation(fields: [stockId], references: [id])
+  usuario      Usuario?      @relation(fields: [userId], references: [id])
+  ordemServico OrdemServico? @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([companyId, productId])
+  @@index([companyId, stockId])
+  @@index([companyId, type])
+  @@index([companyId, createdAt])
+  @@index([deletedAt])
+  @@map("movimentacoes_estoque")
+}
+
+model OrdemServico {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId             String
+  addressId            String?
+  installedEquipmentId String?
+  responsibleId        String?
+  teamId               String?
+  code                 String
+  title                String
+  description          String?
+  status               ServiceOrderStatus   @default(OPEN)
+  priority             ServiceOrderPriority @default(MEDIUM)
+  scheduledAt          DateTime?
+  startedAt            DateTime?
+  finishedAt           DateTime?
+  totalAmount          Decimal              @default(0) @db.Decimal(12, 2)
+  notes                String?
+
+  company              Empresa               @relation(fields: [companyId], references: [id])
+  cliente              Cliente               @relation(fields: [clientId], references: [id])
+  endereco             Endereco?             @relation(fields: [addressId], references: [id])
+  equipamentoInstalado EquipamentoInstalado? @relation(fields: [installedEquipmentId], references: [id])
+  responsavel          Usuario?              @relation("ResponsavelOS", fields: [responsibleId], references: [id])
+  equipe               Equipe?               @relation(fields: [teamId], references: [id])
+  checklists           Checklist[]
+  fotos                Foto[]
+  assinaturas          Assinatura[]
+  materiaisUtilizados  MaterialUtilizado[]
+  agendas              Agenda[]
+  movimentacoesEstoque MovimentacaoEstoque[]
+  financeiros          Financeiro[]
+  financialTransactions FinancialTransaction[]
+  contasReceber        ContaReceber[]
+  arquivos             Arquivo[]
+  equipmentServiceHistories EquipmentServiceHistory[]
+  serviceOrderChecklists       ServiceOrderChecklist[] @relation("ServiceOrderChecklistsOrder")
+  serviceOrderAttachments      ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsOrder")
+  serviceOrderAcceptances      ServiceOrderAcceptance[] @relation("ServiceOrderAcceptancesOrder")
+  warranties                    Warranty[]             @relation("ServiceOrderWarrantiesOrder")
+
+  @@unique([companyId, code])
+  @@index([companyId, clientId])
+  @@index([companyId, status])
+  @@index([companyId, priority])
+  @@index([companyId, scheduledAt])
+  @@index([deletedAt])
+  @@map("ordens_servico")
+}
+
+model Checklist {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  serviceOrderId String
+  title          String
+  items          Json
+  completedAt    DateTime?
+
+  company      Empresa      @relation(fields: [companyId], references: [id])
+  ordemServico OrdemServico @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, completedAt])
+  @@index([deletedAt])
+  @@map("checklists")
+}
+
+model Foto {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  serviceOrderId String
+  url            String
+  caption        String?
+  metadata       Json?
+
+  company      Empresa      @relation(fields: [companyId], references: [id])
+  ordemServico OrdemServico @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([companyId, serviceOrderId])
+  @@index([deletedAt])
+  @@map("fotos")
+}
+
+model Assinatura {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  serviceOrderId String
+  signerName     String
+  signerDocument String?
+  imageUrl       String
+  signedAt       DateTime @default(now())
+
+  company      Empresa      @relation(fields: [companyId], references: [id])
+  ordemServico OrdemServico @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, signedAt])
+  @@index([deletedAt])
+  @@map("assinaturas")
+}
+
+model MaterialUtilizado {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  serviceOrderId String
+  productId      String
+  quantity       Decimal @db.Decimal(12, 3)
+  unitCost       Decimal @default(0) @db.Decimal(12, 2)
+  totalCost      Decimal @default(0) @db.Decimal(12, 2)
+
+  company      Empresa      @relation(fields: [companyId], references: [id])
+  ordemServico OrdemServico @relation(fields: [serviceOrderId], references: [id])
+  produto      Produto      @relation(fields: [productId], references: [id])
+
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, productId])
+  @@index([deletedAt])
+  @@map("materiais_utilizados")
+}
+
+model Equipe {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  vehicleId String?
+  name      String
+  active    Boolean @default(true)
+
+  company     Empresa        @relation(fields: [companyId], references: [id])
+  veiculo     Veiculo?       @relation(fields: [vehicleId], references: [id])
+  usuarios    Usuario[]      @relation("EquipeUsuarios")
+  ferramentas Ferramenta[]   @relation("EquipeFerramentas")
+  ordens      OrdemServico[]
+  agendas     Agenda[]
+
+  @@unique([companyId, name])
+  @@index([companyId, active])
+  @@index([companyId, vehicleId])
+  @@index([deletedAt])
+  @@map("equipes")
+}
+
+model Agenda {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId       String?
+  serviceOrderId String?
+  teamId         String?
+  userId         String?
+  vehicleId      String?
+  addressId      String?
+  title          String
+  description    String?
+  startsAt       DateTime
+  endsAt         DateTime
+  status         String   @default("SCHEDULED")
+
+  company      Empresa       @relation(fields: [companyId], references: [id])
+  cliente      Cliente?      @relation(fields: [clientId], references: [id])
+  ordemServico OrdemServico? @relation(fields: [serviceOrderId], references: [id])
+  equipe       Equipe?       @relation(fields: [teamId], references: [id])
+  usuario      Usuario?      @relation(fields: [userId], references: [id])
+  veiculo      Veiculo?      @relation(fields: [vehicleId], references: [id])
+  endereco     Endereco?     @relation(fields: [addressId], references: [id])
+
+  @@index([companyId, startsAt])
+  @@index([companyId, status])
+  @@index([companyId, teamId])
+  @@index([companyId, userId])
+  @@index([deletedAt])
+  @@map("agendas")
+}
+
+model Financeiro {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId       String?
+  serviceOrderId String?
+  description    String
+  type           CashFlowType
+  amount         Decimal         @db.Decimal(12, 2)
+  status         FinancialStatus @default(OPEN)
+  dueDate        DateTime?
+  paidAt         DateTime?
+
+  company      Empresa       @relation(fields: [companyId], references: [id])
+  cliente      Cliente?      @relation(fields: [clientId], references: [id])
+  ordemServico OrdemServico? @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([companyId, type])
+  @@index([companyId, status])
+  @@index([companyId, dueDate])
+  @@index([deletedAt])
+  @@map("financeiros")
+}
+
+model ContaReceber {
+  id                     String             @id @default(cuid())
+  companyId              String
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  deletedAt              DateTime?
+
+  financialTransactionId String?
+  clientId               String
+  serviceOrderId         String?
+  contractId             String?
+  financialAccountId     String?
+  createdById            String?
+  costCenterId           String?
+
+  description            String
+  amount                 Decimal            @db.Decimal(12, 2)
+  grossAmount            Decimal            @default(0) @db.Decimal(12, 2)
+  discountAmount         Decimal            @default(0) @db.Decimal(12, 2)
+  interestAmount         Decimal            @default(0) @db.Decimal(12, 2)
+  penaltyAmount          Decimal            @default(0) @db.Decimal(12, 2)
+  netAmount              Decimal            @default(0) @db.Decimal(12, 2)
+  dueDate                DateTime
+  receivedAt             DateTime?
+  status                 ReceivableStatus  @default(PENDING)
+  installmentNumber      Int?
+  installmentCount       Int?
+  paymentMethod          PaymentMethod?
+  notes                  String?
+  invoiceNumber          String?
+
+  company             Empresa             @relation(fields: [companyId], references: [id])
+  financialTransaction FinancialTransaction? @relation(fields: [financialTransactionId], references: [id])
+  cliente             Cliente             @relation(fields: [clientId], references: [id])
+  ordemServico        OrdemServico?       @relation(fields: [serviceOrderId], references: [id])
+  contrato            Contrato?           @relation(fields: [contractId], references: [id])
+  financialAccount    FinancialAccount?   @relation(fields: [financialAccountId], references: [id])
+  createdBy           Usuario?            @relation(fields: [createdById], references: [id])
+  centroCusto         CentroCusto?        @relation(fields: [costCenterId], references: [id])
+  fluxosCaixa         FluxoCaixa[]
+
+  @@index([companyId, clientId])
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, contractId])
+  @@index([companyId, financialTransactionId])
+  @@index([companyId, financialAccountId])
+  @@index([companyId, status])
+  @@index([companyId, dueDate])
+  @@index([companyId, receivedAt])
+  @@index([companyId, deletedAt])
+  @@map("contas_receber")
+}
+
+model ContaPagar {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  supplierId   String?
+  costCenterId String?
+  description  String
+  amount       Decimal         @db.Decimal(12, 2)
+  dueDate      DateTime
+  paidAt       DateTime?
+  status       FinancialStatus @default(OPEN)
+
+  company     Empresa      @relation(fields: [companyId], references: [id])
+  fornecedor  Fornecedor?  @relation(fields: [supplierId], references: [id])
+  centroCusto CentroCusto? @relation(fields: [costCenterId], references: [id])
+  fluxosCaixa FluxoCaixa[]
+
+  @@index([companyId, supplierId])
+  @@index([companyId, status])
+  @@index([companyId, dueDate])
+  @@index([deletedAt])
+  @@map("contas_pagar")
+}
+
+model FluxoCaixa {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  receivableId String?
+  payableId    String?
+  costCenterId String?
+  type         CashFlowType
+  description  String
+  amount       Decimal      @db.Decimal(12, 2)
+  occurredAt   DateTime     @default(now())
+
+  company      Empresa       @relation(fields: [companyId], references: [id])
+  contaReceber ContaReceber? @relation(fields: [receivableId], references: [id])
+  contaPagar   ContaPagar?   @relation(fields: [payableId], references: [id])
+  centroCusto  CentroCusto?  @relation(fields: [costCenterId], references: [id])
+
+  @@index([companyId, type])
+  @@index([companyId, occurredAt])
+  @@index([companyId, costCenterId])
+  @@index([deletedAt])
+  @@map("fluxos_caixa")
+}
+
+model CentroCusto {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name        String
+  code        String?
+  description String?
+  color       String?
+  icon        String?
+  parentId    String?
+  isActive    Boolean @map("active") @default(true)
+
+  company       Empresa        @relation(fields: [companyId], references: [id])
+  contasReceber ContaReceber[]
+  contasPagar   ContaPagar[]
+  fluxosCaixa   FluxoCaixa[]
+  parent        CentroCusto?   @relation("CentroCustoParent", fields: [parentId], references: [id])
+  children      CentroCusto[]  @relation("CentroCustoParent")
+
+  @@unique([companyId, code])
+  @@unique([companyId, name])
+  @@index([companyId, parentId])
+  @@index([companyId, name])
+  @@index([deletedAt])
+  @@map("centros_custo")
+}
+
+model Orcamento {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId    String
+  code        String
+  title       String
+  description String?
+  status      BudgetStatus @default(DRAFT)
+  subtotal    Decimal      @default(0) @db.Decimal(12, 2)
+  discount    Decimal      @default(0) @db.Decimal(12, 2)
+  total       Decimal      @default(0) @db.Decimal(12, 2)
+  validUntil  DateTime?
+  approvedAt  DateTime?
+
+  company Empresa @relation(fields: [companyId], references: [id])
+  cliente Cliente @relation(fields: [clientId], references: [id])
+
+  @@unique([companyId, code])
+  @@index([companyId, clientId])
+  @@index([companyId, status])
+  @@index([deletedAt])
+  @@map("orcamentos")
+}
+
+model Contrato {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId   String
+  code       String
+  title      String
+  status     ContractStatus @default(ACTIVE)
+  startsAt   DateTime
+  endsAt     DateTime?
+  monthlyFee Decimal        @default(0) @db.Decimal(12, 2)
+  slaHours   Int?
+  scope      String?
+
+  company                Empresa                @relation(fields: [companyId], references: [id])
+  cliente                Cliente                @relation(fields: [clientId], references: [id])
+  manutencoesPreventivas ManutencaoPreventiva[]
+  contasReceber          ContaReceber[]
+
+  @@unique([companyId, code])
+  @@index([companyId, clientId])
+  @@index([companyId, status])
+  @@index([deletedAt])
+  @@map("contratos")
+}
+
+model AssetCategory {
+  id         String   @id @default(cuid())
+  companyId  String
+  name       String
+  description String?
+  icon       String?
+  color      String?
+  isDefault  Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  company Empresa @relation(fields: [companyId], references: [id])
+
+  assets Asset[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@index([companyId, deletedAt])
+  @@map("categorias_patrimoniais")
+}
+
+model Asset {
+  id                 String        @id @default(cuid())
+  companyId          String
+  categoryId         String?
+  responsibleUserId  String?
+
+  name               String
+  description        String?
+  assetCode          String
+  serialNumber       String?
+  manufacturer       String?
+  model              String?
+  purchaseDate       DateTime?
+  purchaseValue      Decimal       @default(0) @db.Decimal(12, 2)
+  currentValue       Decimal       @default(0) @db.Decimal(12, 2)
+  residualValue      Decimal       @default(0) @db.Decimal(12, 2)
+  estimatedUsefulLifeMonths Int?
+  status             AssetStatus   @default(ACTIVE)
+  condition          AssetCondition @default(GOOD)
+  location           String?
+  supplierId         String?
+  invoiceNumber      String?
+  warrantyUntil      DateTime?
+  notes              String?
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deletedAt          DateTime?
+
+  company Empresa @relation(fields: [companyId], references: [id])
+  category AssetCategory? @relation(fields: [categoryId], references: [id])
+
+  @@unique([companyId, assetCode])
+  @@index([companyId])
+  @@index([companyId, assetCode])
+  @@index([companyId, status])
+  @@index([companyId, categoryId])
+  @@index([companyId, responsibleUserId])
+  @@index([companyId, deletedAt])
+  @@map("patrimonios")
+}
+
+model ManutencaoPreventiva {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  clientId             String
+  contractId           String?
+  installedEquipmentId String?
+  title                String
+  frequencyDays        Int
+  frequencyType        MaintenanceFrequencyType?
+  frequencyInterval    Int?
+  startDate            DateTime?
+  nextServiceDate      DateTime?
+  lastServiceDate      DateTime?
+  lastDoneAt           DateTime?
+  status               PreventiveStatus @default(ACTIVE)
+  checklistTemplate    Json?
+  description          String?
+  estimatedDurationMinutes Int?
+  estimatedTechnicians Int?
+  estimatedCost        Decimal? @db.Decimal(12, 2)
+  isActive             Boolean   @default(true)
+  autoCreateServiceOrder Boolean @default(false)
+  advanceNoticeDays    Int?
+  notes                String?
+
+  company              Empresa               @relation(fields: [companyId], references: [id])
+  cliente              Cliente               @relation(fields: [clientId], references: [id])
+  contrato             Contrato?             @relation(fields: [contractId], references: [id])
+  equipamentoInstalado EquipamentoInstalado? @relation(fields: [installedEquipmentId], references: [id])
+
+  @@index([companyId, clientId])
+  @@index([companyId, installedEquipmentId])
+  @@index([companyId, nextServiceDate])
+  @@index([companyId, status])
+  @@index([companyId, isActive])
+  @@index([companyId, contractId])
+  @@index([deletedAt])
+  @@map("manutencoes_preventivas")
+}
+
+model Notificacao {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  userId  String?
+  title   String
+  message String
+  type    NotificationType @default(INFO)
+  readAt  DateTime?
+
+  company Empresa  @relation(fields: [companyId], references: [id])
+  usuario Usuario? @relation(fields: [userId], references: [id])
+
+  @@index([companyId, userId])
+  @@index([companyId, readAt])
+  @@index([companyId, type])
+  @@index([deletedAt])
+  @@map("notificacoes")
+}
+
+model LogSistema {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+
+  company Empresa  @relation(fields: [companyId], references: [id])
+  usuario Usuario? @relation(fields: [userId], references: [id])
+
+  @@index([companyId, userId])
+  @@index([companyId, entity, entityId])
+  @@index([companyId, createdAt])
+  @@index([deletedAt])
+  @@map("logs_sistema")
+}
+
+model Arquivo {
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  userId         String?
+  clientId       String?
+  serviceOrderId String?
+  name           String
+  url            String
+  mimeType       String?
+  size           Int?
+  visibility     FileVisibility @default(COMPANY)
+  metadata       Json?
+
+  company      Empresa       @relation(fields: [companyId], references: [id])
+  usuario      Usuario?      @relation(fields: [userId], references: [id])
+  cliente      Cliente?      @relation(fields: [clientId], references: [id])
+  ordemServico OrdemServico? @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([companyId, userId])
+  @@index([companyId, clientId])
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, visibility])
+  @@index([deletedAt])
+  @@map("arquivos")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  INVESTMENT
+}
+
+enum ExpenseClassification {
+  FIXED
+  VARIABLE
+  NOT_APPLICABLE
+}
+
+enum AccountType {
+  CASH
+  CHECKING_ACCOUNT
+  DIGITAL_ACCOUNT
+  CREDIT_CARD
+  RESERVE
+  INVESTMENT
+  OTHER
+}
+
+model FinancialCategory {
+  id                    String               @id @default(cuid())
+  companyId             String
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  deletedAt             DateTime?
+
+  name                  String
+  description           String?
+  transactionType       TransactionType
+  expenseClassification ExpenseClassification
+  color                 String?
+  icon                  String?
+  isDefault             Boolean              @default(false)
+  isActive              Boolean              @default(true)
+
+  company Empresa @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, name, transactionType])
+  @@index([companyId, transactionType])
+  @@index([companyId, expenseClassification])
+  @@index([companyId, isDefault])
+  @@index([companyId, deletedAt])
+  @@map("categorias_financeiras")
+
+  financialTransactions FinancialTransaction[]
+}
+
+model FinancialAccount {
+  id                 String    @id @default(cuid())
+  companyId          String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  name               String
+  accountType        AccountType
+  bankName           String?
+  initialBalance     Decimal   @default(0) @db.Decimal(12, 2)
+  initialBalanceDate DateTime
+  isDefault          Boolean   @default(false)
+  isActive           Boolean   @default(true)
+
+  company Empresa @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, accountType])
+  @@index([companyId, isDefault])
+  @@index([companyId, deletedAt])
+  @@map("contas_financeiras")
+
+  financialTransactions FinancialTransaction[]
+  contasReceber        ContaReceber[]
+}
+
+enum TransactionStatus {
+  PLANNED
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  RENEGOTIATED
+  CANCELED
+  REVERSED
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  BOLETO
+  CHECK
+  PAYMENT_LINK
+  OTHER
+}
+
+model FinancialTransaction {
+  id                 String             @id @default(cuid())
+  companyId          String
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+
+  financialCategoryId String
+  financialAccountId  String
+  clientId            String?
+  serviceOrderId      String?
+  supplierId          String?
+  createdById         String
+
+  description         String
+  amount              Decimal            @db.Decimal(12, 2)
+  transactionType     TransactionType
+  status              TransactionStatus
+  paymentMethod       PaymentMethod?
+  competenceDate      DateTime
+  dueDate             DateTime?
+  paidAt              DateTime?
+  notes               String?
+
+  company             Empresa            @relation(fields: [companyId], references: [id])
+  financialCategory   FinancialCategory  @relation(fields: [financialCategoryId], references: [id])
+  financialAccount    FinancialAccount   @relation(fields: [financialAccountId], references: [id])
+  cliente             Cliente?           @relation(fields: [clientId], references: [id])
+  contasReceber       ContaReceber[]
+  ordemServico        OrdemServico?      @relation(fields: [serviceOrderId], references: [id])
+  fornecedor          Fornecedor?        @relation(fields: [supplierId], references: [id])
+  createdBy           Usuario            @relation(fields: [createdById], references: [id])
+
+  @@index([companyId, financialCategoryId])
+  @@index([companyId, financialAccountId])
+  @@index([companyId, clientId])
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, supplierId])
+  @@index([companyId, transactionType])
+  @@index([companyId, status])
+  @@index([companyId, competenceDate])
+  @@index([companyId, dueDate])
+  @@index([companyId, paidAt])
+  @@index([companyId, deletedAt])
+  @@map("transacoes_financeiras")
+}
+
+model ConfiguracaoEmpresa {
+  id        String    @id @default(cuid())
+  companyId String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  timezone     String  @default("America/Sao_Paulo")
+  currency     String  @default("BRL")
+  locale       String  @default("pt-BR")
+  logoUrl      String?
+  primaryColor String  @default("#2563eb")
+  settings     Json?
+
+  company Empresa @relation(fields: [companyId], references: [id])
+
+  @@index([deletedAt])
+  @@map("configuracoes_empresa")
+}

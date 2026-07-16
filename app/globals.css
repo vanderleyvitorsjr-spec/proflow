@@ -1,0 +1,293 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  --background: #f5f7fa;
+  --foreground: #101828;
+
+  --card: #ffffff;
+  --card-foreground: #101828;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #0b2a4a;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eef3f8;
+  --secondary-foreground: #163653;
+
+  --muted: #f0f3f7;
+  --muted-foreground: #667085;
+
+  --accent: #0ea5e9;
+  --accent-foreground: #ffffff;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #d7e0ea;
+  --ring: #0ea5e9;
+
+  --success: #16a34a;
+  --warning: #d97706;
+  --info: #0284c7;
+
+  --surface: #ffffff;
+  --surface-subtle: #f8fafc;
+  --surface-raised: #ffffff;
+  --sidebar: #071a2f;
+  --sidebar-foreground: #dce8f5;
+  --sidebar-muted: #8da5bd;
+  --sidebar-active: #0d345d;
+
+  --radius: 0.625rem;
+  --radius-control: 0.625rem;
+  --radius-card: 0.875rem;
+  --radius-panel: 1rem;
+
+  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.045);
+  --shadow-md:
+    0 10px 28px rgb(15 23 42 / 0.08),
+    0 2px 5px rgb(15 23 42 / 0.035);
+  --shadow-lg: 0 18px 48px rgb(15 23 42 / 0.14);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #07111f;
+  --foreground: #f8fafc;
+
+  --card: #0d1929;
+  --card-foreground: #f8fafc;
+
+  --popover: #0d1829;
+  --popover-foreground: #f8fafc;
+
+  --primary: #38bdf8;
+  --primary-foreground: #07101f;
+
+  --secondary: #152338;
+  --secondary-foreground: #e2e8f0;
+
+  --muted: #122236;
+  --muted-foreground: #94a3b8;
+
+  --accent: #38bdf8;
+  --accent-foreground: #07101f;
+
+  --destructive: #f87171;
+  --destructive-foreground: #450a0a;
+
+  --border: #23364b;
+  --input: #304158;
+  --ring: #38bdf8;
+
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --info: #38bdf8;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.2);
+  --shadow-sm:
+    0 1px 3px rgb(0 0 0 / 0.24),
+    0 1px 2px rgb(0 0 0 / 0.16);
+  --surface: #0d1929;
+  --surface-subtle: #0a1524;
+  --surface-raised: #122238;
+  --sidebar: #040d18;
+  --sidebar-foreground: #e6eef7;
+  --sidebar-muted: #829ab2;
+  --sidebar-active: #0b3158;
+
+  --shadow-md:
+    0 10px 30px rgb(0 0 0 / 0.25),
+    0 3px 8px rgb(0 0 0 / 0.18);
+  --shadow-lg: 0 22px 52px rgb(0 0 0 / 0.38);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-raised: var(--surface-raised);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    Geist,
+    "Geist Fallback",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgb(14 165 233 / 0.22);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ring) 72%, transparent);
+  outline-offset: 2px;
+}
+
+select {
+  color: var(--foreground);
+  background-color: var(--card);
+}
+
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+th {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+tbody tr {
+  transition: background-color 160ms ease;
+}
+
+@media (hover: hover) {
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--muted) 62%, transparent);
+  }
+}
+
+.proflow-metric {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}
+
+.proflow-page {
+  width: 100%;
+  max-width: 100rem;
+  margin-inline: auto;
+}
+
+.proflow-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.55) transparent;
+}
+
+.proflow-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.proflow-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.proflow-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(148 163 184 / 0.45);
+}
+
+.proflow-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139 / 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [class*="hover:-translate"]:hover,
+  [class*="hover:scale"]:hover {
+    transform: none !important;
+  }
+}

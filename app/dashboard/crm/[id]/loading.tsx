@@ -1,0 +1,1 @@
+export default function CrmDetailLoading() { return <div className="space-y-3"><div className="h-20 animate-pulse rounded-xl bg-muted" /><div className="grid gap-3 lg:grid-cols-3"><div className="h-72 animate-pulse rounded-xl bg-muted lg:col-span-2" /><div className="h-72 animate-pulse rounded-xl bg-muted" /></div></div>; }

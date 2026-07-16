@@ -1,0 +1,3 @@
+import type { OrdensStorageAdapter } from "./ordens-storage-adapter";
+import type { OrdemRecord } from "./ordens-types";
+export class OrdensRepository { constructor(private readonly storage: OrdensStorageAdapter) {} async list() { return (await this.storage.list()).filter((item) => !item.archivedAt); } async findById(id: string) { return (await this.storage.list()).find((item) => item.id === id && !item.archivedAt) ?? null; } nextNumber() { return this.storage.nextNumber(); } async save(record: OrdemRecord) { const all = await this.storage.list(); await this.storage.replace(all.some((item) => item.id === record.id) ? all.map((item) => item.id === record.id ? record : item) : [record, ...all]); return record; } }
