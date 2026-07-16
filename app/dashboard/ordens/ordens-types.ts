@@ -25,6 +25,25 @@ export type OrdemWorkNote = {
   text: string;
   createdAt: string;
 };
+
+export type OrdemMediaKind = "BEFORE" | "AFTER" | "GENERAL" | "CLIENT_SIGNATURE" | "TECHNICIAN_SIGNATURE";
+export type OrdemMedia = {
+  id: string;
+  kind: OrdemMediaKind;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  createdBy?: string;
+};
+export type OrdemTechnicalReport = {
+  diagnosis: string;
+  servicePerformed: string;
+  recommendations: string;
+  clientAcknowledgement?: string;
+  updatedAt?: string;
+};
+
 export type OrdemExecution = {
   status: OrdemExecutionStatus;
   startedAt?: string;
@@ -49,7 +68,10 @@ export type OrdemHistory = {
     | "PRICING"
     | "EXECUTION"
     | "TEAM"
-    | "NOTE";
+    | "NOTE"
+    | "MEDIA"
+    | "REPORT"
+    | "SIGNATURE";
   description: string;
   createdAt: string;
 };
@@ -80,6 +102,8 @@ export type OrdemRecord = {
   equipment: string[];
   reservedMaterials: string[];
   execution?: OrdemExecution;
+  media?: OrdemMedia[];
+  technicalReport?: OrdemTechnicalReport;
   createdAt: string;
   updatedAt: string;
   canceledAt?: string;

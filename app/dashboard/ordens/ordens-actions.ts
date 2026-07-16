@@ -12,7 +12,7 @@ import { OrdensRepository } from "./ordens-repository";
 import type { OrdemFormValues } from "./ordens-schema";
 import { OrdensService } from "./ordens-service";
 import { ordensStorageAdapter } from "./ordens-storage-adapter";
-import type { OrdemChecklistItem, OrdemRecord, OrdemWorkNote } from "./ordens-types";
+import type { OrdemChecklistItem, OrdemMedia, OrdemRecord, OrdemTechnicalReport, OrdemWorkNote } from "./ordens-types";
 
 const service = new OrdensService(
   new OrdensRepository(ordensStorageAdapter),
@@ -41,6 +41,9 @@ export const addOrdemWorkNoteAction = (
 ) => service.addWorkNote(id, visibility, text);
 export const updateOrdemTeamAction = (id: string, members: string[]) =>
   service.updateTeam(id, members);
+export const addOrdemMediaAction = (id: string, media: OrdemMedia) => service.addMedia(id, media);
+export const removeOrdemMediaAction = (id: string, mediaId: string) => service.removeMedia(id, mediaId);
+export const updateOrdemTechnicalReportAction = (id: string, report: OrdemTechnicalReport) => service.updateTechnicalReport(id, report);
 
 const snapshot = (order: OrdemRecord | null): ServiceOrderFinancialSnapshot | null =>
   order

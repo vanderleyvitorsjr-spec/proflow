@@ -19,6 +19,7 @@ import { Select } from "@/components/ui/select";
 import { OrdemFormDrawer } from "../ordem-form-drawer";
 import { OrdemChecklist } from "../ordem-checklist";
 import { OrdemExecutionPanel } from "../ordem-execution-panel";
+import { OrdemEvidencePanel } from "../ordem-evidence-panel";
 import {
   addOrdemWorkNoteAction,
   archiveOrdemAction,
@@ -326,6 +327,7 @@ export function OrdemDetail({ id }: { id: string }) {
             </CardContent>
           </Card>
         </div>
+        <OrdemEvidencePanel order={order} onChanged={setOrder} />
         <Card>
           <CardHeader>
             <CardTitle>Histórico</CardTitle>

@@ -14,6 +14,7 @@ import { AgendaConflictError } from "./agenda-service";
 import { AgendaEventFormDrawer } from "./agenda-event-form-drawer";
 import { AgendaSidebar } from "./agenda-sidebar";
 import { AgendaToolbar } from "./agenda-toolbar";
+import { AgendaResourceStrip } from "./agenda-resource-strip";
 import type { AgendaEventFormValues } from "./agenda-schema";
 import type { AgendaDisplayEvent } from "./agenda-types";
 import type { AgendaEventType, AgendaTeam, AgendaView } from "./agenda-data";
@@ -267,6 +268,7 @@ export function AgendaPageContent() {
           setDrawer(true);
         }}
       />
+      <AgendaResourceStrip teams={teams} selected={technicianFilter} onSelect={setTechnicianFilter} />
       {notice && (
         <div
           role="status"

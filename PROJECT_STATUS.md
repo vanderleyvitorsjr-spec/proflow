@@ -451,3 +451,23 @@ public/              Assets estáticos
 - Dashboard foi reorganizado em visão executiva por áreas, com status das fontes, atualização, métricas prioritárias e personalização preservada.
 - Utilitários brasileiros foram ampliados para normalização de telefone, CPF/CNPJ, moeda e horário.
 - Persistências existentes foram preservadas; registros antigos de Ordens são normalizados de forma compatível na leitura.
+
+## 2026-07-16 — CRM profissional
+
+- CRM recebeu probabilidade de fechamento e pipeline ponderado.
+- Próxima ação e follow-up podem ser agendados e persistidos.
+- Atividades comerciais suportam ligação, WhatsApp, e-mail, visita, observação e follow-up.
+- Tarefas comerciais possuem prazo, prioridade, conclusão e indicação de atraso.
+- Lead perdido exige motivo explícito e mantém histórico.
+- Tempo na etapa, atividades, tarefas e histórico foram integrados ao detalhamento.
+- Dados antigos são migrados de forma compatível na leitura do adapter local.
+
+## 2026-07-16 — Lote premium complementar: Ordens e Agenda
+
+- A base atual já continha CRM avançado com probabilidade, pipeline ponderado, tempo em etapa, atividades, tarefas, follow-up e motivo de perda; esses recursos foram preservados sem duplicação.
+- Ordens de Serviço receberam evidências locais por IndexedDB para fotos de antes, depois e gerais, além de assinaturas do cliente e do técnico, sem base64 no localStorage.
+- A ficha da OS passou a armazenar somente metadados dos arquivos no domínio local, com abertura, download e remoção segura do blob no dispositivo.
+- Foi adicionado relatório técnico estruturado com diagnóstico, serviço executado, recomendações e ciência do cliente, preservado no histórico append-only da Ordem.
+- A impressão da OS foi disponibilizada pelo navegador, sem criação de PDF fictício ou instalação de biblioteca adicional.
+- Agenda recebeu uma faixa operacional por responsável, permitindo alternar rapidamente entre agenda geral e agenda individual e visualizar disponibilidade ou ocupação.
+- Dados antigos de Ordens continuam compatíveis; mídia e relatório técnico são opcionais e adicionados sem reinicialização da persistência existente.

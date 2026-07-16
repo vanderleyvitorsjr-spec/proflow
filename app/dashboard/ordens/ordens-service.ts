@@ -9,6 +9,8 @@ import type {
   OrdemHistory,
   OrdemRecord,
   OrdemWorkNote,
+  OrdemMedia,
+  OrdemTechnicalReport,
 } from "./ordens-types";
 import type { ApplyServiceOrderPricingInput } from "@/lib/contracts/ordens.contract";
 import { normalizeProperName } from "@/lib/br-formatters";
@@ -298,6 +300,45 @@ export class OrdensService {
             : "Orientação para o cliente adicionada.",
         ),
       ],
+    });
+  }
+  async addMedia(id: string, media: OrdemMedia) {
+    const current = await this.require(id);
+    const now = new Date().toISOString();
+    const type = media.kind.includes("SIGNATURE") ? "SIGNATURE" : "MEDIA";
+    return this.repository.save({
+      ...current,
+      media: [...(current.media ?? []), media],
+      updatedAt: now,
+      history: [...current.history, history(type, `${media.kind.includes("SIGNATURE") ? "Assinatura" : "Arquivo"} adicionado: ${media.fileName}.`)],
+    });
+  }
+  async removeMedia(id: string, mediaId: string) {
+    const current = await this.require(id);
+    const media = (current.media ?? []).find((item) => item.id === mediaId);
+    if (!media) throw new Error("Arquivo não encontrado.");
+    const now = new Date().toISOString();
+    return this.repository.save({
+      ...current,
+      media: (current.media ?? []).filter((item) => item.id !== mediaId),
+      updatedAt: now,
+      history: [...current.history, history(media.kind.includes("SIGNATURE") ? "SIGNATURE" : "MEDIA", `Arquivo removido: ${media.fileName}.`)],
+    });
+  }
+  async updateTechnicalReport(id: string, report: OrdemTechnicalReport) {
+    const current = await this.require(id);
+    const now = new Date().toISOString();
+    return this.repository.save({
+      ...current,
+      technicalReport: {
+        diagnosis: report.diagnosis.trim(),
+        servicePerformed: report.servicePerformed.trim(),
+        recommendations: report.recommendations.trim(),
+        clientAcknowledgement: report.clientAcknowledgement?.trim() ?? "",
+        updatedAt: now,
+      },
+      updatedAt: now,
+      history: [...current.history, history("REPORT", "Relatório técnico atualizado.")],
     });
   }
   async updateTeam(id: string, members: string[]) {
