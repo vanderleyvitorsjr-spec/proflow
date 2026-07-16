@@ -43,13 +43,7 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
 const statusConfig: Record<
   PricingStatus,
   {
-    variant:
-      | "default"
-      | "success"
-      | "warning"
-      | "neutral"
-      | "destructive"
-      | "info";
+    variant: "default" | "success" | "warning" | "neutral" | "destructive" | "info";
   }
 > = {
   DRAFT: {
@@ -129,9 +123,7 @@ function ServiceCard({ service }: { service: PricingService }) {
                   {pricingStatusLabels[service.status]}
                 </Badge>
 
-                <Badge variant="outline">
-                  {pricingCategoryLabels[service.category]}
-                </Badge>
+                <Badge variant="outline">{pricingCategoryLabels[service.category]}</Badge>
               </div>
             </div>
           </div>
@@ -170,8 +162,7 @@ function ServiceCard({ service }: { service: PricingService }) {
           <div className="space-y-1.5 border-t border-border pt-2.5 text-xs text-muted-foreground">
             <p className="flex items-center gap-2">
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-              Duração média:{" "}
-              {numberFormatter.format(service.averageDurationHours)} h
+              Duração média: {numberFormatter.format(service.averageDurationHours)} h
             </p>
 
             <p className="flex items-center gap-2">
@@ -190,13 +181,9 @@ function ServiceCard({ service }: { service: PricingService }) {
             </p>
 
             <div className="mt-3 flex justify-between text-xs text-sky-700 dark:text-sky-400">
-              <span>
-                Mínimo: {currencyFormatter.format(service.minimumPrice)}
-              </span>
+              <span>Mínimo: {currencyFormatter.format(service.minimumPrice)}</span>
 
-              <span>
-                Premium: {currencyFormatter.format(service.premiumPrice)}
-              </span>
+              <span>Premium: {currencyFormatter.format(service.premiumPrice)}</span>
             </div>
           </div>
 
@@ -210,10 +197,7 @@ function ServiceCard({ service }: { service: PricingService }) {
   );
 }
 
-export function PrecificacaoList({
-  view,
-  services,
-}: PrecificacaoListProps) {
+export function PrecificacaoList({ view, services }: PrecificacaoListProps) {
   if (view === "cards") {
     return (
       <section className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
@@ -223,10 +207,7 @@ export function PrecificacaoList({
 
         {services.length === 0 && (
           <div className="col-span-full flex min-h-48 flex-col items-center justify-center rounded-[var(--radius-card)] border-2 border-dashed border-border bg-card px-6 text-center">
-            <ReceiptText
-              className="h-8 w-8 text-muted-foreground"
-              aria-hidden="true"
-            />
+            <ReceiptText className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
 
             <p className="mt-4 text-sm font-semibold text-foreground">
               Nenhum serviço encontrado
@@ -289,10 +270,7 @@ export function PrecificacaoList({
               const status = statusConfig[service.status];
 
               return (
-                <tr
-                  key={service.id}
-                  className="transition-colors hover:bg-muted/35"
-                >
+                <tr key={service.id} className="transition-colors hover:bg-muted/35">
                   <td className="px-5 py-4">
                     <p className="text-sm font-semibold text-foreground">
                       {service.name}
@@ -313,10 +291,7 @@ export function PrecificacaoList({
 
                   <td className="px-5 py-4">
                     <p className="text-sm text-foreground">
-                      {numberFormatter.format(
-                        service.averageDurationHours,
-                      )}{" "}
-                      h
+                      {numberFormatter.format(service.averageDurationHours)} h
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -330,9 +305,7 @@ export function PrecificacaoList({
 
                   <td className="px-5 py-4">
                     <p className="text-sm font-bold text-foreground">
-                      {currencyFormatter.format(
-                        service.suggestedPrice,
-                      )}
+                      {currencyFormatter.format(service.suggestedPrice)}
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -362,9 +335,7 @@ export function PrecificacaoList({
                     </Badge>
 
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {dateFormatter.format(
-                        new Date(service.updatedAt),
-                      )}
+                      {dateFormatter.format(new Date(service.updatedAt))}
                     </p>
                   </td>
 
@@ -375,10 +346,7 @@ export function PrecificacaoList({
                       size="icon"
                       aria-label={`Abrir ações de ${service.name}`}
                     >
-                      <MoreHorizontal
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      />
+                      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </td>
                 </tr>

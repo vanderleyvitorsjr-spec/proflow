@@ -13,6 +13,7 @@ import { StockService, stockError } from "./estoque-service";
 import { stockStorageAdapter } from "./estoque-storage-adapter";
 import type { StockActionResult } from "./estoque-result";
 import type { StockPreferences } from "./estoque-types";
+import type { StockPricingReference } from "@/lib/contracts/estoque.contract";
 const service = new StockService(new StockRepository(stockStorageAdapter));
 async function action<T>(work: () => Promise<T>): Promise<StockActionResult<T>> {
   try {
@@ -106,3 +107,27 @@ export const reviewStockPurchaseReconciliationAction = (id: string, notes: strin
   action(() => service.reviewPurchaseReconciliation(id, notes));
 export const cancelStockPurchaseOpenFinancialAction = (id: string, reason: string) =>
   action(() => service.cancelPurchaseOpenFinancial(id, reason));
+
+const pricingReference = (
+  snapshot: Awaited<ReturnType<StockService["get"]>>,
+): StockPricingReference | null =>
+  snapshot
+    ? {
+        id: snapshot.item.id,
+        internalCode: snapshot.item.internalCode,
+        name: snapshot.item.name,
+        unit: snapshot.item.unit,
+        unitScale: snapshot.item.unitScale,
+        averageCostCents: snapshot.averageCostCents,
+        physicalQuantity: snapshot.physicalQuantity,
+        reservedQuantity: snapshot.reservedQuantity,
+        availableQuantity: snapshot.availableQuantity,
+        archived: Boolean(snapshot.item.archivedAt),
+        updatedAt: snapshot.item.updatedAt,
+      }
+    : null;
+
+export const listStockPricingReferencesAction = () =>
+  action(async () => (await service.list()).map((item) => pricingReference(item)!));
+export const getStockPricingReferenceAction = (id: string) =>
+  action(async () => pricingReference(await service.get(id)));

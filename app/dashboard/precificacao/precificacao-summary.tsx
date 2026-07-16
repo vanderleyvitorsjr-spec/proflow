@@ -45,8 +45,7 @@ export function PrecificacaoSummary({
       value: numberFormatter.format(servicesCount),
       description: "Modelos disponíveis para orçamento",
       icon: ReceiptText,
-      iconClass:
-        "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
+      iconClass: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
     },
     {
       label: "Margem média",
@@ -69,24 +68,21 @@ export function PrecificacaoSummary({
       value: numberFormatter.format(activeServices),
       description: "Disponíveis para novas propostas",
       icon: FileCheck2,
-      iconClass:
-        "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+      iconClass: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
     },
     {
       label: "Em revisão",
       value: numberFormatter.format(reviewServices),
       description: "Precisam de validação de custos",
       icon: FileClock,
-      iconClass:
-        "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+      iconClass: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
     },
     {
       label: "Lucro estimado",
       value: currencyFormatter.format(estimatedProfit),
       description: "Estimativa sobre os preços sugeridos",
       icon: CircleDollarSign,
-      iconClass:
-        "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
+      iconClass: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
     },
   ];
 
@@ -96,10 +92,7 @@ export function PrecificacaoSummary({
         const Icon = item.icon;
 
         return (
-          <Card
-            key={item.label}
-            className="rounded-none border-0 bg-card shadow-none"
-          >
+          <Card key={item.label} className="rounded-none border-0 bg-card shadow-none">
             <CardContent className="flex min-h-20 items-center gap-3 p-3">
               <div
                 className={cn(

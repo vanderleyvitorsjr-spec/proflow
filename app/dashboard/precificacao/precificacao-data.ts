@@ -11,16 +11,9 @@ export type PricingCategory =
   | "INSPECTION"
   | "OTHER";
 
-export type PricingStatus =
-  | "DRAFT"
-  | "ACTIVE"
-  | "REVIEW"
-  | "INACTIVE";
+export type PricingStatus = "DRAFT" | "ACTIVE" | "REVIEW" | "INACTIVE";
 
-export type PricingMarginLevel =
-  | "LOW"
-  | "HEALTHY"
-  | "HIGH";
+export type PricingMarginLevel = "LOW" | "HEALTHY" | "HIGH";
 
 export type PricingService = {
   id: string;
@@ -86,8 +79,7 @@ export const pricingServices: PricingService[] = [
     id: "pricing-1",
     name: "Instalação de ar-condicionado Split",
     code: "CLI-INS-001",
-    description:
-      "Instalação padrão de equipamento Split com infraestrutura básica.",
+    description: "Instalação padrão de equipamento Split com infraestrutura básica.",
     category: "INSTALLATION",
     status: "ACTIVE",
     averageDurationHours: 4,
@@ -110,8 +102,7 @@ export const pricingServices: PricingService[] = [
     id: "pricing-2",
     name: "Manutenção preventiva de Split",
     code: "CLI-PRE-001",
-    description:
-      "Limpeza, higienização, medições e inspeção geral do equipamento.",
+    description: "Limpeza, higienização, medições e inspeção geral do equipamento.",
     category: "PREVENTIVE",
     status: "ACTIVE",
     averageDurationHours: 2,
@@ -134,8 +125,7 @@ export const pricingServices: PricingService[] = [
     id: "pricing-3",
     name: "Manutenção corretiva elétrica",
     code: "ELE-COR-001",
-    description:
-      "Diagnóstico, correção de falha e testes de segurança elétrica.",
+    description: "Diagnóstico, correção de falha e testes de segurança elétrica.",
     category: "CORRECTIVE",
     status: "ACTIVE",
     averageDurationHours: 3,
@@ -158,8 +148,7 @@ export const pricingServices: PricingService[] = [
     id: "pricing-4",
     name: "Inspeção de quadro elétrico",
     code: "ELE-INS-002",
-    description:
-      "Inspeção técnica, medições, registro fotográfico e relatório.",
+    description: "Inspeção técnica, medições, registro fotográfico e relatório.",
     category: "INSPECTION",
     status: "REVIEW",
     averageDurationHours: 2.5,
@@ -182,8 +171,7 @@ export const pricingServices: PricingService[] = [
     id: "pricing-5",
     name: "Instalação de quadro de distribuição",
     code: "ELE-INS-003",
-    description:
-      "Montagem, organização, identificação e instalação de quadro elétrico.",
+    description: "Montagem, organização, identificação e instalação de quadro elétrico.",
     category: "ELECTRICAL",
     status: "ACTIVE",
     averageDurationHours: 8,
@@ -206,8 +194,7 @@ export const pricingServices: PricingService[] = [
     id: "pricing-6",
     name: "Carga de fluido refrigerante",
     code: "CLI-COR-004",
-    description:
-      "Teste de estanqueidade, diagnóstico e complemento de fluido.",
+    description: "Teste de estanqueidade, diagnóstico e complemento de fluido.",
     category: "CLIMATIZATION",
     status: "DRAFT",
     averageDurationHours: 2,

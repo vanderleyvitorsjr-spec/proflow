@@ -1,5 +1,30 @@
 # Status do Projeto ProFlow
 
+### Fundação funcional — Precificação Ciclo B (16/07/2026)
+
+- Precificação passou a consumir Estoque e Equipamentos exclusivamente por contratos públicos resumidos, actions públicas aditivas e gateways próprios, sem acessar repositories, adapters ou tipos internos completos dos módulos de origem.
+- O envelope local evoluiu explicitamente da versão 1 para a versão 2, preservando templates, simulações, composições, perfis, cenários, IDs, sequências, revisões, históricos, preferências, arquivamentos e backup anterior validado com Zod.
+- Materiais reais usam custo médio e escala inteira do Estoque, registram disponibilidade, perda técnica, custo original, eventual custo manual justificado e confirmação auditável de insuficiência sem reservar ou consumir saldo.
+- Equipamentos reais suportam custo derivado por hora e custos manuais por hora ou uso; ativos de cliente e terceiros não incorporam depreciação patrimonial própria.
+- Snapshots técnicos registram código, origem, valores, condição, disponibilidade, método, atualização da origem e data da consulta; nenhuma origem histórica é recalculada automaticamente.
+- Divergências de custo, disponibilidade, arquivamento, status, condição, valor, depreciação, manutenção e alteração manual são derivadas comparando snapshot e referência pública atual.
+- Atualizar a origem e manter o valor são decisões explícitas, geram revisão imutável e histórico; substituições criam novo snapshot e preservam o componente anterior nas revisões.
+- O detalhamento passou a exibir origens reais, links para Estoque e Equipamentos, snapshots, divergências e ações técnicas; cenários também mostram custos reais, snapshots e componentes manualmente modificados.
+- Integrações com Clientes, Ordens, Financeiro, reservas, consumos, lançamentos, Google Maps, equipes, Event Bus, Prisma, Supabase e autenticação permanecem reservadas ao Ciclo C ou etapas posteriores.
+
+### Fundação funcional — Precificação Ciclo A (16/07/2026)
+
+- Precificação passou a seguir `Página → Action → Service → Repository → Storage Adapter`; somente o adapter próprio acessa `localStorage`.
+- O envelope `proflow:precificacao:v1` armazena templates, composições, perfis locais de mão de obra, simulações, cenários, preferências, revisão incremental e backup validado com Zod.
+- Valores monetários usam centavos inteiros e percentuais usam basis points; as fórmulas separam custo, overhead, impostos, comissão, lucro, margem e markup sem resultados persistidos como fonte independente.
+- A biblioteca de serviços possui templates reutilizáveis, versões, composições, duplicação e arquivamento, com carga inicial neutra baseada apenas nos antigos mocks visuais.
+- Simulações suportam materiais manuais com perda técnica, mão de obra por perfil, equipamentos por hora ou uso, deslocamento manual, overhead e outros custos.
+- Preços mínimo, recomendado, premium e promocional são derivados; preços promocionais abaixo do mínimo exigem confirmação explícita.
+- Cada alteração relevante gera revisão imutável com parâmetros, componentes, regras comerciais e snapshot do resultado; duplicações e cenários começam na versão 1 com IDs e históricos próprios.
+- A precificação reversa informa custo máximo, lucro, margem, redução necessária e componentes de maior impacto sem modificar automaticamente a composição.
+- A nova ficha `/dashboard/precificacao/[id]` reúne componentes, custos, preços, resultado, análise reversa, revisões e histórico append-only.
+- Estoque, Equipamentos, Clientes, Ordens, Financeiro, Google Maps, equipes, Prisma, Supabase, autenticação e Event Bus continuam reservados aos ciclos seguintes.
+
 ### Fundação funcional — Estoque Ciclo C (16/07/2026)
 
 - O envelope local do Estoque evoluiu explicitamente da versão 2 para a versão 3, preservando itens, movimentos, reservas, IDs, sequências, preferências, revisões e backups dos Ciclos A e B, com validação Zod integral.

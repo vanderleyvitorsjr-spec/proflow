@@ -1,11 +1,4 @@
-import {
-  Calculator,
-  Filter,
-  LayoutGrid,
-  List,
-  Plus,
-  Search,
-} from "lucide-react";
+import { Calculator, Filter, LayoutGrid, List, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,47 +105,37 @@ export function PrecificacaoFilters({
 
             <select
               value={categoryFilter}
-              onChange={(event) =>
-                onCategoryFilterChange(event.target.value)
-              }
+              onChange={(event) => onCategoryFilterChange(event.target.value)}
               className="h-9 rounded-[var(--radius-control)] border border-input bg-background px-3 text-sm font-medium text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
               aria-label="Filtrar por categoria"
             >
               <option value="ALL">Todas as categorias</option>
 
-              {Object.entries(pricingCategoryLabels).map(
-                ([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ),
-              )}
+              {Object.entries(pricingCategoryLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
 
             <select
               value={statusFilter}
-              onChange={(event) =>
-                onStatusFilterChange(event.target.value)
-              }
+              onChange={(event) => onStatusFilterChange(event.target.value)}
               className="h-9 rounded-[var(--radius-control)] border border-input bg-background px-3 text-sm font-medium text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
               aria-label="Filtrar por status"
             >
               <option value="ALL">Todos os status</option>
 
-              {Object.entries(pricingStatusLabels).map(
-                ([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ),
-              )}
+              {Object.entries(pricingStatusLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
 
             <select
               value={marginFilter}
-              onChange={(event) =>
-                onMarginFilterChange(event.target.value)
-              }
+              onChange={(event) => onMarginFilterChange(event.target.value)}
               className="h-9 rounded-[var(--radius-control)] border border-input bg-background px-3 text-sm font-medium text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
               aria-label="Filtrar por margem"
             >
