@@ -421,3 +421,13 @@ public/              Assets estáticos
 - Central de Notificações materializa regras derivadas com chave idempotente, leitura, arquivamento, restauração, adiamento e backup, sem Event Bus, push ou envio externo.
 - Timeline Global agrega atividades resumidas por actions públicas e Pesquisa Global consulta Clientes, CRM, Ordens, Equipamentos e Biblioteca com `Ctrl/Cmd + K`, sem copiar os registros de origem.
 - Header passou a exibir pesquisa, timeline e contador de notificações sem ampliar a sidebar ou alterar o shell estrutural.
+
+### Fundação funcional — Perfil local (16/07/2026)
+
+- Perfil deixou de usar `ModulePage` e passou a seguir `Página → Action → Service → Repository → Storage Adapter`, com envelope `proflow:perfil:v1`, backup, revisão otimista, validação, histórico append-only e preparação para migrações.
+- Identidade pessoal, vínculo resumido com integrante ativo da equipe, preferências individuais, disponibilidade, notificações pessoais, documentos profissionais, atividade, produtividade e metadados neutros de segurança passaram a ser persistentes.
+- Avatar e assinatura usam IndexedDB isolado, com validação de formato e tamanho; nenhuma imagem, assinatura, senha ou credencial é armazenada em base64 no envelope local.
+- Foi criado contrato público mínimo para identidade, preferências, disponibilidade, documentos válidos e revisão, sem expor documento pessoal completo.
+- Timeline Global, Central de Notificações e Configurações são consumidas por gateways ou actions públicas; Perfil não acessa adapters ou repositories externos.
+- Exportação e importação JSON preservam o envelope versionado e rejeitam versões incompatíveis; blobs não são incorporados ao JSON.
+- A área de segurança deixa explícita a ausência de senha, 2FA e sessões reais, sem simular autenticação.

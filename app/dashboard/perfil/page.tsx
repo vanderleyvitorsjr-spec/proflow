@@ -1,5 +1,4 @@
-import { ModulePage } from "@/features/workspace/module-page";
-
-export default function PerfilPage() {
-  return <ModulePage moduleKey="perfil" />;
+import { PerfilPageContent } from "./perfil-page";
+export default function Page() {
+  return <PerfilPageContent />;
 }
