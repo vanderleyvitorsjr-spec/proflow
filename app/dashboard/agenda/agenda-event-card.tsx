@@ -1,10 +1,5 @@
 import Link from "next/link";
-import {
-  CalendarClock,
-  ClipboardList,
-  MapPin,
-  UserRound,
-} from "lucide-react";
+import { CalendarClock, ClipboardList, MapPin, UserRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -69,13 +64,7 @@ const statusConfig: Record<
   AgendaEventStatus,
   {
     label: string;
-    variant:
-      | "default"
-      | "success"
-      | "warning"
-      | "neutral"
-      | "destructive"
-      | "info";
+    variant: "default" | "success" | "warning" | "neutral" | "destructive" | "info";
   }
 > = {
   CONFIRMED: {
@@ -136,11 +125,13 @@ function formatTime(value: string) {
 type AgendaEventCardProps = {
   event: AgendaEvent;
   compact?: boolean;
+  draggable?: boolean;
 };
 
 export function AgendaEventCard({
   event,
   compact = false,
+  draggable = false,
 }: AgendaEventCardProps) {
   const eventType = typeConfig[event.type];
   const status = statusConfig[event.status];
@@ -149,6 +140,11 @@ export function AgendaEventCard({
   return (
     <Link
       href={`/dashboard/agenda/${event.id}`}
+      draggable={draggable}
+      onDragStart={(dragEvent) => {
+        dragEvent.dataTransfer.setData("application/x-proflow-agenda-event", event.id);
+        dragEvent.dataTransfer.effectAllowed = "move";
+      }}
       className={cn(
         "rounded-lg border p-2 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm",
         eventType.className,
@@ -161,18 +157,12 @@ export function AgendaEventCard({
             {formatTime(event.startAt)} – {formatTime(event.endAt)}
           </div>
 
-          <h4 className="mt-1 line-clamp-2 text-xs font-bold">
-            {event.title}
-          </h4>
+          <h4 className="mt-1 line-clamp-2 text-xs font-bold">{event.title}</h4>
 
-          <p className="mt-1 truncate text-xs opacity-80">
-            {event.customer}
-          </p>
+          <p className="mt-1 truncate text-xs opacity-80">{event.customer}</p>
         </div>
 
-        {!compact && (
-          <Badge variant={status.variant}>{status.label}</Badge>
-        )}
+        {!compact && <Badge variant={status.variant}>{status.label}</Badge>}
       </div>
 
       {!compact && (
@@ -184,10 +174,7 @@ export function AgendaEventCard({
             </p>
 
             <p className="flex items-start gap-1.5">
-              <MapPin
-                className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                aria-hidden="true"
-              />
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>
                 {event.city}, {event.state}
               </span>
@@ -198,26 +185,16 @@ export function AgendaEventCard({
                 href={`/dashboard/ordens`}
                 className="flex items-center gap-1.5 font-semibold hover:underline"
               >
-                <ClipboardList
-                  className="h-3.5 w-3.5"
-                  aria-hidden="true"
-                />
+                <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
                 {event.serviceOrderNumber}
               </Link>
             )}
           </div>
 
           <div className="mt-3 flex items-center justify-between gap-3">
-            <span className="text-[0.68rem] font-bold">
-              {eventType.label}
-            </span>
+            <span className="text-[0.68rem] font-bold">{eventType.label}</span>
 
-            <span
-              className={cn(
-                "text-[0.68rem] font-bold",
-                priority.className,
-              )}
-            >
+            <span className={cn("text-[0.68rem] font-bold", priority.className)}>
               Prioridade {priority.label.toLowerCase()}
             </span>
           </div>

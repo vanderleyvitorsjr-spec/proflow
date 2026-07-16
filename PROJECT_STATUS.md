@@ -442,3 +442,12 @@ public/              Assets estáticos
 - Prevenção de duplicidade por documento, telefone e e-mail.
 - Contrato público resumido criado em `lib/contracts/fornecedores.contract.ts`.
 - Entrada adicionada à navegação principal.
+
+## Lote operacional: Ordens, Agenda e Dashboard
+
+- Ordens de Serviço receberam controle de execução com início, pausa, retomada, conclusão, sessões cronometradas, equipe participante e apontamentos internos/para cliente.
+- A ficha da OS passou a exibir progresso do checklist, tempo registrado e timeline operacional ampliada.
+- Agenda recebeu reagendamento por arrastar e soltar nas visões de dia, semana e mês, preservando validação de conflitos e integração com Ordens.
+- Dashboard foi reorganizado em visão executiva por áreas, com status das fontes, atualização, métricas prioritárias e personalização preservada.
+- Utilitários brasileiros foram ampliados para normalização de telefone, CPF/CNPJ, moeda e horário.
+- Persistências existentes foram preservadas; registros antigos de Ordens são normalizados de forma compatível na leitura.

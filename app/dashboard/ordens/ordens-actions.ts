@@ -12,7 +12,7 @@ import { OrdensRepository } from "./ordens-repository";
 import type { OrdemFormValues } from "./ordens-schema";
 import { OrdensService } from "./ordens-service";
 import { ordensStorageAdapter } from "./ordens-storage-adapter";
-import type { OrdemChecklistItem, OrdemRecord } from "./ordens-types";
+import type { OrdemChecklistItem, OrdemRecord, OrdemWorkNote } from "./ordens-types";
 
 const service = new OrdensService(
   new OrdensRepository(ordensStorageAdapter),
@@ -30,6 +30,18 @@ export const updateOrdemChecklistAction = (id: string, items: OrdemChecklistItem
 export const cancelOrdemAction = (id: string, reason: string) =>
   service.cancel(id, reason);
 export const archiveOrdemAction = (id: string) => service.archive(id);
+export const startOrdemExecutionAction = (id: string) => service.startExecution(id);
+export const pauseOrdemExecutionAction = (id: string) => service.pauseExecution(id);
+export const resumeOrdemExecutionAction = (id: string) => service.resumeExecution(id);
+export const completeOrdemExecutionAction = (id: string) => service.completeExecution(id);
+export const addOrdemWorkNoteAction = (
+  id: string,
+  visibility: OrdemWorkNote["visibility"],
+  text: string,
+) => service.addWorkNote(id, visibility, text);
+export const updateOrdemTeamAction = (id: string, members: string[]) =>
+  service.updateTeam(id, members);
+
 const snapshot = (order: OrdemRecord | null): ServiceOrderFinancialSnapshot | null =>
   order
     ? {
@@ -85,18 +97,48 @@ export const getServiceOrderStockReferenceAction = async (id: string) => {
 };
 export const listServiceOrderStockReferencesAction = async () =>
   (await ordensStorageAdapter.list()).map(stockReference);
-const pricingReference = (order: OrdemRecord): ServiceOrderPricingReference => ({ id: order.id, number: order.orderNumber, title: order.title, clientId: order.clientId, currentPriceCents: Math.round(order.estimatedValue * 100), status: order.status, canceled: Boolean(order.canceledAt) || order.status === "CANCELED", archived: Boolean(order.archivedAt), updatedAt: order.updatedAt, appliedPricing: order.appliedPricing });
-export const listEligibleServiceOrderPricingReferencesAction = async () => (await service.list()).filter((order) => !order.archivedAt && !order.canceledAt && order.status !== "CANCELED").map(pricingReference);
-export const getServiceOrderPricingReferenceAction = async (id: string) => { const order = await service.get(id); return order ? pricingReference(order) : null; };
-export const applyServiceOrderPricingAction = (input: ApplyServiceOrderPricingInput) => service.applyPricing(input);
+const pricingReference = (order: OrdemRecord): ServiceOrderPricingReference => ({
+  id: order.id,
+  number: order.orderNumber,
+  title: order.title,
+  clientId: order.clientId,
+  currentPriceCents: Math.round(order.estimatedValue * 100),
+  status: order.status,
+  canceled: Boolean(order.canceledAt) || order.status === "CANCELED",
+  archived: Boolean(order.archivedAt),
+  updatedAt: order.updatedAt,
+  appliedPricing: order.appliedPricing,
+});
+export const listEligibleServiceOrderPricingReferencesAction = async () =>
+  (await service.list())
+    .filter(
+      (order) => !order.archivedAt && !order.canceledAt && order.status !== "CANCELED",
+    )
+    .map(pricingReference);
+export const getServiceOrderPricingReferenceAction = async (id: string) => {
+  const order = await service.get(id);
+  return order ? pricingReference(order) : null;
+};
+export const applyServiceOrderPricingAction = (input: ApplyServiceOrderPricingInput) =>
+  service.applyPricing(input);
 export const listServiceOrdersReportAction = async (): Promise<ReportServiceOrder[]> =>
   (await service.list()).map((order) => ({
-    id: order.id, clientId: order.clientId, createdAt: order.createdAt,
-    updatedAt: order.updatedAt, canceledAt: order.canceledAt, archivedAt: order.archivedAt,
+    id: order.id,
+    clientId: order.clientId,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    canceledAt: order.canceledAt,
+    archivedAt: order.archivedAt,
     completedAt: order.status === "COMPLETED" ? order.updatedAt : undefined,
-    scheduledAt: `${order.scheduledDate}T${order.scheduledTime}:00`, category: order.category,
-    status: order.status, technician: order.technician, city: order.city, state: order.state,
-    estimatedDurationMinutes: order.estimatedDurationMinutes, estimatedValue: order.estimatedValue,
-    appliedPriceCents: order.appliedPricing?.priceCents, equipmentCount: order.equipment.length,
+    scheduledAt: `${order.scheduledDate}T${order.scheduledTime}:00`,
+    category: order.category,
+    status: order.status,
+    technician: order.technician,
+    city: order.city,
+    state: order.state,
+    estimatedDurationMinutes: order.estimatedDurationMinutes,
+    estimatedValue: order.estimatedValue,
+    appliedPriceCents: order.appliedPricing?.priceCents,
+    equipmentCount: order.equipment.length,
     materialCount: order.reservedMaterials.length,
   }));
