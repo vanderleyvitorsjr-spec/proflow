@@ -42,6 +42,15 @@ export function normalizeProperName(value: string | undefined | null): string {
     .join(" ");
 }
 
+
+export function normalizeProperNameInput(value: string | undefined | null): string {
+  const source = String(value ?? "");
+  if (!source) return "";
+  const hasTrailingSpace = /\s$/.test(source);
+  const normalized = normalizeProperName(source);
+  return hasTrailingSpace && normalized ? `${normalized} ` : normalized;
+}
+
 export function normalizeUpperCode(value: string | undefined | null): string {
   return String(value ?? "")
     .trim()

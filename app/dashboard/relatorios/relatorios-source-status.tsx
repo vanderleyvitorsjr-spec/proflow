@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, Clock3 } from "lucide-react";
 import type { ReportSourceStatus } from "./relatorios-types";
+import { formatDateTimeBR } from "@/lib/br-formatters";
 export function RelatoriosSourceStatus({
   statuses,
   generatedAt,
@@ -41,7 +42,7 @@ export function RelatoriosSourceStatus({
       </div>
       <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
         <Clock3 className="h-3.5 w-3.5" />
-        {new Date(generatedAt).toLocaleString("pt-BR")} · {executionTimeMs} ms
+        {formatDateTimeBR(generatedAt)} · {executionTimeMs} ms
       </span>
     </aside>
   );

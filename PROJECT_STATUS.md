@@ -500,3 +500,14 @@ public/              Assets estáticos
 - Equipamentos passou a capitalizar automaticamente nome, responsável e fornecedor, além de aplicar máscara monetária nos valores de aquisição e residual.
 - Drawers e diálogos afetados receberam altura baseada em `dvh`, rolagem interna e respeito à safe area inferior para melhor uso em celulares.
 - Nenhuma regra de cálculo, rota, persistência, Prisma, Supabase ou autenticação foi alterada.
+
+### Refinamento transversal — Financeiro, Agenda, Perfil e Relatórios (16/07/2026)
+
+- A biblioteca brasileira compartilhada passou a capitalizar nomes próprios também durante a digitação, preservando conectivos em português e a normalização final no `blur` e no service.
+- Foi criado `CurrencyTextInput` para formulários cujo domínio recebe moeda como texto brasileiro, sem alterar se a fonte interna usa centavos ou reais.
+- Financeiro recebeu máscara monetária nos fluxos de contas, lançamentos, obrigações, pagamentos e recebimentos, além de capitalização de contas e fornecedores.
+- Drawers e dialogs financeiros foram ajustados para `100dvh`, rolagem interna e rodapé com `safe-area`, mantendo as ações acessíveis com o teclado do celular aberto.
+- Agenda passou a capitalizar automaticamente título, localização e cidade e recebeu refinamento mobile equivalente no formulário de evento.
+- Perfil passou a capitalizar nomes marcados como próprios durante a digitação, mantendo a normalização final existente.
+- Relatórios passaram a usar os formatadores centrais em tooltips, status das fontes, percentuais e CSV, incluindo datas no padrão `dd/mm/aaaa` e data/hora no padrão brasileiro.
+- Nenhuma regra financeira, fórmula, persistência, rota, Prisma, Supabase ou autenticação foi alterada.

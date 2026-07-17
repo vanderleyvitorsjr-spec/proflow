@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, Minus, CircleHelp } from "lucide-react";
 import { MetricItem, MetricStrip } from "@/components/ui/metric-strip";
 import type { ReportMetric } from "./relatorios-types";
+import { formatNumberBR } from "@/lib/br-formatters";
 export function RelatoriosSummary({
   metrics,
   comparisonEnabled,
@@ -36,7 +37,7 @@ export function RelatoriosSummary({
               ? item.trend === "NOT_COMPARABLE"
                 ? "Sem base"
                 : "—"
-              : `${Math.abs(item.percentageChange).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
+              : `${formatNumberBR(Math.abs(item.percentageChange), 1)}%`}
           </span>
         ) : undefined;
         return (

@@ -2,6 +2,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyTextInput } from "@/components/ui/br-masked-inputs";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatMoneyCents } from "./financeiro-money";
@@ -92,7 +93,7 @@ export function FinanceiroPaymentDialog({
         aria-modal="true"
         aria-labelledby="payment-title"
         onSubmit={submit}
-        className="w-full max-w-lg rounded-xl border border-border bg-background p-5 shadow-2xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl sm:p-5"
       >
         <h2 id="payment-title" className="text-lg font-bold">
           {transaction.kind === "RECEIVABLE"
@@ -106,12 +107,11 @@ export function FinanceiroPaymentDialog({
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="payment-value">Valor</Label>
-            <Input
+            <CurrencyTextInput
               id="payment-value"
               autoFocus
-              inputMode="decimal"
               value={values.amount}
-              onChange={(e) => setValues({ ...values, amount: e.target.value })}
+              onValueChange={(amount) => setValues({ ...values, amount })}
             />
           </div>
           <div>

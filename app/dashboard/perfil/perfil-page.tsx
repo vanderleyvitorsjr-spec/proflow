@@ -47,6 +47,7 @@ import {
   formatDateTimeBR,
   maskCpf,
   normalizeProperName,
+  normalizeProperNameInput,
   normalizeUpperCode,
 } from "@/lib/br-formatters";
 import { cn } from "@/lib/utils";
@@ -697,7 +698,7 @@ function Section({ title, description, children }: { title: string; description?
 }
 
 function TextField({ name, label, defaultValue, type = "text", required, mask, properName, upper, ...props }: { name: string; label: string; defaultValue?: string; type?: string; required?: boolean; mask?: "phone" | "cpf" | "cep"; properName?: boolean; upper?: boolean } & Omit<ComponentProps<typeof Input>, "name" | "defaultValue" | "type">) {
-  return <div><Label htmlFor={`profile-${name}`}>{label}</Label><Input id={`profile-${name}`} name={name} type={type} required={required} defaultValue={defaultValue ?? ""} onChange={(event) => { if (mask === "phone") event.currentTarget.value = formatBrazilianPhone(event.currentTarget.value); if (mask === "cpf") event.currentTarget.value = formatCpf(event.currentTarget.value); if (mask === "cep") event.currentTarget.value = formatCep(event.currentTarget.value); if (upper) event.currentTarget.value = normalizeUpperCode(event.currentTarget.value); }} onBlur={(event) => { if (properName) event.currentTarget.value = normalizeProperName(event.currentTarget.value); if (upper) event.currentTarget.value = normalizeUpperCode(event.currentTarget.value); }} {...props} /></div>;
+  return <div><Label htmlFor={`profile-${name}`}>{label}</Label><Input id={`profile-${name}`} name={name} type={type} required={required} defaultValue={defaultValue ?? ""} onChange={(event) => { if (mask === "phone") event.currentTarget.value = formatBrazilianPhone(event.currentTarget.value); if (mask === "cpf") event.currentTarget.value = formatCpf(event.currentTarget.value); if (mask === "cep") event.currentTarget.value = formatCep(event.currentTarget.value); if (properName) event.currentTarget.value = normalizeProperNameInput(event.currentTarget.value); if (upper) event.currentTarget.value = normalizeUpperCode(event.currentTarget.value); }} onBlur={(event) => { if (properName) event.currentTarget.value = normalizeProperName(event.currentTarget.value); if (upper) event.currentTarget.value = normalizeUpperCode(event.currentTarget.value); }} {...props} /></div>;
 }
 
 function PreferenceSelect({ label, value, options, onChange }: { label: string; value: string; options: readonly (readonly [string, string])[] | [string, string][]; onChange: (value: string) => void }) {

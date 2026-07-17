@@ -2,7 +2,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CurrencyTextInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { accountTypeLabels } from "./financeiro-data";
@@ -71,7 +71,7 @@ export function FinanceiroAccountFormDrawer({
         aria-modal="true"
         aria-labelledby="account-form-title"
         onSubmit={submit}
-        className="h-full w-full max-w-lg overflow-y-auto border-l border-border bg-background shadow-2xl"
+        className="flex h-[100dvh] w-full flex-col overflow-hidden border-l border-border bg-background shadow-2xl sm:max-w-lg"
       >
         <header className="flex items-center justify-between border-b border-border p-5">
           <div>
@@ -92,14 +92,14 @@ export function FinanceiroAccountFormDrawer({
             <X className="h-4 w-4" />
           </Button>
         </header>
-        <div className="space-y-4 p-5">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-28 sm:p-5">
           <div>
             <Label htmlFor="account-name">Nome</Label>
-            <Input
+            <ProperNameInput
               id="account-name"
               autoFocus
               value={values.name}
-              onChange={(e) => setValues({ ...values, name: e.target.value })}
+              onValueChange={(name) => setValues({ ...values, name })}
             />
           </div>
           <div>
@@ -123,11 +123,11 @@ export function FinanceiroAccountFormDrawer({
           </div>
           <div>
             <Label htmlFor="opening-balance">Saldo inicial</Label>
-            <Input
+            <CurrencyTextInput
               id="opening-balance"
-              inputMode="decimal"
+              allowNegative
               value={values.openingBalance}
-              onChange={(e) => setValues({ ...values, openingBalance: e.target.value })}
+              onValueChange={(openingBalance) => setValues({ ...values, openingBalance })}
               placeholder="0,00"
             />
           </div>
@@ -148,7 +148,7 @@ export function FinanceiroAccountFormDrawer({
             </p>
           )}
         </div>
-        <footer className="flex justify-end gap-2 border-t border-border p-5">
+        <footer className="sticky bottom-0 flex justify-end gap-2 border-t border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5">
           <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
             Cancelar
           </Button>

@@ -12,6 +12,7 @@ import {
   formatDecimalInputBR,
   parseDecimalBR,
   normalizeProperName,
+  normalizeProperNameInput,
   onlyDigits,
 } from "@/lib/br-formatters";
 import { Input, type InputProps } from "@/components/ui/input";
@@ -32,7 +33,7 @@ export const ProperNameInput = React.forwardRef<HTMLInputElement, TextValueProps
       {...props}
       ref={ref}
       value={value}
-      onChange={(event) => onValueChange(event.target.value)}
+      onChange={(event) => onValueChange(normalizeProperNameInput(event.target.value))}
       onBlur={(event) => {
         onValueChange(normalizeProperName(event.currentTarget.value));
         onBlur?.(event);
@@ -131,6 +132,40 @@ export const PercentageBasisPointsInput = React.forwardRef<
   />
 ));
 PercentageBasisPointsInput.displayName = "PercentageBasisPointsInput";
+
+type CurrencyTextInputProps = Omit<InputProps, "value" | "onChange" | "type"> & {
+  value: string;
+  onValueChange: (value: string) => void;
+  allowNegative?: boolean;
+};
+
+export const CurrencyTextInput = React.forwardRef<HTMLInputElement, CurrencyTextInputProps>(
+  ({ value, onValueChange, allowNegative = false, ...props }, ref) => {
+    const negative = allowNegative && String(value).trim().startsWith("-");
+    const digits = onlyDigits(value);
+    const display = digits
+      ? `${negative ? "-" : ""}${formatCurrencyInputBR(Number(digits))}`
+      : value === "-" && allowNegative
+        ? "-"
+        : "";
+
+    return (
+      <Input
+        {...props}
+        ref={ref}
+        inputMode="numeric"
+        value={display}
+        onChange={(event) => {
+          const raw = event.target.value;
+          const nextNegative = allowNegative && raw.trim().startsWith("-");
+          const nextDigits = onlyDigits(raw);
+          onValueChange(nextDigits ? `${nextNegative ? "-" : ""}${formatCurrencyInputBR(Number(nextDigits))}` : nextNegative ? "-" : "");
+        }}
+      />
+    );
+  },
+);
+CurrencyTextInput.displayName = "CurrencyTextInput";
 
 type UncontrolledNumericProps = Omit<InputProps, "defaultValue" | "type"> & {
   defaultValue?: number;

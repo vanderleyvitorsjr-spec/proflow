@@ -8,6 +8,7 @@ import type { FinancialRelationOrder } from "./financeiro-relations-gateway";
 import type { FinancialAccountWithBalance } from "./financeiro-types";
 import type { FinancialObligationFormValues } from "./financeiro-schema";
 import { formatMoneyCents } from "./financeiro-money";
+import { formatDateBR } from "@/lib/br-formatters";
 
 const today = () => new Date().toISOString().slice(0, 10);
 export function FinanceiroOrderReceivableDrawer({
@@ -66,87 +67,89 @@ export function FinanceiroOrderReceivableDrawer({
         aria-modal="true"
         aria-labelledby="order-receivable-title"
         onSubmit={submit}
-        className="h-full w-full max-w-xl overflow-y-auto border-l bg-background p-5 shadow-2xl"
+        className="flex h-[100dvh] w-full flex-col overflow-hidden border-l bg-background shadow-2xl sm:max-w-xl"
       >
-        <h2 id="order-receivable-title" className="text-lg font-bold">
-          Gerar recebível da OS
-        </h2>
-        <p className="mb-5 text-sm text-muted-foreground">
-          A criação só ocorre após sua confirmação.
-        </p>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="financial-order">Ordem elegível</Label>
-            <Select
-              id="financial-order"
-              autoFocus
-              value={orderId}
-              onChange={(e) => setOrderId(e.target.value)}
-            >
-              <option value="">Selecione</option>
-              {orders.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.number} · {item.title}
-                </option>
-              ))}
-            </Select>
-          </div>
-          {order && (
-            <div className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2">
-              <p>
-                <span className="text-muted-foreground">Cliente:</span>
-                <br />
-                {order.client.name}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Status:</span>
-                <br />
-                {order.status}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Valor:</span>
-                <br />
-                {formatMoneyCents(order.estimatedValueCents)}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Atualizada:</span>
-                <br />
-                {new Intl.DateTimeFormat("pt-BR").format(new Date(order.updatedAt))}
-              </p>
-            </div>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex-1 overflow-y-auto p-4 pb-28 sm:p-5">
+          <h2 id="order-receivable-title" className="text-lg font-bold">
+            Gerar recebível da OS
+          </h2>
+          <p className="mb-5 text-sm text-muted-foreground">
+            A criação só ocorre após sua confirmação.
+          </p>
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="financial-order-due">Primeiro vencimento</Label>
-              <Input
-                id="financial-order-due"
-                type="date"
-                value={due}
-                onChange={(e) => setDue(e.target.value)}
-              />
+              <Label htmlFor="financial-order">Ordem elegível</Label>
+              <Select
+                id="financial-order"
+                autoFocus
+                value={orderId}
+                onChange={(event) => setOrderId(event.target.value)}
+              >
+                <option value="">Selecione</option>
+                {orders.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.number} · {item.title}
+                  </option>
+                ))}
+              </Select>
             </div>
-            <div>
-              <Label htmlFor="financial-order-count">Parcelas</Label>
-              <Input
-                id="financial-order-count"
-                type="number"
-                min={1}
-                max={120}
-                value={count}
-                onChange={(e) => setCount(Number(e.target.value))}
-              />
+            {order && (
+              <div className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2">
+                <p>
+                  <span className="text-muted-foreground">Cliente:</span>
+                  <br />
+                  {order.client.name}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Status:</span>
+                  <br />
+                  {order.status}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Valor:</span>
+                  <br />
+                  {formatMoneyCents(order.estimatedValueCents)}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Atualizada:</span>
+                  <br />
+                  {formatDateBR(order.updatedAt)}
+                </p>
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="financial-order-due">Primeiro vencimento</Label>
+                <Input
+                  id="financial-order-due"
+                  type="date"
+                  value={due}
+                  onChange={(event) => setDue(event.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="financial-order-count">Parcelas</Label>
+                <Input
+                  id="financial-order-count"
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={count}
+                  onChange={(event) => setCount(Number(event.target.value))}
+                />
+              </div>
             </div>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+              >
+                {error}
+              </p>
+            )}
           </div>
-          {error && (
-            <p
-              role="alert"
-              className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
-            >
-              {error}
-            </p>
-          )}
         </div>
-        <footer className="mt-6 flex justify-end gap-2">
+        <footer className="sticky bottom-0 flex justify-end gap-2 border-t border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5">
           <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
             Voltar
           </Button>

@@ -2,6 +2,7 @@ import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ChartDataset } from "./relatorios-types";
+import { formatCurrencyBRLFromReais, formatNumberBR } from "@/lib/br-formatters";
 const colors = ["bg-sky-500", "bg-emerald-500", "bg-violet-500", "bg-amber-500"];
 export function RelatoriosCharts({ charts }: { charts: ChartDataset[] }) {
   if (!charts.length) return null;
@@ -55,7 +56,7 @@ export function RelatoriosCharts({ charts }: { charts: ChartDataset[] }) {
                           {chart.series.map((series, seriesIndex) => (
                             <div
                               key={series.name}
-                              title={`${series.name}: ${series.values[index]?.toLocaleString("pt-BR") ?? 0}`}
+                              title={`${series.name}: ${formatChartValue(series.values[index] ?? 0, chart)}`}
                               className={`w-full max-w-5 rounded-t-sm ${colors[seriesIndex % colors.length]}`}
                               style={{
                                 height: `${Math.max(series.values[index] ? 4 : 0, ((series.values[index] ?? 0) / maximum) * 100)}%`,
@@ -77,4 +78,10 @@ export function RelatoriosCharts({ charts }: { charts: ChartDataset[] }) {
       })}
     </div>
   );
+}
+
+function formatChartValue(value: number, chart: ChartDataset): string {
+  if (chart.currency) return formatCurrencyBRLFromReais(value);
+  if (chart.percentage) return `${formatNumberBR(value, 2)}%`;
+  return formatNumberBR(value, Number.isInteger(value) ? 0 : 2);
 }

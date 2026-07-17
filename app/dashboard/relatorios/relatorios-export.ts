@@ -1,10 +1,11 @@
+import { formatDateBR, formatDateTimeBR, formatNumberBR } from "@/lib/br-formatters";
 import type { ReportDataset } from "./relatorios-types";
 const escape = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 export function reportCsv(dataset: ReportDataset) {
   const rows: unknown[][] = [
     ["Relatório ProFlow"],
-    ["Gerado em", new Date(dataset.generatedAt).toLocaleString("pt-BR")],
-    ["Período", `${dataset.period.start} a ${dataset.period.end}`],
+    ["Gerado em", formatDateTimeBR(dataset.generatedAt)],
+    ["Período", `${formatDateBR(dataset.period.start)} a ${formatDateBR(dataset.period.end)}`],
     ["Área", dataset.filters.area],
     [],
     ["Fontes"],
@@ -16,7 +17,7 @@ export function reportCsv(dataset: ReportDataset) {
       status.available ? "Sim" : "Não",
       status.partial ? "Sim" : "Não",
       status.recordCount,
-      status.updatedAt ? new Date(status.updatedAt).toLocaleString("pt-BR") : "",
+      status.updatedAt ? formatDateTimeBR(status.updatedAt) : "",
       status.warnings.join(" | ") || status.error || "",
     ]);
   for (const section of dataset.sections) {
@@ -30,7 +31,7 @@ export function reportCsv(dataset: ReportDataset) {
         item.title,
         item.formattedValue,
         item.previousValue ?? "",
-        item.percentageChange ?? "Sem base comparável",
+        item.percentageChange === undefined ? "Sem base comparável" : `${formatNumberBR(item.percentageChange, 2)}%`,
         item.status,
         item.description,
       ]);
