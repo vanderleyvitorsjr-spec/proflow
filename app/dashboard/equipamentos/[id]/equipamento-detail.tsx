@@ -71,6 +71,7 @@ import {
   equipmentIndicators,
   warrantyStatus,
 } from "../equipamentos-selectors";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 import type {
   AssetStatus,
   EquipmentStorageState,
@@ -578,7 +579,7 @@ export function EquipmentDetail({ id }: { id: string }) {
               <div>
                 <p className="font-medium">{event.message}</p>
                 <p className="text-xs text-muted-foreground">
-                  {event.type} · {event.origin}
+                  {ptBrLabel(event.type)} · {ptBrLabel(event.origin)}
                 </p>
               </div>
               <time className="text-xs text-muted-foreground">

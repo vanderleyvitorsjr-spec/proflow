@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { CurrencyReaisInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
 import { normalizeAddressText, normalizeUpperCode } from "@/lib/br-formatters";
+import { ptBrLabel, teamRoleLabel } from "@/lib/pt-br-labels";
 import { ordemSchema, type OrdemFormInput, type OrdemFormValues } from "./ordens-schema";
 import type { OrdemRecord } from "./ordens-types";
 import { getOrdersConfiguration } from "./ordens-configuracoes-gateway";
@@ -162,12 +163,13 @@ export function OrdemFormDrawer({
             <legend className="col-span-full text-sm font-semibold">Vínculos</legend>
             <Field
               label="Cliente"
+              description="Selecione o cliente que receberá o atendimento. Cadastre-o em Clientes caso ainda não apareça na lista."
               htmlFor="os-client"
               error={errors.clientId?.message}
               required
             >
               <Select id="os-client" {...register("clientId")}>
-                <option value="">Selecione</option>
+                <option value="">Selecione um cliente</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.name}
@@ -176,7 +178,8 @@ export function OrdemFormDrawer({
               </Select>
             </Field>
             <Field
-              label="Lead de origem"
+              label="Contato de origem no CRM"
+              description="Use este campo somente quando a ordem nasceu de uma oportunidade cadastrada no CRM."
               htmlFor="os-lead"
               error={errors.crmLeadId?.message}
             >
@@ -193,7 +196,8 @@ export function OrdemFormDrawer({
           <fieldset className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full text-sm font-semibold">Serviço</legend>
             <Field
-              label="Título"
+              label="Serviço a executar"
+              description="Resuma o trabalho de forma objetiva. Ex.: Manutenção corretiva em ar-condicionado Split."
               htmlFor="os-title"
               error={errors.title?.message}
               required
@@ -209,7 +213,8 @@ export function OrdemFormDrawer({
               />
             </Field>
             <Field
-              label="Categoria"
+              label="Tipo de serviço"
+              description="Escolha a área que melhor representa o atendimento."
               htmlFor="os-category"
               error={errors.category?.message}
             >
@@ -226,13 +231,14 @@ export function OrdemFormDrawer({
                   .filter(isCategory)
                   .map((value) => (
                     <option key={value} value={value}>
-                      {value}
+                      {ptBrLabel(value)}
                     </option>
                   ))}
               </Select>
             </Field>
             <Field
-              label="Descrição"
+              label="Descrição do problema ou serviço"
+              description="Descreva o defeito relatado, o diagnóstico inicial ou o resultado esperado."
               htmlFor="os-description"
               error={errors.description?.message}
               className="md:col-span-2 xl:col-span-3"
@@ -244,7 +250,8 @@ export function OrdemFormDrawer({
               />
             </Field>
             <Field
-              label="Prioridade"
+              label="Prioridade do atendimento"
+              description="Indique a urgência operacional desta ordem."
               htmlFor="os-priority"
               error={errors.priority?.message}
             >
@@ -253,12 +260,12 @@ export function OrdemFormDrawer({
                   .filter(isPriority)
                   .map((value) => (
                     <option key={value} value={value}>
-                      {value}
+                      {ptBrLabel(value)}
                     </option>
                   ))}
               </Select>
             </Field>
-            <Field label="Status" htmlFor="os-status" error={errors.status?.message}>
+            <Field label="Situação da ordem" description="Mostra em qual etapa operacional este atendimento se encontra." htmlFor="os-status" error={errors.status?.message}>
               <Select id="os-status" {...register("status")}>
                 {(
                   settings?.statuses ?? [
@@ -272,25 +279,26 @@ export function OrdemFormDrawer({
                   .filter(isStatus)
                   .map((value) => (
                     <option key={value} value={value}>
-                      {value}
+                      {ptBrLabel(value)}
                     </option>
                   ))}
               </Select>
             </Field>
             <Field
-              label="Técnico ou equipe"
+              label="Responsável pela execução"
+              description="Selecione o técnico ou integrante da equipe que executará o serviço."
               htmlFor="os-tech"
               error={errors.technician?.message}
             >
               <Select id="os-tech" {...register("technician")}>
-                <option value="">Selecione</option>
+                <option value="">Selecione um responsável</option>
                 {order?.technician &&
                 !team.some((item) => item.name === order.technician) ? (
                   <option value={order.technician}>{order.technician} (legado)</option>
                 ) : null}
                 {team.map((item) => (
                   <option key={item.id} value={item.name}>
-                    {item.name} · {item.role}
+                    {item.name} · {teamRoleLabel(item.role)}
                   </option>
                 ))}
               </Select>
@@ -304,7 +312,8 @@ export function OrdemFormDrawer({
               Local e agenda
             </legend>
             <Field
-              label="Endereço"
+              label="Endereço do atendimento"
+              description="Informe o local exato onde o serviço será realizado."
               htmlFor="os-address"
               error={errors.address?.message}
               className="xl:col-span-2"
@@ -320,7 +329,7 @@ export function OrdemFormDrawer({
                 }
               />
             </Field>
-            <Field label="Cidade" htmlFor="os-city" error={errors.city?.message}>
+            <Field label="Cidade" description="Cidade onde ocorrerá o atendimento." htmlFor="os-city" error={errors.city?.message}>
               <ProperNameInput
                 id="os-city"
                 value={values.city}
@@ -329,7 +338,7 @@ export function OrdemFormDrawer({
                 }
               />
             </Field>
-            <Field label="UF" htmlFor="os-state" error={errors.state?.message}>
+            <Field label="UF" description="Sigla do estado, com duas letras. Ex.: BA." htmlFor="os-state" error={errors.state?.message}>
               <Input
                 id="os-state"
                 maxLength={2}
@@ -343,21 +352,24 @@ export function OrdemFormDrawer({
               />
             </Field>
             <Field
-              label="Data prevista"
+              label="Data prevista do atendimento"
+              description="Data combinada ou estimada para a execução."
               htmlFor="os-date"
               error={errors.scheduledDate?.message}
             >
               <Input id="os-date" type="date" {...register("scheduledDate")} />
             </Field>
             <Field
-              label="Horário"
+              label="Horário previsto"
+              description="Horário planejado para o início do serviço."
               htmlFor="os-time"
               error={errors.scheduledTime?.message}
             >
               <Input id="os-time" type="time" {...register("scheduledTime")} />
             </Field>
             <Field
-              label="Duração (minutos)"
+              label="Duração estimada (minutos)"
+              description="Tempo aproximado necessário para concluir o atendimento."
               htmlFor="os-duration"
               error={errors.estimatedDurationMinutes?.message}
             >
@@ -370,7 +382,8 @@ export function OrdemFormDrawer({
               />
             </Field>
             <Field
-              label="Valor previsto"
+              label="Valor previsto do serviço"
+              description="Valor estimado para esta ordem, antes de eventuais ajustes."
               htmlFor="os-value"
               error={errors.estimatedValue?.message}
             >
@@ -390,7 +403,8 @@ export function OrdemFormDrawer({
           <fieldset className="grid gap-3 md:grid-cols-3">
             <legend className="col-span-full text-sm font-semibold">Execução</legend>
             <Field
-              label="Checklist inicial"
+              label="Etapas e verificações iniciais"
+              description="Digite uma tarefa por linha. Ex.: Conferir tensão elétrica; fotografar equipamento; verificar número de série."
               htmlFor="os-checklist"
               error={errors.checklistText?.message}
             >
@@ -401,7 +415,8 @@ export function OrdemFormDrawer({
                 {...register("checklistText")}
               />
             </Field>
-            <Field label="Equipamentos vinculados" htmlFor="os-equipment">
+            <Field label="Equipamentos atendidos"
+              description="Digite um equipamento por linha. Ex.: Evaporadora LG 18.000 BTU." htmlFor="os-equipment">
               <textarea
                 id="os-equipment"
                 className="min-h-28 w-full rounded-lg border bg-background p-2 text-sm"
@@ -409,7 +424,8 @@ export function OrdemFormDrawer({
                 {...register("equipmentText")}
               />
             </Field>
-            <Field label="Materiais reservados" htmlFor="os-materials">
+            <Field label="Materiais previstos ou reservados"
+              description="Digite um material por linha. Ex.: Cabo PP 2x2,5; disjuntor 20 A." htmlFor="os-materials">
               <textarea
                 id="os-materials"
                 className="min-h-28 w-full rounded-lg border bg-background p-2 text-sm"
@@ -418,7 +434,8 @@ export function OrdemFormDrawer({
               />
             </Field>
             <Field
-              label="Observações"
+              label="Observações internas"
+              description="Registre orientações, restrições de acesso ou informações úteis para a equipe."
               htmlFor="os-notes"
               error={errors.notes?.message}
               className="md:col-span-3"

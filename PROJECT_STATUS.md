@@ -519,3 +519,11 @@ public/              Assets estáticos
 - “Responsável” foi renomeado para “Responsável pelo atendimento”, com explicação e cargos traduzidos.
 - Mensagens de validação foram ajustadas para linguagem mais simples.
 
+
+## 2026-07-16 — Linguagem clara e tradução pt-BR
+- Criada biblioteca central `lib/pt-br-labels.ts` para impedir a exibição de códigos internos em inglês.
+- Ordem de Serviço revisada com rótulos em português, nomes de campos mais claros e textos explicativos nos campos operacionais.
+- Agenda revisada com explicações para tipo, cliente, descrição e responsável.
+- Funções da equipe traduzidas em Ordens, Agenda e Configurações.
+- Traduções aplicadas também em detalhes de Ordens, Agenda, Central Operacional, CRM, Financeiro, Equipamentos, Biblioteca Técnica e Precificação.
+- Valores internos e contratos de domínio foram preservados; apenas a apresentação ao usuário foi alterada.

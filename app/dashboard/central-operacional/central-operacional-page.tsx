@@ -35,6 +35,7 @@ import {
   normalizeProperName,
 } from "@/lib/br-formatters";
 import { loadOperationalCenterSnapshot } from "./central-operacional-gateway";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 import type {
   OperationalAlert,
   OperationalCenterSnapshot,
@@ -165,7 +166,7 @@ export function CentralOperacionalPage() {
                         <p className="truncate text-xs text-muted-foreground">{normalizeProperName(order.clientName)} · {normalizeProperName(order.technician || "Sem responsável")}</p>
                       </div>
                       <div className="text-left sm:text-right">
-                        <Badge variant="outline">{order.status}</Badge>
+                        <Badge variant="outline">{ptBrLabel(order.status)}</Badge>
                         <p className="mt-1 text-xs font-medium tabular-nums">{formatCurrencyBRLFromReais(order.estimatedValue)}</p>
                       </div>
                     </Link>
@@ -217,7 +218,7 @@ export function CentralOperacionalPage() {
                     <Link key={event.id} href={event.origin === "SERVICE_ORDER" && event.orderId ? `/dashboard/ordens/${event.orderId}` : `/dashboard/agenda/${event.id}`} className="rounded-xl border p-3 transition-colors hover:bg-muted/50">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-semibold">{event.title}</p>
-                        <Badge variant="outline">{event.priority}</Badge>
+                        <Badge variant="outline">{ptBrLabel(event.priority)}</Badge>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">{formatDateTimeBR(event.startAt)}</p>
                       <p className="mt-1 truncate text-xs text-muted-foreground">{normalizeProperName(event.customer)} · {normalizeProperName(event.technician)}</p>

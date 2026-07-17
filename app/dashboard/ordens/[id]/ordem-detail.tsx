@@ -37,6 +37,7 @@ import {
 import type { OrdemFormValues } from "../ordens-schema";
 import type { OrdemRecord, OrdemWorkNote } from "../ordens-types";
 import type { ServiceOrderStatus } from "../ordens-data";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 import {
   formatCurrencyBRLFromCents,
   formatDateBR,
@@ -204,8 +205,8 @@ export function OrdemDetail({ id }: { id: string }) {
                 value={order.crmLeadId ? "Lead vinculado" : "Sem origem comercial"}
                 link={order.crmLeadId ? `/dashboard/crm/${order.crmLeadId}` : undefined}
               />
-              <Info label="Categoria" value={order.category} />
-              <Info label="Prioridade" value={order.priority} />
+              <Info label="Categoria" value={ptBrLabel(order.category)} />
+              <Info label="Prioridade" value={ptBrLabel(order.priority)} />
               <div>
                 <dt className="text-xs text-muted-foreground">Status</dt>
                 <dd className="mt-1">
@@ -338,7 +339,7 @@ export function OrdemDetail({ id }: { id: string }) {
               .reverse()
               .map((item) => (
                 <div key={item.id} className="border-l-2 border-sky-500 pl-3">
-                  <Badge variant="outline">{item.type}</Badge>
+                  <Badge variant="outline">{ptBrLabel(item.type)}</Badge>
                   <p className="mt-1 text-sm">{item.description}</p>
                   <time className="text-xs text-muted-foreground">
                     {datetime.format(new Date(item.createdAt))}

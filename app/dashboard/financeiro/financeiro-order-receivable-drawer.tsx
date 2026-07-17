@@ -9,6 +9,7 @@ import type { FinancialAccountWithBalance } from "./financeiro-types";
 import type { FinancialObligationFormValues } from "./financeiro-schema";
 import { formatMoneyCents } from "./financeiro-money";
 import { formatDateBR } from "@/lib/br-formatters";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 
 const today = () => new Date().toISOString().slice(0, 10);
 export function FinanceiroOrderReceivableDrawer({
@@ -103,7 +104,7 @@ export function FinanceiroOrderReceivableDrawer({
                 <p>
                   <span className="text-muted-foreground">Status:</span>
                   <br />
-                  {order.status}
+                  {ptBrLabel(order.status)}
                 </p>
                 <p>
                   <span className="text-muted-foreground">Valor:</span>

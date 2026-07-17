@@ -16,6 +16,7 @@ import { calculatePricing } from "./precificacao-selectors";
 import { getPricingDivergencesAction } from "./precificacao-actions";
 import { Select } from "@/components/ui/select";
 import type { PricingSimulation, PricingTemplate } from "./precificacao-types";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function PricingSimulationsList({
   simulations,
@@ -126,7 +127,7 @@ export function PricingSimulationsList({
                     <TableCell>{item.scenarioLabel}</TableCell>
                     <TableCell>
                       <span className="rounded-full bg-muted px-2 py-1 text-[11px]">
-                        {item.status}
+                        {ptBrLabel(item.status)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

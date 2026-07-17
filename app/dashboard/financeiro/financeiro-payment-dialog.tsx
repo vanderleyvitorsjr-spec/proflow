@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { CurrencyTextInput } from "@/components/ui/br-masked-inputs";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 import { formatMoneyCents } from "./financeiro-money";
 import {
   financialPaymentSchema,
@@ -144,7 +145,7 @@ export function FinanceiroPaymentDialog({
               value={values.method}
               onChange={(e) => setValues({ ...values, method: e.target.value })}
             >
-              {methods.map((method) => <option key={method} value={method}>{method}</option>)}
+              {methods.map((method) => <option key={method} value={method}>{ptBrLabel(method)}</option>)}
             </Select>
           </div>
           <div>

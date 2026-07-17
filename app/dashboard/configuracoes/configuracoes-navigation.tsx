@@ -42,6 +42,7 @@ import { numberingExample } from "./configuracoes-selectors";
 import type { ConfigSection, ConfigState, TeamMember } from "./configuracoes-types";
 import { ConfigurationTeamDialog } from "./configuracoes-team-dialog";
 import { ConfigurationConfirmationDialog } from "./configuracoes-confirmation-dialog";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 type View = ConfigSection | "history" | "transfer";
 const items: { id: View; label: string; icon: typeof Settings2 }[] = [
   { id: "company", label: "Empresa", icon: Building2 },
@@ -342,7 +343,7 @@ export function ConfigurationCenter() {
                 "SERVICOS_TECNICOS",
                 "OUTRO",
               ].map((v) => (
-                <option key={v}>{v}</option>
+                <option key={v} value={v}>{ptBrLabel(v)}</option>
               ))}
             </Select>
           </label>
@@ -700,7 +701,7 @@ export function ConfigurationCenter() {
                 "ENDING_0",
                 "ENDING_9",
               ].map((v) => (
-                <option key={v}>{v}</option>
+                <option key={v} value={v}>{ptBrLabel(v)}</option>
               ))}
             </Select>
           </label>
@@ -880,7 +881,7 @@ export function ConfigurationCenter() {
               onChange={(e) => set("accent", e.target.value)}
             >
               {["sky", "blue", "violet", "emerald", "amber"].map((v) => (
-                <option key={v}>{v}</option>
+                <option key={v} value={v}>{ptBrLabel(v)}</option>
               ))}
             </Select>
           </label>

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { BrazilianPhoneInput, CpfCnpjInput, CurrencyCentsInput, PercentageBasisPointsInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
 import { normalizeProperName } from "@/lib/br-formatters";
+import { teamRoleLabel } from "@/lib/pt-br-labels";
 import type { TeamMember } from "./configuracoes-types";
 type Draft = Omit<TeamMember, "id" | "createdAt" | "updatedAt" | "history">;
 const empty: Draft = {
@@ -113,7 +114,7 @@ export function ConfigurationTeamDialog({
                 "FINANCIAL",
                 "OTHER",
               ].map((role) => (
-                <option key={role}>{role}</option>
+                <option key={role} value={role}>{teamRoleLabel(role)}</option>
               ))}
             </Select>
           </label>
