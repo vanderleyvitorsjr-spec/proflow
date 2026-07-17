@@ -471,3 +471,14 @@ public/              Assets estáticos
 - A impressão da OS foi disponibilizada pelo navegador, sem criação de PDF fictício ou instalação de biblioteca adicional.
 - Agenda recebeu uma faixa operacional por responsável, permitindo alternar rapidamente entre agenda geral e agenda individual e visualizar disponibilidade ou ocupação.
 - Dados antigos de Ordens continuam compatíveis; mídia e relatório técnico são opcionais e adicionados sem reinicialização da persistência existente.
+
+
+## 2026-07-16 — Central Operacional e consistência brasileira
+
+- Foi criada a rota `/dashboard/central-operacional`, adicionada à navegação principal.
+- A Central Operacional agrega Ordens, Agenda, Estoque e Equipamentos por actions públicas, sem acessar adapters ou repositories externos.
+- A tela apresenta OS do dia, Ordens atrasadas, execuções em andamento, equipe em campo, próximos compromissos, estoque crítico, manutenção e garantias.
+- Um assistente operacional determinístico destaca pendências reais, sem IA e sem inventar dados quando uma fonte está indisponível.
+- As consultas são tolerantes a falhas por fonte e exibem o estado operacional parcial.
+- O formatador monetário brasileiro passou a distinguir explicitamente valores legados em reais de valores modernos em centavos.
+- Nomes exibidos na Central são normalizados para capitalização brasileira, preservando conectivos e siglas.

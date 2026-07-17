@@ -14,6 +14,7 @@ import {
   Warehouse,
   Wrench,
   Handshake,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export type NavigationItem = {
 
 export const dashboardNavigation: NavigationItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: BarChart3 },
+  { title: "Central Operacional", href: "/dashboard/central-operacional", icon: Activity },
   { title: "CRM", href: "/dashboard/crm", icon: BriefcaseBusiness },
   { title: "Clientes", href: "/dashboard/clientes", icon: Users },
   { title: "Agenda", href: "/dashboard/agenda", icon: CalendarDays },

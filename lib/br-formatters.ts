@@ -134,6 +134,16 @@ export function formatCurrencyBRLFromCents(value: number): string {
   );
 }
 
+
+export function formatCurrencyBRLFromReais(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
 export function formatNumberBR(value: number, minimumFractionDigits = 2): string {
   return new Intl.NumberFormat("pt-BR", {
     minimumFractionDigits,
