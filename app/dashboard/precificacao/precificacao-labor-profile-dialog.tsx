@@ -1,7 +1,16 @@
 "use client";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  CurrencyFormInput,
+  PercentageFormInput,
+  ProperNameInput,
+} from "@/components/ui/br-masked-inputs";
+import {
+  parseCurrencyBRToCents,
+  parsePercentageBRToBasisPoints,
+} from "@/lib/br-formatters";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import type { LaborProfileFormValues } from "./precificacao-schema";
 export function PricingLaborProfileDialog({
@@ -15,6 +24,7 @@ export function PricingLaborProfileDialog({
   onClose: () => void;
   onSave: (input: LaborProfileFormValues) => Promise<void>;
 }) {
+  const [name, setName] = useState("");
   useEffect(() => {
     if (!open) return;
     const handler = (event: KeyboardEvent) => {
@@ -30,15 +40,19 @@ export function PricingLaborProfileDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="labor-title"
-        className="w-full max-w-lg rounded-xl border bg-background p-5 shadow-2xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl sm:p-5"
         onSubmit={(e) => {
           e.preventDefault();
           const d = new FormData(e.currentTarget);
           void onSave({
-            name: String(d.get("name")),
-            hourlyCostCents: Math.round(Number(d.get("hourly")) * 100),
-            burdenRateBasisPoints: Math.round(Number(d.get("burden")) * 100),
-            fixedAdditionalCents: Math.round(Number(d.get("additional")) * 100),
+            name,
+            hourlyCostCents: parseCurrencyBRToCents(String(d.get("hourly") ?? "")),
+            burdenRateBasisPoints: parsePercentageBRToBasisPoints(
+              String(d.get("burden") ?? ""),
+            ),
+            fixedAdditionalCents: parseCurrencyBRToCents(
+              String(d.get("additional") ?? ""),
+            ),
             active: true,
             notes: String(d.get("notes") ?? ""),
           });
@@ -50,39 +64,31 @@ export function PricingLaborProfileDialog({
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="labor-name">Nome</Label>
-            <Input id="labor-name" name="name" autoFocus required />
+            <ProperNameInput
+              id="labor-name"
+              name="name"
+              value={name}
+              onValueChange={setName}
+              autoFocus
+              required
+            />
           </div>
           <div>
             <Label htmlFor="labor-hourly">Custo por hora</Label>
-            <Input
+            <CurrencyFormInput
               id="labor-hourly"
               name="hourly"
-              type="number"
-              min="0"
-              step="0.01"
+              defaultValue={0}
               required
             />
           </div>
           <div>
             <Label htmlFor="labor-burden">Encargos (%)</Label>
-            <Input
-              id="labor-burden"
-              name="burden"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-            />
+            <PercentageFormInput id="labor-burden" name="burden" defaultValue={0} />
           </div>
           <div>
             <Label htmlFor="labor-additional">Adicional fixo</Label>
-            <Input
-              id="labor-additional"
-              name="additional"
-              type="number"
-              min="0"
-              step="0.01"
-            />
+            <CurrencyFormInput id="labor-additional" name="additional" defaultValue={0} />
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">

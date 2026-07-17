@@ -134,7 +134,6 @@ export function formatCurrencyBRLFromCents(value: number): string {
   );
 }
 
-
 export function formatCurrencyBRLFromReais(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -225,7 +224,9 @@ export function normalizeAddressText(value: string | undefined | null): string {
 }
 
 export function normalizeEmail(value: string | undefined | null): string {
-  return String(value ?? "").trim().toLocaleLowerCase("pt-BR");
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("pt-BR");
 }
 
 export function parseCurrencyBRToReais(
@@ -238,14 +239,16 @@ export function formatCurrencyInputFromReais(valueInReais: number): string {
   return new Intl.NumberFormat("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format((Number.isFinite(valueInReais) ? valueInReais : 0));
+  }).format(Number.isFinite(valueInReais) ? valueInReais : 0);
 }
 
 export function parsePercentageBRToBasisPoints(
   value: string | number | undefined | null,
 ): number {
   if (typeof value === "number") return Math.round(value * 100);
-  const cleaned = String(value ?? "").trim().replace(/%/g, "");
+  const cleaned = String(value ?? "")
+    .trim()
+    .replace(/%/g, "");
   if (!cleaned) return 0;
   const normalized = cleaned.replace(/\./g, "").replace(",", ".");
   const parsed = Number(normalized);
@@ -257,4 +260,20 @@ export function formatPercentageInputFromBasisPoints(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format((Number.isFinite(value) ? value : 0) / 100);
+}
+
+export function parseDecimalBR(value: string | number | undefined | null): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const cleaned = String(value ?? "").trim();
+  if (!cleaned) return 0;
+  const normalized = cleaned.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function formatDecimalInputBR(value: number, maximumFractionDigits = 3): string {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits,
+  }).format(Number.isFinite(value) ? value : 0);
 }

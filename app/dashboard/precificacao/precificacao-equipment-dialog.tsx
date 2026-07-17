@@ -2,6 +2,8 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyFormInput, DecimalBRInput } from "@/components/ui/br-masked-inputs";
+import { parseCurrencyBRToCents, parseDecimalBR } from "@/lib/br-formatters";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { EquipmentPricingReference } from "@/lib/contracts/equipamentos.contract";
@@ -40,16 +42,16 @@ export function PricingEquipmentDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="real-equipment-title"
-        className="w-full max-w-lg space-y-3 rounded-xl border bg-background p-5 shadow-xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-xl sm:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget),
-            manual = Number(data.get("manualCost"));
+            manual = parseCurrencyBRToCents(String(data.get("manualCost") ?? ""));
           void onSave({
             equipmentId: String(data.get("equipmentId")),
             method: String(data.get("method")) as PricingEquipmentInput["method"],
-            usage: Number(data.get("usage")),
-            manualCostCents: manual > 0 ? Math.round(manual * 100) : undefined,
+            usage: parseDecimalBR(String(data.get("usage") ?? "")),
+            manualCostCents: manual > 0 ? manual : undefined,
             manualReason: String(data.get("manualReason") ?? ""),
           });
         }}
@@ -86,23 +88,20 @@ export function PricingEquipmentDialog({
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="pricing-equipment-usage">Horas ou usos</Label>
-            <Input
+            <DecimalBRInput
               id="pricing-equipment-usage"
               name="usage"
-              type="number"
-              min="0.01"
-              step="0.01"
+              defaultValue={0}
+              maximumFractionDigits={2}
               required
             />
           </div>
           <div>
             <Label htmlFor="pricing-equipment-cost">Custo manual (R$)</Label>
-            <Input
+            <CurrencyFormInput
               id="pricing-equipment-cost"
               name="manualCost"
-              type="number"
-              min="0"
-              step="0.01"
+              defaultValue={0}
             />
           </div>
         </div>

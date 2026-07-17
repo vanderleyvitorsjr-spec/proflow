@@ -491,3 +491,12 @@ public/              Assets estáticos
 - Nomes, cidades, endereços, responsáveis, especialidades, e-mails e UFs são normalizados de forma centralizada nos services.
 - Inputs monetários deixam de exibir números crus e passam a usar padrão brasileiro sem alterar a unidade interna de cada domínio.
 - Drawers e dialogs afetados receberam comportamento mobile mais seguro, incluindo largura total e área inferior compatível com safe-area.
+
+### Refinamento transversal — Formatação brasileira e formulários técnicos (17/07/2026)
+
+- A biblioteca central de máscaras ganhou campos reutilizáveis para quantidades decimais, moeda em centavos e percentuais em basis points, evitando `type="number"` com ponto decimal em fluxos operacionais.
+- Estoque passou a aceitar quantidade e custo unitário no padrão brasileiro, mantendo a conversão correta antes de enviar os dados ao domínio e preservando o ledger em escala inteira e centavos.
+- Precificação passou a usar moeda, percentuais e quantidades formatadas nos diálogos de materiais, equipamentos e perfis de mão de obra; custos continuam persistidos em centavos e taxas em basis points.
+- Equipamentos passou a capitalizar automaticamente nome, responsável e fornecedor, além de aplicar máscara monetária nos valores de aquisição e residual.
+- Drawers e diálogos afetados receberam altura baseada em `dvh`, rolagem interna e respeito à safe area inferior para melhor uso em celulares.
+- Nenhuma regra de cálculo, rota, persistência, Prisma, Supabase ou autenticação foi alterada.

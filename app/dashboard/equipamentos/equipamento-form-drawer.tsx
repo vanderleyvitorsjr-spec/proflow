@@ -2,6 +2,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyCentsInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
+import { formatCurrencyInputBR, parseCurrencyBRToCents } from "@/lib/br-formatters";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import {
@@ -44,7 +46,7 @@ const empty: EquipmentFormValues = {
   photoMetadata: "",
   documentMetadata: "",
 };
-const brl = (c: number) => (c / 100).toFixed(2).replace(".", ",");
+const brl = (c: number) => formatCurrencyInputBR(c);
 const fromAsset = (a: EquipmentAsset): EquipmentFormValues => ({
   internalCode: a.internalCode,
   name: a.name,
@@ -130,7 +132,7 @@ export function EquipmentFormDrawer({
         aria-modal="true"
         aria-labelledby="asset-form-title"
         onSubmit={submit}
-        className="h-full w-full max-w-3xl overflow-y-auto border-l bg-background shadow-2xl"
+        className="h-[100dvh] w-full overflow-y-auto border-l bg-background pb-[max(0px,env(safe-area-inset-bottom))] shadow-2xl sm:max-w-3xl"
       >
         <header className="border-b p-5">
           <h2 id="asset-form-title" className="text-lg font-bold">
@@ -139,7 +141,7 @@ export function EquipmentFormDrawer({
           <p className="text-xs text-muted-foreground">Ativo ou patrimônio durável.</p>
         </header>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
-          <Text
+          <NameText
             id="asset-name"
             label="Nome"
             value={v.name}
@@ -196,7 +198,7 @@ export function EquipmentFormDrawer({
             options={ownershipLabels}
             onChange={(x) => set("ownership", x as EquipmentFormValues["ownership"])}
           />
-          <Text
+          <NameText
             id="asset-responsible"
             label="Responsável"
             value={v.responsible}
@@ -227,13 +229,13 @@ export function EquipmentFormDrawer({
             type="date"
             onChange={(x) => set("acquisitionDate", x)}
           />
-          <Text
+          <MoneyText
             id="asset-value"
             label="Valor de aquisição"
             value={v.acquisitionValue}
             onChange={(x) => set("acquisitionValue", x)}
           />
-          <Text
+          <NameText
             id="asset-supplier"
             label="Fornecedor"
             value={v.supplier}
@@ -262,7 +264,7 @@ export function EquipmentFormDrawer({
                 value={String(v.usefulLifeMonths)}
                 onChange={(x) => set("usefulLifeMonths", Number(x))}
               />
-              <Text
+              <MoneyText
                 id="asset-residual"
                 label="Valor residual"
                 value={v.residualValue}
@@ -357,6 +359,56 @@ function Text({
     </div>
   );
 }
+function NameText({
+  id,
+  label,
+  value,
+  onChange,
+  autoFocus,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoFocus?: boolean;
+}) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <ProperNameInput
+        id={id}
+        value={value}
+        onValueChange={onChange}
+        autoFocus={autoFocus}
+      />
+    </div>
+  );
+}
+
+function MoneyText({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const cents = parseCurrencyBRToCents(value);
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <CurrencyCentsInput
+        id={id}
+        value={cents}
+        onValueChange={(nextCents) => onChange(formatCurrencyInputBR(nextCents))}
+      />
+    </div>
+  );
+}
+
 function Area({
   id,
   label,

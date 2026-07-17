@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyFormInput, DecimalBRInput } from "@/components/ui/br-masked-inputs";
+import { parseCurrencyBRToCents, parseDecimalBR } from "@/lib/br-formatters";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { stockUnitLabels } from "./estoque-data";
@@ -62,7 +64,7 @@ export function StockMovementDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="movement-title"
-        className="h-full w-full max-w-xl overflow-y-auto border-l bg-background p-5 shadow-2xl"
+        className="h-[100dvh] w-full overflow-y-auto border-l bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl sm:max-w-xl sm:p-5"
       >
         <div className="flex justify-between">
           <div>
@@ -93,8 +95,8 @@ export function StockMovementDrawer({
             void onSave({
               itemId,
               type: type as Exclude<StockMovementType, "CONSUMPTION">,
-              quantity: Number(d.get("quantity")),
-              unitCost: Number(d.get("unitCost") || 0),
+              quantity: parseDecimalBR(String(d.get("quantity") ?? "")),
+              unitCost: parseCurrencyBRToCents(String(d.get("unitCost") ?? "")) / 100,
               date: String(d.get("date")),
               reason: String(d.get("reason") || ""),
               notes: String(d.get("notes") || ""),
@@ -143,14 +145,14 @@ export function StockMovementDrawer({
               <Label htmlFor="movement-quantity">
                 Quantidade {selected ? `(${stockUnitLabels[selected.item.unit]})` : ""}
               </Label>
-              <Input
+              <DecimalBRInput
                 id="movement-quantity"
                 name="quantity"
-                type="number"
-                min="0"
-                step={selected ? 1 / selected.item.unitScale : "any"}
+                defaultValue={0}
+                maximumFractionDigits={selected?.item.unitScale === 1 ? 0 : 3}
                 autoFocus
                 required
+                aria-label="Quantidade no padrão brasileiro"
               />
             </div>
             <div>
@@ -167,13 +169,11 @@ export function StockMovementDrawer({
           {adds ? (
             <div>
               <Label htmlFor="movement-cost">Custo unitário</Label>
-              <Input
+              <CurrencyFormInput
                 id="movement-cost"
                 name="unitCost"
-                type="number"
-                min="0"
-                step="0.01"
-                defaultValue="0"
+                defaultValue={0}
+                aria-label="Custo unitário em reais"
               />
               <div className="mt-2 flex flex-wrap gap-4 text-sm">
                 <label>

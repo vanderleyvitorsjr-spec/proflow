@@ -2,6 +2,17 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  CurrencyFormInput,
+  DecimalBRInput,
+  PercentageFormInput,
+} from "@/components/ui/br-masked-inputs";
+import {
+  formatCurrencyBRLFromCents,
+  parseCurrencyBRToCents,
+  parseDecimalBR,
+  parsePercentageBRToBasisPoints,
+} from "@/lib/br-formatters";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { StockPricingReference } from "@/lib/contracts/estoque.contract";
@@ -42,16 +53,18 @@ export function PricingMaterialDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="stock-material-title"
-        className="w-full max-w-lg space-y-3 rounded-xl border bg-background p-5 shadow-xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-xl sm:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget),
-            manual = Number(data.get("manualCost"));
+            manual = parseCurrencyBRToCents(String(data.get("manualCost") ?? ""));
           void onSave({
             stockItemId: String(data.get("stockItemId")),
-            quantity: Number(data.get("quantity")),
-            wasteBasisPoints: Math.round(Number(data.get("waste")) * 100),
-            manualCostCents: manual > 0 ? Math.round(manual * 100) : undefined,
+            quantity: parseDecimalBR(String(data.get("quantity") ?? "")),
+            wasteBasisPoints: parsePercentageBRToBasisPoints(
+              String(data.get("waste") ?? ""),
+            ),
+            manualCostCents: manual > 0 ? manual : undefined,
             manualReason: String(data.get("manualReason") ?? ""),
             insufficientConfirmed: data.get("insufficientConfirmed") === "on",
           });
@@ -68,10 +81,8 @@ export function PricingMaterialDialog({
               .filter((item) => !item.archived)
               .map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.internalCode} · {item.name} · R${" "}
-                  {(item.averageCostCents / 100).toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                  })}
+                  {item.internalCode} · {item.name} ·{" "}
+                  {formatCurrencyBRLFromCents(item.averageCostCents)}
                 </option>
               ))}
           </Select>
@@ -79,37 +90,26 @@ export function PricingMaterialDialog({
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="pricing-stock-quantity">Quantidade</Label>
-            <Input
+            <DecimalBRInput
               id="pricing-stock-quantity"
               name="quantity"
-              type="number"
-              min="0.001"
-              step="0.001"
+              defaultValue={0}
+              maximumFractionDigits={3}
               required
             />
           </div>
           <div>
             <Label htmlFor="pricing-stock-waste">Perda técnica (%)</Label>
-            <Input
-              id="pricing-stock-waste"
-              name="waste"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              defaultValue="0"
-            />
+            <PercentageFormInput id="pricing-stock-waste" name="waste" defaultValue={0} />
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="pricing-stock-manual">Custo manual (R$)</Label>
-            <Input
+            <CurrencyFormInput
               id="pricing-stock-manual"
               name="manualCost"
-              type="number"
-              min="0"
-              step="0.01"
+              defaultValue={0}
             />
           </div>
           <div>

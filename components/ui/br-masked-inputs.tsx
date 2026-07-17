@@ -9,6 +9,8 @@ import {
   formatCurrencyInputBR,
   formatCurrencyInputFromReais,
   formatPercentageInputFromBasisPoints,
+  formatDecimalInputBR,
+  parseDecimalBR,
   normalizeProperName,
   onlyDigits,
 } from "@/lib/br-formatters";
@@ -113,18 +115,96 @@ export const CurrencyReaisInput = React.forwardRef<HTMLInputElement, NumberValue
 );
 CurrencyReaisInput.displayName = "CurrencyReaisInput";
 
-export const PercentageBasisPointsInput = React.forwardRef<HTMLInputElement, NumberValueProps>(
-  ({ value, onValueChange, ...props }, ref) => (
+export const PercentageBasisPointsInput = React.forwardRef<
+  HTMLInputElement,
+  NumberValueProps
+>(({ value, onValueChange, ...props }, ref) => (
+  <Input
+    {...props}
+    ref={ref}
+    inputMode="numeric"
+    value={formatPercentageInputFromBasisPoints(value)}
+    onChange={(event) => {
+      const digits = onlyDigits(event.target.value);
+      onValueChange(digits ? Number(digits) : 0);
+    }}
+  />
+));
+PercentageBasisPointsInput.displayName = "PercentageBasisPointsInput";
+
+type UncontrolledNumericProps = Omit<InputProps, "defaultValue" | "type"> & {
+  defaultValue?: number;
+  maximumFractionDigits?: number;
+};
+
+export const DecimalBRInput = React.forwardRef<
+  HTMLInputElement,
+  UncontrolledNumericProps
+>(({ defaultValue = 0, maximumFractionDigits = 3, onBlur, ...props }, ref) => {
+  const [display, setDisplay] = React.useState(() =>
+    formatDecimalInputBR(defaultValue, maximumFractionDigits),
+  );
+  return (
+    <Input
+      {...props}
+      ref={ref}
+      inputMode="decimal"
+      value={display}
+      onChange={(event) => setDisplay(event.target.value.replace(/[^0-9.,-]/g, ""))}
+      onBlur={(event) => {
+        setDisplay(
+          formatDecimalInputBR(
+            parseDecimalBR(event.currentTarget.value),
+            maximumFractionDigits,
+          ),
+        );
+        onBlur?.(event);
+      }}
+    />
+  );
+});
+DecimalBRInput.displayName = "DecimalBRInput";
+
+export const CurrencyFormInput = React.forwardRef<
+  HTMLInputElement,
+  UncontrolledNumericProps
+>(({ defaultValue = 0, onBlur, ...props }, ref) => {
+  const [display, setDisplay] = React.useState(() => formatCurrencyInputBR(defaultValue));
+  return (
     <Input
       {...props}
       ref={ref}
       inputMode="numeric"
-      value={formatPercentageInputFromBasisPoints(value)}
+      value={display}
       onChange={(event) => {
         const digits = onlyDigits(event.target.value);
-        onValueChange(digits ? Number(digits) : 0);
+        setDisplay(formatCurrencyInputBR(digits ? Number(digits) : 0));
       }}
+      onBlur={onBlur}
     />
-  ),
-);
-PercentageBasisPointsInput.displayName = "PercentageBasisPointsInput";
+  );
+});
+CurrencyFormInput.displayName = "CurrencyFormInput";
+
+export const PercentageFormInput = React.forwardRef<
+  HTMLInputElement,
+  UncontrolledNumericProps
+>(({ defaultValue = 0, onBlur, ...props }, ref) => {
+  const [display, setDisplay] = React.useState(() =>
+    formatPercentageInputFromBasisPoints(defaultValue),
+  );
+  return (
+    <Input
+      {...props}
+      ref={ref}
+      inputMode="numeric"
+      value={display}
+      onChange={(event) => {
+        const digits = onlyDigits(event.target.value);
+        setDisplay(formatPercentageInputFromBasisPoints(digits ? Number(digits) : 0));
+      }}
+      onBlur={onBlur}
+    />
+  );
+});
+PercentageFormInput.displayName = "PercentageFormInput";
