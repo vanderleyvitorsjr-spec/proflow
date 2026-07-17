@@ -14,7 +14,7 @@ export const crmLeadSchema = z.object({
   email: z.union([z.literal(""), z.email("Informe um e-mail válido.")]),
   address: z.string().trim().min(3, "Informe o endereço."), city: z.string().trim().min(2, "Informe a cidade."),
   state: z.string().trim().length(2, "Informe a UF."), zipCode: z.string().trim().optional().default(""),
-  source: z.string().trim().min(2, "Informe a origem."), serviceInterest: z.string().trim().min(2, "Informe o interesse."),
+  source: z.string().trim().min(2, "Selecione como o contato conheceu a empresa."), serviceInterest: z.string().trim().min(2, "Informe o serviço de interesse."),
   salesOwner: z.string().trim().min(2, "Informe o responsável."), priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   estimatedValue: z.coerce.number().min(0, "O valor não pode ser negativo."), contactDate: z.string().min(1, "Informe a data."),
   notes: z.string().trim().optional().default(""), stageId: z.enum(stageIds),

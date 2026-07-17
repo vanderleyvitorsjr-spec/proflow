@@ -511,3 +511,11 @@ public/              Assets estáticos
 - Perfil passou a capitalizar nomes marcados como próprios durante a digitação, mantendo a normalização final existente.
 - Relatórios passaram a usar os formatadores centrais em tooltips, status das fontes, percentuais e CSV, incluindo datas no padrão `dd/mm/aaaa` e data/hora no padrão brasileiro.
 - Nenhuma regra financeira, fórmula, persistência, rota, Prisma, Supabase ou autenticação foi alterada.
+## Refinamento de linguagem do CRM
+
+- O grupo “Qualificação comercial” foi renomeado para “Informações da oportunidade”.
+- O campo “Origem” passou a se chamar “Como conheceu a empresa?” e agora usa opções claras em português do Brasil.
+- “Interesse” foi renomeado para “Serviço de interesse”, com exemplo de preenchimento.
+- “Responsável” foi renomeado para “Responsável pelo atendimento”, com explicação e cargos traduzidos.
+- Mensagens de validação foram ajustadas para linguagem mais simples.
+

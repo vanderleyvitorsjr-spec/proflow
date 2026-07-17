@@ -13,19 +13,21 @@ const densityStyles: Record<TableDensity, string> = {
 
 type TableFrameProps = React.HTMLAttributes<HTMLDivElement> & {
   scrollHint?: boolean;
+  maxHeight?: string;
 };
 
-export function TableFrame({ className, scrollHint = false, children, ...props }: TableFrameProps) {
+export function TableFrame({ className, scrollHint = false, maxHeight, children, style, ...props }: TableFrameProps) {
   return (
     <div
       className={cn(
-        "proflow-scrollbar relative w-full overflow-x-auto rounded-[var(--radius-card)] border border-border",
+        "proflow-scrollbar relative w-full overflow-auto rounded-[var(--radius-card)] border border-border bg-card",
         className,
       )}
+      style={{ ...style, maxHeight }}
       {...props}
     >
       {scrollHint ? (
-        <div className="sticky left-0 flex items-center justify-end gap-1 border-b px-3 py-1 text-[10px] text-muted-foreground sm:hidden">
+        <div className="sticky left-0 top-0 z-30 flex items-center justify-end gap-1 border-b bg-card/95 px-3 py-1 text-[10px] text-muted-foreground backdrop-blur sm:hidden">
           <MoveHorizontal className="size-3" aria-hidden="true" />
           Deslize para ver mais
         </div>
@@ -40,19 +42,36 @@ export function Table({
   density = "standard",
   scrollHint = false,
   framed = true,
+  stickyHeader = false,
+  striped = false,
+  maxHeight,
   ...props
 }: React.TableHTMLAttributes<HTMLTableElement> & {
   density?: TableDensity;
   scrollHint?: boolean;
   framed?: boolean;
+  stickyHeader?: boolean;
+  striped?: boolean;
+  maxHeight?: string;
 }) {
-  const table = <table className={cn("w-full border-collapse text-sm", densityStyles[density], className)} {...props} />;
+  const table = (
+    <table
+      className={cn(
+        "w-full border-collapse text-sm [&_[data-align='right']]:text-right [&_[data-align='right']]:tabular-nums [&_[data-align='center']]:text-center",
+        densityStyles[density],
+        stickyHeader && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-20 [&_thead]:bg-card/95 [&_thead]:backdrop-blur",
+        striped && "[&_tbody_tr:nth-child(even)]:bg-muted/25",
+        className,
+      )}
+      {...props}
+    />
+  );
 
-  return framed ? <TableFrame scrollHint={scrollHint}>{table}</TableFrame> : table;
+  return framed ? <TableFrame scrollHint={scrollHint} maxHeight={maxHeight}>{table}</TableFrame> : table;
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("bg-surface-subtle", className)} {...props} />;
+  return <thead className={cn("border-b bg-surface-subtle", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
@@ -60,18 +79,21 @@ export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTabl
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("transition-colors hover:bg-muted/55", className)} {...props} />;
+  return <tr className={cn("transition-colors hover:bg-muted/55 data-[selected=true]:bg-primary/5", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <th
-      className={cn("text-left align-middle text-xs font-semibold text-muted-foreground", className)}
-      {...props}
-    />
-  );
+  return <th className={cn("whitespace-nowrap text-left align-middle text-xs font-semibold text-muted-foreground", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return <td className={cn("align-middle text-foreground", className)} {...props} />;
+}
+
+export function TableNumericCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return <TableCell data-align="right" className={cn("font-medium tabular-nums", className)} {...props} />;
+}
+
+export function TableActionsCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return <TableCell data-align="right" className={cn("w-px whitespace-nowrap", className)} {...props} />;
 }

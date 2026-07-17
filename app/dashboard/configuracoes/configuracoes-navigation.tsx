@@ -28,6 +28,7 @@ import {
   PageHeaderIdentity,
 } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
+import { formatCurrencyBRLFromCents } from "@/lib/br-formatters";
 import {
   getConfigurationsAction,
   importConfigurationsAction,
@@ -399,12 +400,7 @@ export function ConfigurationCenter() {
                       <td className="p-2 font-medium">{member.name}</td>
                       <td>{member.role}</td>
                       <td>{csv(member.specialties)}</td>
-                      <td>
-                        {(member.hourlyCostCents / 100).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </td>
+                      <td>{formatCurrencyBRLFromCents(member.hourlyCostCents)}</td>
                       <td>
                         {member.archivedAt
                           ? "Arquivado"

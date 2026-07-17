@@ -1,4 +1,5 @@
 "use client";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -122,7 +123,7 @@ export function EquipamentosPageContent() {
     } else setError(r.error.message);
     setBusy(false);
   };
-  if (loading) return <div className="h-80 animate-pulse rounded-xl bg-muted" />;
+  if (loading) return <PageSkeleton metrics={5} rows={7} columns={8} />;
   if (!state)
     return <EmptyState title="Equipamentos indisponíveis" description={error} />;
   const patrimonial = active

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   PageHeader,
   PageHeaderActions,
@@ -22,7 +23,7 @@ import {
   PageHeaderHeading,
   PageHeaderIdentity,
 } from "@/components/ui/page-header";
-import { formatDateTimeBR } from "@/lib/br-formatters";
+import { formatDateTimeBR, formatNumberBR } from "@/lib/br-formatters";
 import type {
   ReportDataset,
   ReportMetric,
@@ -150,7 +151,7 @@ export function DashboardOverview() {
         </div>
         <span className="text-muted-foreground">
           {dataset
-            ? `Atualizado em ${formatDateTimeBR(dataset.generatedAt)} · ${dataset.executionTimeMs} ms`
+            ? `Atualizado em ${formatDateTimeBR(dataset.generatedAt)} · ${formatNumberBR(dataset.executionTimeMs, 0)} ms`
             : "Aguardando atualização"}
         </span>
       </div>
@@ -198,7 +199,7 @@ export function DashboardOverview() {
       {loading ? (
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="h-28 animate-pulse rounded-xl bg-muted" />
+            <Skeleton key={index} className="h-28 rounded-xl" />
           ))}
         </div>
       ) : (
