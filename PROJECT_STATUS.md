@@ -527,3 +527,22 @@ public/              Assets estáticos
 - Funções da equipe traduzidas em Ordens, Agenda e Configurações.
 - Traduções aplicadas também em detalhes de Ordens, Agenda, Central Operacional, CRM, Financeiro, Equipamentos, Biblioteca Técnica e Precificação.
 - Valores internos e contratos de domínio foram preservados; apenas a apresentação ao usuário foi alterada.
+
+### Refinamento global de linguagem e ajuda contextual (17/07/2026)
+
+- O componente compartilhado `Field` passou a aceitar ajuda contextual com ícone, mantendo mensagens de validação prioritárias.
+- Clientes, CRM e Agenda receberam nomes de campos mais claros, orientações de preenchimento e terminologia consistente em português do Brasil.
+- Rótulos técnicos de funções, tipos, categorias, prioridades, movimentos, contas e componentes de precificação foram centralizados em `lib/pt-br-labels.ts`.
+- Exibições remanescentes de códigos internos foram traduzidas em Configurações, Perfil, Financeiro, Estoque, Biblioteca Técnica, páginas legadas e detalhes de Precificação.
+- Os códigos internos em inglês foram preservados apenas na camada de domínio e persistência para evitar regressões.
+- ESLint concluído sem erros; permanecem três avisos preexistentes do React Compiler relacionados ao `watch()` do React Hook Form.
+- O build compilou os arquivos da aplicação e avançou até a checagem TypeScript; a validação final ficou bloqueada porque o Prisma Client não pôde ser gerado no ambiente sem acesso a `binaries.prisma.sh`.
+
+### Lote de Refinamento — Formulários guiados (17/07/2026)
+
+- Criados os componentes compartilhados `RequiredFieldsNotice`, `FormSectionIntro` e `FormTip` para orientar preenchimento sem alterar regras de negócio.
+- O cadastro de Estoque passou a explicar nome, código interno, categoria, unidade, estoque mínimo, localização, fornecedor e observações com exemplos próprios de climatização e elétrica.
+- O cadastro de Fornecedores foi reorganizado em identificação, contato, endereço, categorias e condições comerciais, com linguagem simples, ajuda contextual e melhor comportamento mobile em `100dvh`.
+- O lançamento manual do Financeiro passou a explicar tipo financeiro, movimento da conta, categoria, competência, emissão, movimentação, conta e favorecido, reduzindo dúvidas sobre termos contábeis.
+- Campos obrigatórios agora possuem uma legenda padronizada no início dos formulários refinados.
+- Persistência, schemas, cálculos, valores em centavos, máscaras brasileiras, rotas e integrações permaneceram inalterados.

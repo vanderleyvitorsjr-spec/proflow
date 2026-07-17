@@ -4,7 +4,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyTextInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
+import { FormSectionIntro, RequiredFieldsNotice } from "@/components/ui/form-guidance";
 import { Select } from "@/components/ui/select";
 import { natureLabels } from "./financeiro-data";
 import { getFinancialConfiguration } from "./financeiro-configuracoes-gateway";
@@ -149,26 +150,25 @@ export function FinanceiroTransactionFormDrawer({
           </Button>
         </header>
         <div className="grid flex-1 gap-4 overflow-y-auto p-4 pb-28 sm:grid-cols-2 sm:p-5">
-          <div className="sm:col-span-2">
-            <Label htmlFor="transaction-title">Título</Label>
+          <RequiredFieldsNotice className="sm:col-span-2" />
+          <FormSectionIntro className="sm:col-span-2" title="Informações do lançamento" description="Registre o motivo, a classificação e a conta afetada por esta movimentação." />
+          <Field className="sm:col-span-2" label="Identificação do lançamento" htmlFor="transaction-title" required help="Use um título que permita reconhecer a movimentação rapidamente. Ex.: Compra de cabos para obra Centro.">
             <Input
               id="transaction-title"
               autoFocus
               value={values.title}
               onChange={(e) => setValues({ ...values, title: e.target.value })}
             />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="transaction-description">Descrição</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Descrição" htmlFor="transaction-description" help="Detalhe o motivo do lançamento, o documento relacionado ou informações para conferência futura.">
             <textarea
               id="transaction-description"
               className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={values.description}
               onChange={(e) => setValues({ ...values, description: e.target.value })}
             />
-          </div>
-          <div>
-            <Label htmlFor="transaction-nature">Natureza</Label>
+          </Field>
+          <Field label="Tipo financeiro" htmlFor="transaction-nature" required help="Receita é dinheiro recebido; despesa é gasto operacional; investimento é aquisição que gera benefício futuro.">
             <Select
               id="transaction-nature"
               value={values.nature}
@@ -180,9 +180,8 @@ export function FinanceiroTransactionFormDrawer({
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="transaction-direction">Direção</Label>
+          </Field>
+          <Field label="Movimento da conta" htmlFor="transaction-direction" help="Indica se o valor entra ou sai da conta. Em receitas e despesas, essa opção é definida automaticamente.">
             <Select
               id="transaction-direction"
               value={values.direction}
@@ -198,9 +197,8 @@ export function FinanceiroTransactionFormDrawer({
               <option value="INCOME">Entrada</option>
               <option value="EXPENSE">Saída</option>
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="transaction-category">Categoria</Label>
+          </Field>
+          <Field label="Categoria financeira" htmlFor="transaction-category" required help="Classifique a movimentação para organizar relatórios. Ex.: Materiais, combustível, serviços ou equipamentos.">
             <Input
               id="transaction-category"
               list="financial-categories"
@@ -212,9 +210,8 @@ export function FinanceiroTransactionFormDrawer({
                 <option key={item} value={item} />
               ))}
             </datalist>
-          </div>
-          <div>
-            <Label htmlFor="transaction-account">Conta</Label>
+          </Field>
+          <Field label="Conta movimentada" htmlFor="transaction-account" required help="Escolha a conta bancária, carteira ou caixa onde o valor entrou ou saiu.">
             <Select
               id="transaction-account"
               value={values.accountId}
@@ -227,60 +224,55 @@ export function FinanceiroTransactionFormDrawer({
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="transaction-competence">Competência</Label>
+          </Field>
+          <FormSectionIntro className="sm:col-span-2 mt-2" title="Datas e valor" description="As datas ajudam a separar quando o fato ocorreu, quando foi emitido e quando afetou a conta." />
+          <Field label="Mês de referência" htmlFor="transaction-competence" required help="Data usada para indicar a qual período financeiro a movimentação pertence, mesmo que o pagamento ocorra em outro dia.">
             <Input
               id="transaction-competence"
               type="date"
               value={values.competenceDate}
               onChange={(e) => setValues({ ...values, competenceDate: e.target.value })}
             />
-          </div>
-          <div>
-            <Label htmlFor="transaction-issue">Emissão</Label>
+          </Field>
+          <Field label="Data de emissão" htmlFor="transaction-issue" required help="Data do recibo, nota fiscal, boleto ou documento que originou o lançamento.">
             <Input
               id="transaction-issue"
               type="date"
               value={values.issueDate}
               onChange={(e) => setValues({ ...values, issueDate: e.target.value })}
             />
-          </div>
-          <div>
-            <Label htmlFor="transaction-realized">Realização</Label>
+          </Field>
+          <Field label="Data da movimentação" htmlFor="transaction-realized" required help="Dia em que o dinheiro realmente entrou ou saiu da conta selecionada.">
             <Input
               id="transaction-realized"
               type="date"
               value={values.realizedAt}
               onChange={(e) => setValues({ ...values, realizedAt: e.target.value })}
             />
-          </div>
-          <div>
-            <Label htmlFor="transaction-total">Valor</Label>
+          </Field>
+          <Field label="Valor total" htmlFor="transaction-total" required help="Informe o valor completo da movimentação em reais.">
             <CurrencyTextInput
               id="transaction-total"
               placeholder="0,00"
               value={values.total}
               onValueChange={(total) => setValues({ ...values, total })}
             />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="transaction-supplier">Fornecedor opcional</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Fornecedor ou favorecido" htmlFor="transaction-supplier" help="Nome de quem recebeu ou forneceu o produto/serviço. Este campo é opcional.">
             <ProperNameInput
               id="transaction-supplier"
               value={values.supplier}
               onValueChange={(supplier) => setValues({ ...values, supplier })}
             />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="transaction-notes">Observações</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Observações internas" htmlFor="transaction-notes" help="Inclua número do documento, forma de pagamento ou informações úteis para conferência.">
             <textarea
               id="transaction-notes"
               className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={values.notes}
               onChange={(e) => setValues({ ...values, notes: e.target.value })}
             />
-          </div>
+          </Field>
           {(validation || error) && (
             <p
               role="alert"

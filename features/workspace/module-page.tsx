@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export function ModulePage({ moduleKey }: ModulePageProps) {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 sm:justify-end">
-                  <Badge>{record.status}</Badge>
+                  <Badge>{ptBrLabel(record.status)}</Badge>
                   <span className="text-sm font-bold text-slate-900 dark:text-white">
                     {record.value}
                   </span>

@@ -58,7 +58,7 @@ export function ClientDetail({ id }: { id: string }) {
           <CardHeader className="border-b px-4 py-3"><h2 className="text-sm font-semibold">Dados cadastrais</h2></CardHeader>
           <CardContent className="grid gap-4 p-4 sm:grid-cols-2">
             <div><p className="text-xs text-muted-foreground">Nome</p><p className="mt-1 font-medium">{client.name}</p></div>
-            <div><p className="text-xs text-muted-foreground">Status</p><Badge className="mt-1">{statusLabels[client.status]}</Badge></div>
+            <div><p className="text-xs text-muted-foreground">Situação</p><Badge className="mt-1">{statusLabels[client.status]}</Badge></div>
             <div className="flex gap-2"><Phone className="mt-0.5 h-4 w-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Telefone</p><p className="mt-1 text-sm">{formatPhone(client.phone)}</p></div></div>
             <div className="flex gap-2"><Mail className="mt-0.5 h-4 w-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">E-mail</p><p className="mt-1 text-sm">{client.email || "Não informado"}</p></div></div>
             <div className="flex gap-2 sm:col-span-2"><MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Endereço</p><p className="mt-1 text-sm">{[client.street, client.number, client.district, client.city, client.state].filter(Boolean).join(", ")}</p></div></div>

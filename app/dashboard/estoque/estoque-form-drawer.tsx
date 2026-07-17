@@ -2,12 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
+import { FormSectionIntro, RequiredFieldsNotice } from "@/components/ui/form-guidance";
 import { Select } from "@/components/ui/select";
 import { stockCategoryLabels, stockUnitLabels, stockUnitScales } from "./estoque-data";
 import type { StockItemFormValues } from "./estoque-schema";
 import type { StockItem } from "./estoque-types";
-const field = "space-y-1.5";
 export function StockFormDrawer({
   open,
   item,
@@ -66,6 +66,7 @@ export function StockFormDrawer({
             {error}
           </div>
         ) : null}
+        <RequiredFieldsNotice className="mt-4" />
         <form
           ref={formRef}
           className="mt-5 grid gap-4 sm:grid-cols-2"
@@ -91,8 +92,8 @@ export function StockFormDrawer({
             });
           }}
         >
-          <div className={field}>
-            <Label htmlFor="stock-name">Nome</Label>
+          <FormSectionIntro className="sm:col-span-2" title="Identificação do item" description="Informe como o material será reconhecido nas compras, reservas e movimentações." />
+          <Field label="Nome do item" htmlFor="stock-name" required help="Use um nome claro e específico. Ex.: Cabo PP 2 x 2,5 mm².">
             <Input
               id="stock-name"
               name="name"
@@ -100,18 +101,16 @@ export function StockFormDrawer({
               defaultValue={item?.name}
               required
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-code">Código interno</Label>
+          </Field>
+          <Field label="Código interno" htmlFor="stock-code" required help="Código curto usado pela empresa para localizar o item. Ex.: CAB-PP-225.">
             <Input
               id="stock-code"
               name="internalCode"
               defaultValue={item?.internalCode}
               required
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-category">Categoria</Label>
+          </Field>
+          <Field label="Categoria do material" htmlFor="stock-category" help="Agrupa itens semelhantes e facilita filtros e relatórios.">
             <Select
               id="stock-category"
               name="category"
@@ -123,9 +122,8 @@ export function StockFormDrawer({
                 </option>
               ))}
             </Select>
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-unit">Unidade</Label>
+          </Field>
+          <Field label="Unidade de controle" htmlFor="stock-unit" help="Escolha como a quantidade será registrada: unidade, metro, quilo, litro ou outra medida.">
             <Select
               id="stock-unit"
               name="unit"
@@ -142,32 +140,27 @@ export function StockFormDrawer({
             <p className="text-xs text-muted-foreground">
               Escala interna: {stockUnitScales[unit as StockItem["unit"]]}
             </p>
-          </div>
-          <div className={`${field} sm:col-span-2`}>
-            <Label htmlFor="stock-description">Descrição</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Descrição do item" htmlFor="stock-description" help="Inclua características que diferenciam o material, como medida, capacidade, cor ou aplicação.">
             <textarea
               id="stock-description"
               name="description"
               defaultValue={item?.description}
               className="min-h-20 w-full rounded-lg border bg-background px-3 py-2 text-sm"
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-barcode">Código de barras</Label>
+          </Field>
+          <Field label="Código de barras" htmlFor="stock-barcode" help="Preencha somente quando o produto possuir código de barras do fabricante.">
             <Input id="stock-barcode" name="barcode" defaultValue={item?.barcode} />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-manufacturer">Fabricante</Label>
+          </Field>
+          <Field label="Fabricante" htmlFor="stock-manufacturer" help="Marca ou empresa que fabrica o item. Ex.: Schneider, Elgin ou Tigre.">
             <Input
               id="stock-manufacturer"
               name="manufacturer"
               defaultValue={item?.manufacturer}
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-minimum">
-              Estoque mínimo ({stockUnitLabels[unit as StockItem["unit"]]})
-            </Label>
+          </Field>
+          <FormSectionIntro className="sm:col-span-2 mt-2" title="Controle e localização" description="Defina quando o sistema deve alertar reposição e onde o item fica armazenado." />
+          <Field label={`Estoque mínimo (${stockUnitLabels[unit as StockItem["unit"]]})`} htmlFor="stock-minimum" required help="Quantidade mínima desejada antes de o sistema sinalizar necessidade de reposição.">
             <Input
               id="stock-minimum"
               name="minimumQuantity"
@@ -177,57 +170,51 @@ export function StockFormDrawer({
               defaultValue={item ? item.minimumQuantity / item.unitScale : 0}
               required
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-location">Localização</Label>
+          </Field>
+          <Field label="Local principal" htmlFor="stock-location" required help="Informe o almoxarifado, depósito, veículo ou unidade onde o material fica guardado.">
             <Input
               id="stock-location"
               name="locationName"
               defaultValue={item?.location.name}
               required
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-room">Sala/área</Label>
+          </Field>
+          <Field label="Sala ou área" htmlFor="stock-room" help="Detalhe a área dentro do local principal. Ex.: Sala elétrica ou corredor B.">
             <Input
               id="stock-room"
               name="locationRoom"
               defaultValue={item?.location.room}
             />
-          </div>
-          <div className={field}>
-            <Label htmlFor="stock-container">Prateleira/recipiente</Label>
+          </Field>
+          <Field label="Prateleira ou recipiente" htmlFor="stock-container" help="Ex.: Prateleira 03, caixa azul ou gaveta 12.">
             <Input
               id="stock-container"
               name="locationContainer"
               defaultValue={item?.location.container}
             />
-          </div>
-          <div className={`${field} sm:col-span-2`}>
-            <Label htmlFor="stock-location-description">Descrição da localização</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Referência da localização" htmlFor="stock-location-description" help="Use quando precisar de uma orientação adicional para encontrar o item.">
             <Input
               id="stock-location-description"
               name="locationDescription"
               defaultValue={item?.location.description}
             />
-          </div>
-          <div className={`${field} sm:col-span-2`}>
-            <Label htmlFor="stock-supplier">Fornecedor preferencial</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Fornecedor preferencial" htmlFor="stock-supplier" help="Fornecedor normalmente utilizado para repor este material.">
             <Input
               id="stock-supplier"
               name="supplierReference"
               defaultValue={item?.supplierReference}
             />
-          </div>
-          <div className={`${field} sm:col-span-2`}>
-            <Label htmlFor="stock-notes">Observações</Label>
+          </Field>
+          <Field className="sm:col-span-2" label="Observações internas" htmlFor="stock-notes" help="Registre cuidados, compatibilidades ou informações úteis para compras e uso.">
             <textarea
               id="stock-notes"
               name="notes"
               defaultValue={item?.notes}
               className="min-h-20 w-full rounded-lg border bg-background px-3 py-2 text-sm"
             />
-          </div>
+          </Field>
           <div className="flex justify-end gap-2 sm:col-span-2">
             <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
               Cancelar

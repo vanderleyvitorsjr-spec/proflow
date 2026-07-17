@@ -67,6 +67,7 @@ import type { ProfileState } from "./perfil-types";
 import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
 import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
 import type { NotificationItem } from "@/app/dashboard/notificacoes/notificacoes-types";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 
 const tabs = [
   ["Visão geral", UserRound],
@@ -286,7 +287,7 @@ function Overview({
           <div className="flex flex-col items-center text-center">
             <Avatar profileName={profile.displayName || profile.fullName} avatarUrl={avatarUrl} size="large" />
             <h2 className="mt-3 text-xl font-semibold">{profile.displayName || "Usuário local"}</h2>
-            <p className="text-sm text-muted-foreground">{profile.role || "Cargo não informado"}</p>
+            <p className="text-sm text-muted-foreground">{ptBrLabel(profile.role, profile.role || "Cargo não informado")}</p>
             <Badge className="mt-2" variant="outline">{availabilityLabels[state.availability.status]}</Badge>
           </div>
 
@@ -303,7 +304,7 @@ function Overview({
             <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-left">
               <p className="text-xs font-medium text-muted-foreground">Vinculado à equipe</p>
               <p className="mt-1 text-sm font-semibold">{normalizeProperName(profile.teamMemberSnapshot.name)}</p>
-              <p className="text-xs text-muted-foreground">{normalizeProperName(profile.teamMemberSnapshot.role)}</p>
+              <p className="text-xs text-muted-foreground">{ptBrLabel(profile.teamMemberSnapshot.role)}</p>
             </div>
           )}
 
@@ -348,7 +349,7 @@ function Overview({
                     <p className="truncate text-sm font-medium">{document.title}</p>
                     <p className="text-xs text-muted-foreground">{document.expiresAt ? `Validade: ${formatDateBR(document.expiresAt)}` : "Sem validade"}</p>
                   </div>
-                  <Badge variant={document.expiresAt && document.expiresAt < new Date().toISOString().slice(0, 10) ? "destructive" : "outline"}>{document.type}</Badge>
+                  <Badge variant={document.expiresAt && document.expiresAt < new Date().toISOString().slice(0, 10) ? "destructive" : "outline"}>{ptBrLabel(document.type)}</Badge>
                 </div>
               ))}
               {!validDocuments.length && <CompactEmpty title="Nenhum documento válido" action="Adicionar documento" onClick={() => onOpenTab("Documentos")} />}

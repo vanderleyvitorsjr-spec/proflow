@@ -119,38 +119,38 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-4 sm:p-6">
           <fieldset className="grid gap-3 sm:grid-cols-2">
             <legend className="col-span-full mb-1 text-sm font-semibold text-foreground">Identificação</legend>
-            <Field label="Nome ou razão social" htmlFor="client-name" error={errors.name?.message} required className="sm:col-span-2">
+            <Field label="Nome ou razão social" htmlFor="client-name" error={errors.name?.message} help="Informe o nome completo da pessoa ou a razão social da empresa." required className="sm:col-span-2">
               <ProperNameInput id="client-name" autoFocus value={values.name} onValueChange={(value) => setValue("name", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.name)} />
             </Field>
-            <Field label="Tipo" htmlFor="client-type" error={errors.type?.message} required>
+            <Field label="Tipo de cliente" htmlFor="client-type" error={errors.type?.message} help="Escolha se o cadastro pertence a uma pessoa, empresa ou condomínio." required>
               <Select id="client-type" {...register("type")}><option value="RESIDENTIAL">Residencial</option><option value="COMPANY">Empresa</option><option value="CONDOMINIUM">Condomínio</option></Select>
             </Field>
-            <Field label="CPF ou CNPJ" htmlFor="client-document" error={errors.document?.message} description="Usado para prevenir duplicidades.">
+            <Field label="CPF ou CNPJ" htmlFor="client-document" error={errors.document?.message} help="Informe o documento para identificar o cliente e evitar cadastros duplicados.">
               <CpfCnpjInput id="client-document" value={values.document ?? ""} onValueChange={(value) => setValue("document", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.document)} />
             </Field>
-            <Field label="Segmento" htmlFor="client-segment" error={errors.segment?.message} required>
+            <Field label="Área de atendimento" htmlFor="client-segment" error={errors.segment?.message} help="Selecione quais serviços este cliente costuma contratar." required>
               <Select id="client-segment" {...register("segment")}><option value="CLIMATIZATION">Climatização</option><option value="ELECTRICAL">Elétrica</option><option value="BOTH">Climatização e elétrica</option></Select>
             </Field>
-            <Field label="Status" htmlFor="client-status" error={errors.status?.message} required>
+            <Field label="Situação do cliente" htmlFor="client-status" error={errors.status?.message} help="Use Recorrente para clientes frequentes e Requer atenção para cadastros que precisam de acompanhamento." required>
               <Select id="client-status" {...register("status")}><option value="ACTIVE">Ativo</option><option value="RECURRING">Recorrente</option><option value="ATTENTION">Requer atenção</option><option value="INACTIVE">Inativo</option></Select>
             </Field>
           </fieldset>
 
           <fieldset className="grid gap-3 sm:grid-cols-2">
             <legend className="col-span-full mb-1 text-sm font-semibold text-foreground">Contato</legend>
-            <Field label="Telefone" htmlFor="client-phone" error={errors.phone?.message} required><BrazilianPhoneInput id="client-phone" placeholder="(73) 9 8893-6763" value={values.phone} onValueChange={(value) => setValue("phone", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.phone)} /></Field>
-            <Field label="WhatsApp" htmlFor="client-whatsapp" error={errors.whatsapp?.message}><BrazilianPhoneInput id="client-whatsapp" placeholder="(73) 9 8893-6763" value={values.whatsapp ?? ""} onValueChange={(value) => setValue("whatsapp", value, { shouldValidate: true, shouldDirty: true })} /></Field>
-            <Field label="E-mail" htmlFor="client-email" error={errors.email?.message} className="sm:col-span-2"><Input id="client-email" type="email" {...register("email")} aria-invalid={Boolean(errors.email)} /></Field>
+            <Field label="Telefone principal" htmlFor="client-phone" error={errors.phone?.message} help="Número principal para ligações e contato operacional." required><BrazilianPhoneInput id="client-phone" placeholder="(73) 9 8893-6763" value={values.phone} onValueChange={(value) => setValue("phone", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.phone)} /></Field>
+            <Field label="WhatsApp" htmlFor="client-whatsapp" error={errors.whatsapp?.message} help="Informe apenas quando for diferente do telefone principal."><BrazilianPhoneInput id="client-whatsapp" placeholder="(73) 9 8893-6763" value={values.whatsapp ?? ""} onValueChange={(value) => setValue("whatsapp", value, { shouldValidate: true, shouldDirty: true })} /></Field>
+            <Field label="E-mail" htmlFor="client-email" error={errors.email?.message} help="Usado para enviar orçamentos, documentos e comunicações." className="sm:col-span-2"><Input id="client-email" type="email" {...register("email")} aria-invalid={Boolean(errors.email)} /></Field>
           </fieldset>
 
           <fieldset className="grid gap-3 sm:grid-cols-6">
             <legend className="col-span-full mb-1 text-sm font-semibold text-foreground">Endereço</legend>
-            <Field label="Endereço" htmlFor="client-street" error={errors.street?.message} required className="sm:col-span-4"><Input id="client-street" {...register("street")} onBlur={(event) => setValue("street", normalizeAddressText(event.currentTarget.value), { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.street)} /></Field>
+            <Field label="Rua, avenida ou logradouro" htmlFor="client-street" error={errors.street?.message} help="Informe o endereço onde o cliente está localizado ou recebe atendimento." required className="sm:col-span-4"><Input id="client-street" {...register("street")} onBlur={(event) => setValue("street", normalizeAddressText(event.currentTarget.value), { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.street)} /></Field>
             <Field label="Número" htmlFor="client-number" error={errors.number?.message} className="sm:col-span-2"><Input id="client-number" {...register("number")} /></Field>
             <Field label="Complemento" htmlFor="client-complement" error={errors.complement?.message} className="sm:col-span-3"><Input id="client-complement" {...register("complement")} /></Field>
             <Field label="Bairro" htmlFor="client-district" error={errors.district?.message} className="sm:col-span-3"><Input id="client-district" {...register("district")} onBlur={(event) => setValue("district", normalizeProperName(event.currentTarget.value), { shouldDirty: true })} /></Field>
             <Field label="Cidade" htmlFor="client-city" error={errors.city?.message} required className="sm:col-span-3"><ProperNameInput id="client-city" value={values.city} onValueChange={(value) => setValue("city", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.city)} /></Field>
-            <Field label="UF" htmlFor="client-state" error={errors.state?.message} required className="sm:col-span-1"><Input id="client-state" maxLength={2} {...register("state")} onChange={(event) => setValue("state", normalizeUpperCode(event.target.value).slice(0, 2), { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.state)} /></Field>
+            <Field label="Estado (UF)" htmlFor="client-state" error={errors.state?.message} help="Use a sigla com duas letras. Ex.: BA." required className="sm:col-span-1"><Input id="client-state" maxLength={2} {...register("state")} onChange={(event) => setValue("state", normalizeUpperCode(event.target.value).slice(0, 2), { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.state)} /></Field>
             <Field label="CEP" htmlFor="client-zip" error={errors.zipCode?.message} className="sm:col-span-2"><BrazilianCepInput id="client-zip" value={values.zipCode ?? ""} onValueChange={(value) => setValue("zipCode", value, { shouldValidate: true, shouldDirty: true })} /></Field>
           </fieldset>
 

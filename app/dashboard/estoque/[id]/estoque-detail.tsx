@@ -44,6 +44,7 @@ import type {
   StockSnapshot,
 } from "../estoque-types";
 import type { StockOrderReference } from "../estoque-ordens-gateway";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }),
   date = new Intl.DateTimeFormat("pt-BR"),
   datetime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -337,7 +338,7 @@ export function StockDetail({ id }: { id: string }) {
                 .reverse()
                 .map((h) => (
                   <div key={h.id} className="border-l-2 border-sky-500 pl-3">
-                    <Badge variant="outline">{h.type}</Badge>
+                    <Badge variant="outline">{ptBrLabel(h.type)}</Badge>
                     <p className="mt-1 text-sm">{h.description}</p>
                     <time className="text-xs text-muted-foreground">
                       {datetime.format(new Date(h.createdAt))}

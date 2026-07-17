@@ -51,6 +51,7 @@ import type { EquipmentPricingReference } from "@/lib/contracts/equipamentos.con
 import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
 import type { CrmPricingReference } from "@/lib/contracts/crm.contract";
 import type { ServiceOrderPricingReference } from "@/lib/contracts/ordens.contract";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function PricingDetail({ simulationId }: { simulationId: string }) {
   const [simulation, setSimulation] = useState<PricingSimulation | null>(null),
@@ -232,7 +233,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
               <TableBody>
                 {simulation.costComponents.map((component) => (
                   <TableRow key={component.id}>
-                    <TableCell>{component.type}</TableCell>
+                    <TableCell>{ptBrLabel(component.type)}</TableCell>
                     <TableCell>
                       {component.description}
                       <p className="text-[11px] text-muted-foreground">

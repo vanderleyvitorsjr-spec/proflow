@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { serviceOrders } from "@/features/service-orders/service-orders-data";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 
 export function ServiceOrdersTable() {
   return (
@@ -47,7 +48,7 @@ export function ServiceOrdersTable() {
                 <p className="mt-0.5 text-xs text-slate-500">{order.location}</p>
               </div>
               <div className="lg:col-span-3">
-                <Badge>{order.category}</Badge>
+                <Badge>{ptBrLabel(order.category)}</Badge>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {order.service}
                 </p>
@@ -64,7 +65,7 @@ export function ServiceOrdersTable() {
                 </p>
               </div>
               <div className="lg:col-span-2">
-                <Badge variant={order.tone}>{order.status}</Badge>
+                <Badge variant={order.tone}>{ptBrLabel(order.status)}</Badge>
               </div>
             </div>
           ))}

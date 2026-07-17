@@ -1,12 +1,14 @@
 import * as React from "react";
 
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { cn } from "@/lib/utils";
 
 type FieldProps = React.HTMLAttributes<HTMLDivElement> & {
   label?: string;
   htmlFor?: string;
   description?: string;
+  help?: string;
   error?: string;
   required?: boolean;
 };
@@ -15,6 +17,7 @@ export function Field({
   label,
   htmlFor,
   description,
+  help,
   error,
   required,
   children,
@@ -30,6 +33,7 @@ export function Field({
         </Label>
       )}
       {children}
+      {help && !error ? <HelpHint text={help} /> : null}
       {(error || description) && (
         <p className={cn("text-xs text-muted-foreground", error && "text-destructive")}>
           {error ?? description}

@@ -40,6 +40,7 @@ import type {
   FinancialTransaction,
 } from "../financeiro-types";
 import { accountsWithBalance } from "../financeiro-selectors";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const date = (value: string) =>
     new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`)),
   dateTime = (value: string) =>
@@ -301,7 +302,7 @@ export function FinanceiroDetail({ id }: { id: string }) {
             <div key={item.id} className="flex justify-between gap-3 py-3 text-sm">
               <div>
                 <p className="font-medium">{item.description}</p>
-                <p className="text-xs text-muted-foreground">{item.type}</p>
+                <p className="text-xs text-muted-foreground">{ptBrLabel(item.type)}</p>
               </div>
               <time className="text-xs text-muted-foreground">
                 {dateTime(item.createdAt)}

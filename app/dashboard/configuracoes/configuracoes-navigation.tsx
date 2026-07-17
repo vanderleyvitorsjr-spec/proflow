@@ -42,7 +42,7 @@ import { numberingExample } from "./configuracoes-selectors";
 import type { ConfigSection, ConfigState, TeamMember } from "./configuracoes-types";
 import { ConfigurationTeamDialog } from "./configuracoes-team-dialog";
 import { ConfigurationConfirmationDialog } from "./configuracoes-confirmation-dialog";
-import { ptBrLabel } from "@/lib/pt-br-labels";
+import { ptBrLabel, teamRoleLabel } from "@/lib/pt-br-labels";
 type View = ConfigSection | "history" | "transfer";
 const items: { id: View; label: string; icon: typeof Settings2 }[] = [
   { id: "company", label: "Empresa", icon: Building2 },
@@ -391,7 +391,7 @@ export function ConfigurationCenter() {
                     <th>Perfil</th>
                     <th>Especialidades</th>
                     <th>Custo/hora</th>
-                    <th>Status</th>
+                    <th>Situação</th>
                     <th className="text-right">Ações</th>
                   </tr>
                 </thead>
@@ -399,7 +399,7 @@ export function ConfigurationCenter() {
                   {visible.map((member) => (
                     <tr key={member.id} className="border-b">
                       <td className="p-2 font-medium">{member.name}</td>
-                      <td>{member.role}</td>
+                      <td>{teamRoleLabel(member.role)}</td>
                       <td>{csv(member.specialties)}</td>
                       <td>{formatCurrencyBRLFromCents(member.hourlyCostCents)}</td>
                       <td>
@@ -979,7 +979,7 @@ export function ConfigurationCenter() {
                     {new Date(item.createdAt).toLocaleString("pt-BR")}
                   </time>
                 </div>
-                <p className="text-[10px] text-muted-foreground">{item.type}</p>
+                <p className="text-[10px] text-muted-foreground">{ptBrLabel(item.type)}</p>
               </li>
             ))}
           </ol>

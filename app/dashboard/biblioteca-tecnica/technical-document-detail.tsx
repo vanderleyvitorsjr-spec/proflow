@@ -11,6 +11,7 @@ import {
   removeTechnicalFileAction,
 } from "./biblioteca-tecnica-actions";
 import type { TechnicalDocument } from "./biblioteca-tecnica-types";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 export function TechnicalDocumentDetail({ id }: { id: string }) {
   const [document, setDocument] = useState<TechnicalDocument | null | undefined>();
   const load = useCallback(() => getTechnicalDocumentAction(id).then(setDocument), [id]);
@@ -116,7 +117,7 @@ export function TechnicalDocumentDetail({ id }: { id: string }) {
           <ol className="mt-2 space-y-2">
             {[...document.history].reverse().map((h) => (
               <li key={h.id} className="text-sm">
-                <strong>{h.type}</strong> ·{" "}
+                <strong>{ptBrLabel(h.type)}</strong> ·{" "}
                 {new Date(h.occurredAt).toLocaleString("pt-BR")}
                 <p className="text-muted-foreground">{h.description}</p>
               </li>

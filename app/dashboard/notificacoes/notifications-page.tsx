@@ -27,6 +27,7 @@ import {
   snoozeNotificationAction,
 } from "./notificacoes-actions";
 import type { NotificationItem, NotificationState } from "./notificacoes-types";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 
 const priorityLabels: Record<string, string> = {
   LOW: "Baixa",
@@ -183,7 +184,7 @@ function NotificationCard({
             <Badge variant="secondary">
               {priorityLabels[item.priority] ?? item.priority}
             </Badge>
-            <Badge variant="outline">{typeLabels[item.type] ?? item.type}</Badge>
+            <Badge variant="outline">{typeLabels[item.type] ?? ptBrLabel(item.type)}</Badge>
             {!item.readAt ? <Badge>Não lida</Badge> : null}
           </div>
           <h2 className="font-semibold">{item.title}</h2>
