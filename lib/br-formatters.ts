@@ -219,3 +219,42 @@ export function formatTimeBR(value: string | undefined | null): string {
     date,
   );
 }
+
+export function normalizeAddressText(value: string | undefined | null): string {
+  return normalizeProperName(value);
+}
+
+export function normalizeEmail(value: string | undefined | null): string {
+  return String(value ?? "").trim().toLocaleLowerCase("pt-BR");
+}
+
+export function parseCurrencyBRToReais(
+  value: string | number | undefined | null,
+): number {
+  return parseCurrencyBRToCents(value) / 100;
+}
+
+export function formatCurrencyInputFromReais(valueInReais: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format((Number.isFinite(valueInReais) ? valueInReais : 0));
+}
+
+export function parsePercentageBRToBasisPoints(
+  value: string | number | undefined | null,
+): number {
+  if (typeof value === "number") return Math.round(value * 100);
+  const cleaned = String(value ?? "").trim().replace(/%/g, "");
+  if (!cleaned) return 0;
+  const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
+}
+
+export function formatPercentageInputFromBasisPoints(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format((Number.isFinite(value) ? value : 0) / 100);
+}

@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { isValidCnpj, isValidCpf, onlyDigits } from "@/lib/br-formatters";
 
-const digits = (value: string) => value.replace(/\D/g, "");
+const digits = onlyDigits;
 
 export const clientSchema = z
   .object({
@@ -22,9 +23,13 @@ export const clientSchema = z
     notes: z.string().trim().optional().default(""),
   })
   .superRefine((value, context) => {
-    const documentLength = digits(value.document);
-    if (documentLength && ![11, 14].includes(documentLength.length)) {
+    const document = digits(value.document);
+    if (document && !((document.length === 11 && isValidCpf(document)) || (document.length === 14 && isValidCnpj(document)))) {
       context.addIssue({ code: "custom", path: ["document"], message: "Informe um CPF ou CNPJ válido." });
+    }
+    const zipCode = digits(value.zipCode);
+    if (zipCode && zipCode.length !== 8) {
+      context.addIssue({ code: "custom", path: ["zipCode"], message: "Informe um CEP válido." });
     }
   });
 

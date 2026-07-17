@@ -1,39 +1,11 @@
 import { ZodError } from "zod";
+import { isValidCnpj, isValidCpf, normalizeAddressText, normalizeEmail, normalizeProperName, normalizeUpperCode, onlyDigits } from "@/lib/br-formatters";
 import { configStateSchema, teamMemberSchema } from "./configuracoes-schema";
 import { defaultConfigState } from "./configuracoes-data";
 import { ConfigurationError } from "./configuracoes-errors";
 import type { ConfigurationRepository } from "./configuracoes-repository";
 import { publicSettings } from "./configuracoes-selectors";
 import type { ConfigSection, ConfigState, TeamMember } from "./configuracoes-types";
-const digits = (value: string) => value.replace(/\D/g, "");
-const validCpf = (value: string) => {
-  const d = digits(value);
-  if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
-  const calc = (length: number) => {
-    let sum = 0;
-    for (let i = 0; i < length; i++) sum += Number(d[i]) * (length + 1 - i);
-    const rest = (sum * 10) % 11;
-    return rest === 10 ? 0 : rest;
-  };
-  return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
-};
-const validCnpj = (value: string) => {
-  const d = digits(value);
-  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
-  const calc = (length: number) => {
-    const weights =
-      length === 12
-        ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-        : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    const sum = weights.reduce(
-        (total, weight, index) => total + Number(d[index]) * weight,
-        0,
-      ),
-      rest = sum % 11;
-    return rest < 2 ? 0 : 11 - rest;
-  };
-  return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
-};
 const history = (type: string, description: string) => ({
   id: crypto.randomUUID(),
   type,
@@ -58,13 +30,28 @@ export class ConfigurationService {
     const state = await this.list(),
       next = structuredClone(state);
     if (section === "company") {
+      const input = value as ConfigState["company"];
       const company = {
-        ...(value as ConfigState["company"]),
+        ...input,
+        legalName: normalizeProperName(input.legalName),
+        tradeName: normalizeProperName(input.tradeName),
+        displayName: normalizeProperName(input.displayName),
+        shortName: normalizeProperName(input.shortName),
+        legalRepresentative: normalizeProperName(input.legalRepresentative),
+        address: normalizeAddressText(input.address),
+        city: normalizeProperName(input.city),
+        state: normalizeUpperCode(input.state),
+        document: onlyDigits(input.document),
+        phone: onlyDigits(input.phone),
+        whatsapp: onlyDigits(input.whatsapp),
+        zipCode: onlyDigits(input.zipCode),
+        email: normalizeEmail(input.email),
+        specialties: input.specialties.map(normalizeProperName),
         updatedAt: new Date().toISOString(),
       };
       if (
         company.document &&
-        !(validCpf(company.document) || validCnpj(company.document))
+        !(isValidCpf(company.document) || isValidCnpj(company.document))
       )
         throw new ConfigurationError("VALIDATION", "Informe um CPF ou CNPJ válido.");
       next.company = company;
@@ -96,16 +83,18 @@ export class ConfigurationService {
     const state = await this.list(),
       now = new Date().toISOString(),
       normalized = {
-        email: input.email.trim().toLowerCase(),
-        phone: digits(input.phone),
-        document: digits(input.document ?? ""),
+        name: normalizeProperName(input.name),
+        specialties: input.specialties.map(normalizeProperName),
+        email: normalizeEmail(input.email),
+        phone: onlyDigits(input.phone),
+        document: onlyDigits(input.document ?? ""),
       };
     const duplicate = state.teamMembers.find(
       (item) =>
         item.id !== id &&
-        ((normalized.email && item.email.toLowerCase() === normalized.email) ||
-          (normalized.phone && digits(item.phone) === normalized.phone) ||
-          (normalized.document && digits(item.document ?? "") === normalized.document)),
+        ((normalized.email && normalizeEmail(item.email) === normalized.email) ||
+          (normalized.phone && onlyDigits(item.phone) === normalized.phone) ||
+          (normalized.document && onlyDigits(item.document ?? "") === normalized.document)),
     );
     if (duplicate)
       throw new ConfigurationError(

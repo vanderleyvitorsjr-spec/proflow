@@ -13,7 +13,7 @@ import type {
   OrdemTechnicalReport,
 } from "./ordens-types";
 import type { ApplyServiceOrderPricingInput } from "@/lib/contracts/ordens.contract";
-import { normalizeProperName } from "@/lib/br-formatters";
+import { normalizeAddressText, normalizeProperName, normalizeUpperCode } from "@/lib/br-formatters";
 const history = (type: OrdemHistory["type"], description: string): OrdemHistory => ({
   id: crypto.randomUUID(),
   type,
@@ -58,16 +58,16 @@ export class OrdensService {
       clientId: client.id,
       clientName: client.name,
       crmLeadId: value.crmLeadId || undefined,
-      title: value.title.trim(),
+      title: normalizeProperName(value.title),
       description: value.description.trim(),
       category: value.category,
       priority: value.priority,
       status: value.status,
       technician: normalizeProperName(value.technician),
       teamMembers: [normalizeProperName(value.technician)],
-      address: value.address.trim(),
+      address: normalizeAddressText(value.address),
       city: normalizeProperName(value.city),
-      state: value.state.toUpperCase(),
+      state: normalizeUpperCode(value.state),
       scheduledDate: value.scheduledDate,
       scheduledTime: value.scheduledTime,
       estimatedDurationMinutes: value.estimatedDurationMinutes,
@@ -119,14 +119,15 @@ export class OrdensService {
     const record: OrdemRecord = {
       ...current,
       ...value,
-      title: value.title.trim(),
+      title: normalizeProperName(value.title),
       description: value.description.trim(),
       technician: normalizeProperName(value.technician),
       teamMembers: current.teamMembers?.length
         ? current.teamMembers
         : [normalizeProperName(value.technician)],
+      address: normalizeAddressText(value.address),
       city: normalizeProperName(value.city),
-      state: value.state.toUpperCase(),
+      state: normalizeUpperCode(value.state),
       clientName: client.name,
       crmLeadId: value.crmLeadId || undefined,
       checklist: current.checklist,

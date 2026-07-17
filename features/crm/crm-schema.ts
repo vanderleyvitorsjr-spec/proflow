@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { isValidCnpj, isValidCpf, onlyDigits } from "@/lib/br-formatters";
 import { crmStages } from "./crm-data";
 
-const digits = (value: string) => value.replace(/\D/g, "");
+const digits = onlyDigits;
 const stageIds = crmStages.map((stage) => stage.id) as ["new", ...Array<"contacted" | "technical-visit" | "sent" | "negotiation" | "approved" | "lost">];
 
 export const crmLeadSchema = z.object({
@@ -18,8 +19,10 @@ export const crmLeadSchema = z.object({
   estimatedValue: z.coerce.number().min(0, "O valor não pode ser negativo."), contactDate: z.string().min(1, "Informe a data."),
   notes: z.string().trim().optional().default(""), stageId: z.enum(stageIds),
 }).superRefine((value, context) => {
-  const length = digits(value.document).length;
-  if (length && ![11, 14].includes(length)) context.addIssue({ code: "custom", path: ["document"], message: "Informe um CPF ou CNPJ válido." });
+  const document = digits(value.document);
+  if (document && !((document.length === 11 && isValidCpf(document)) || (document.length === 14 && isValidCnpj(document)))) context.addIssue({ code: "custom", path: ["document"], message: "Informe um CPF ou CNPJ válido." });
+  const zipCode = digits(value.zipCode);
+  if (zipCode && zipCode.length !== 8) context.addIssue({ code: "custom", path: ["zipCode"], message: "Informe um CEP válido." });
 });
 
 export type CrmLeadFormInput = z.input<typeof crmLeadSchema>;

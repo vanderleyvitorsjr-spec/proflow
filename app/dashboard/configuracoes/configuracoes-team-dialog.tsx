@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { BrazilianPhoneInput, CpfCnpjInput, CurrencyCentsInput, PercentageBasisPointsInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
+import { normalizeProperName } from "@/lib/br-formatters";
 import type { TeamMember } from "./configuracoes-types";
 type Draft = Omit<TeamMember, "id" | "createdAt" | "updatedAt" | "history">;
 const empty: Draft = {
@@ -70,7 +72,7 @@ export function ConfigurationTeamDialog({
       }}
     >
       <form
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border bg-card p-5 shadow-xl"
+        className="max-h-[96dvh] w-full overflow-y-auto rounded-xl border bg-card p-4 shadow-xl sm:max-w-2xl sm:p-5"
         onSubmit={async (event) => {
           event.preventDefault();
           setSaving(true);
@@ -84,12 +86,12 @@ export function ConfigurationTeamDialog({
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-medium">
             Nome
-            <Input
+            <ProperNameInput
               ref={first}
               className="mt-1"
               required
               value={draft.name}
-              onChange={(e) => update("name", e.target.value)}
+              onValueChange={(value) => update("name", value)}
             />
           </label>
           <label className="text-xs font-medium">
@@ -117,10 +119,10 @@ export function ConfigurationTeamDialog({
           </label>
           <label className="text-xs font-medium">
             Telefone
-            <Input
+            <BrazilianPhoneInput
               className="mt-1"
               value={draft.phone}
-              onChange={(e) => update("phone", e.target.value)}
+              onValueChange={(value) => update("phone", value)}
               placeholder="(73) 9 8893-6763"
             />
           </label>
@@ -135,10 +137,10 @@ export function ConfigurationTeamDialog({
           </label>
           <label className="text-xs font-medium">
             CPF/CNPJ opcional
-            <Input
+            <CpfCnpjInput
               className="mt-1"
-              value={draft.document}
-              onChange={(e) => update("document", e.target.value)}
+              value={draft.document ?? ""}
+              onValueChange={(value) => update("document", value)}
             />
           </label>
           <label className="text-xs font-medium">
@@ -151,7 +153,7 @@ export function ConfigurationTeamDialog({
                   "specialties",
                   e.target.value
                     .split(",")
-                    .map((v) => v.trim())
+                    .map((v) => normalizeProperName(v))
                     .filter(Boolean),
                 )
               }
@@ -159,28 +161,20 @@ export function ConfigurationTeamDialog({
           </label>
           <label className="text-xs font-medium">
             Custo/hora (R$)
-            <Input
+            <CurrencyCentsInput
               className="mt-1"
-              type="number"
-              min="0"
-              step="0.01"
-              value={draft.hourlyCostCents / 100}
-              onChange={(e) =>
-                update("hourlyCostCents", Math.round(Number(e.target.value) * 100))
-              }
+              value={draft.hourlyCostCents}
+              onValueChange={(value) => update("hourlyCostCents", value)}
+              aria-label="Custo por hora em reais"
             />
           </label>
           <label className="text-xs font-medium">
             Encargos (%)
-            <Input
+            <PercentageBasisPointsInput
               className="mt-1"
-              type="number"
-              min="0"
-              step="0.01"
-              value={draft.burdenRateBasisPoints / 100}
-              onChange={(e) =>
-                update("burdenRateBasisPoints", Math.round(Number(e.target.value) * 100))
-              }
+              value={draft.burdenRateBasisPoints}
+              onValueChange={(value) => update("burdenRateBasisPoints", value)}
+              aria-label="Encargos percentuais"
             />
           </label>
           <label className="text-xs font-medium sm:col-span-2">

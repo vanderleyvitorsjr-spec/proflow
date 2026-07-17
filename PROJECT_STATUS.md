@@ -482,3 +482,12 @@ public/              Assets estáticos
 - As consultas são tolerantes a falhas por fonte e exibem o estado operacional parcial.
 - O formatador monetário brasileiro passou a distinguir explicitamente valores legados em reais de valores modernos em centavos.
 - Nomes exibidos na Central são normalizados para capitalização brasileira, preservando conectivos e siglas.
+
+## Refinamento transversal de formulários e padrões brasileiros
+
+- Criados inputs reutilizáveis para nomes próprios, telefone brasileiro, CPF/CNPJ, CEP, moeda em centavos, moeda legada em reais e percentuais em basis points.
+- Clientes, CRM, Fornecedores, Equipe de Configurações e Ordens passaram a aplicar máscaras durante a digitação e normalização novamente antes da persistência.
+- Validação de CPF/CNPJ e CEP foi fortalecida em Clientes e CRM.
+- Nomes, cidades, endereços, responsáveis, especialidades, e-mails e UFs são normalizados de forma centralizada nos services.
+- Inputs monetários deixam de exibir números crus e passam a usar padrão brasileiro sem alterar a unidade interna de cada domínio.
+- Drawers e dialogs afetados receberam comportamento mobile mais seguro, incluindo largura total e área inferior compatível com safe-area.

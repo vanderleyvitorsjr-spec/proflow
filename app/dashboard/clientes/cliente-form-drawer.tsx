@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { BrazilianCepInput, BrazilianPhoneInput, CpfCnpjInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
+import { normalizeAddressText, normalizeProperName, normalizeUpperCode } from "@/lib/br-formatters";
 
 import { clientSchema, type ClientFormInput, type ClientFormValues } from "./cliente-schema";
 import type { ClientRecord } from "./clientes-data";
@@ -67,6 +69,8 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ClientFormInput, unknown, ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -87,6 +91,8 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose, open, saving]);
 
+  const values = watch();
+
   if (!open) return null;
 
   return (
@@ -96,7 +102,7 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
         role="dialog"
         aria-modal="true"
         aria-labelledby="client-form-title"
-        className="proflow-scrollbar relative h-full w-full max-w-2xl overflow-y-auto border-l border-border bg-background shadow-2xl"
+        className="proflow-scrollbar relative h-full w-full overflow-y-auto border-l border-border bg-background shadow-2xl sm:max-w-2xl"
       >
         <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b bg-card/95 px-4 py-3 backdrop-blur sm:px-6">
           <div>
@@ -114,13 +120,13 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
           <fieldset className="grid gap-3 sm:grid-cols-2">
             <legend className="col-span-full mb-1 text-sm font-semibold text-foreground">Identificação</legend>
             <Field label="Nome ou razão social" htmlFor="client-name" error={errors.name?.message} required className="sm:col-span-2">
-              <Input id="client-name" autoFocus {...register("name")} aria-invalid={Boolean(errors.name)} />
+              <ProperNameInput id="client-name" autoFocus value={values.name} onValueChange={(value) => setValue("name", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.name)} />
             </Field>
             <Field label="Tipo" htmlFor="client-type" error={errors.type?.message} required>
               <Select id="client-type" {...register("type")}><option value="RESIDENTIAL">Residencial</option><option value="COMPANY">Empresa</option><option value="CONDOMINIUM">Condomínio</option></Select>
             </Field>
             <Field label="CPF ou CNPJ" htmlFor="client-document" error={errors.document?.message} description="Usado para prevenir duplicidades.">
-              <Input id="client-document" inputMode="numeric" {...register("document")} aria-invalid={Boolean(errors.document)} />
+              <CpfCnpjInput id="client-document" value={values.document ?? ""} onValueChange={(value) => setValue("document", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.document)} />
             </Field>
             <Field label="Segmento" htmlFor="client-segment" error={errors.segment?.message} required>
               <Select id="client-segment" {...register("segment")}><option value="CLIMATIZATION">Climatização</option><option value="ELECTRICAL">Elétrica</option><option value="BOTH">Climatização e elétrica</option></Select>
@@ -132,27 +138,27 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
 
           <fieldset className="grid gap-3 sm:grid-cols-2">
             <legend className="col-span-full mb-1 text-sm font-semibold text-foreground">Contato</legend>
-            <Field label="Telefone" htmlFor="client-phone" error={errors.phone?.message} required><Input id="client-phone" inputMode="tel" placeholder="(73) 9 8893-6763" {...register("phone")} aria-invalid={Boolean(errors.phone)} /></Field>
-            <Field label="WhatsApp" htmlFor="client-whatsapp" error={errors.whatsapp?.message}><Input id="client-whatsapp" inputMode="tel" placeholder="(73) 9 8893-6763" {...register("whatsapp")} /></Field>
+            <Field label="Telefone" htmlFor="client-phone" error={errors.phone?.message} required><BrazilianPhoneInput id="client-phone" placeholder="(73) 9 8893-6763" value={values.phone} onValueChange={(value) => setValue("phone", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.phone)} /></Field>
+            <Field label="WhatsApp" htmlFor="client-whatsapp" error={errors.whatsapp?.message}><BrazilianPhoneInput id="client-whatsapp" placeholder="(73) 9 8893-6763" value={values.whatsapp ?? ""} onValueChange={(value) => setValue("whatsapp", value, { shouldValidate: true, shouldDirty: true })} /></Field>
             <Field label="E-mail" htmlFor="client-email" error={errors.email?.message} className="sm:col-span-2"><Input id="client-email" type="email" {...register("email")} aria-invalid={Boolean(errors.email)} /></Field>
           </fieldset>
 
           <fieldset className="grid gap-3 sm:grid-cols-6">
             <legend className="col-span-full mb-1 text-sm font-semibold text-foreground">Endereço</legend>
-            <Field label="Endereço" htmlFor="client-street" error={errors.street?.message} required className="sm:col-span-4"><Input id="client-street" {...register("street")} aria-invalid={Boolean(errors.street)} /></Field>
+            <Field label="Endereço" htmlFor="client-street" error={errors.street?.message} required className="sm:col-span-4"><Input id="client-street" {...register("street")} onBlur={(event) => setValue("street", normalizeAddressText(event.currentTarget.value), { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.street)} /></Field>
             <Field label="Número" htmlFor="client-number" error={errors.number?.message} className="sm:col-span-2"><Input id="client-number" {...register("number")} /></Field>
             <Field label="Complemento" htmlFor="client-complement" error={errors.complement?.message} className="sm:col-span-3"><Input id="client-complement" {...register("complement")} /></Field>
-            <Field label="Bairro" htmlFor="client-district" error={errors.district?.message} className="sm:col-span-3"><Input id="client-district" {...register("district")} /></Field>
-            <Field label="Cidade" htmlFor="client-city" error={errors.city?.message} required className="sm:col-span-3"><Input id="client-city" {...register("city")} aria-invalid={Boolean(errors.city)} /></Field>
-            <Field label="UF" htmlFor="client-state" error={errors.state?.message} required className="sm:col-span-1"><Input id="client-state" maxLength={2} {...register("state")} aria-invalid={Boolean(errors.state)} /></Field>
-            <Field label="CEP" htmlFor="client-zip" error={errors.zipCode?.message} className="sm:col-span-2"><Input id="client-zip" inputMode="numeric" {...register("zipCode")} /></Field>
+            <Field label="Bairro" htmlFor="client-district" error={errors.district?.message} className="sm:col-span-3"><Input id="client-district" {...register("district")} onBlur={(event) => setValue("district", normalizeProperName(event.currentTarget.value), { shouldDirty: true })} /></Field>
+            <Field label="Cidade" htmlFor="client-city" error={errors.city?.message} required className="sm:col-span-3"><ProperNameInput id="client-city" value={values.city} onValueChange={(value) => setValue("city", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.city)} /></Field>
+            <Field label="UF" htmlFor="client-state" error={errors.state?.message} required className="sm:col-span-1"><Input id="client-state" maxLength={2} {...register("state")} onChange={(event) => setValue("state", normalizeUpperCode(event.target.value).slice(0, 2), { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.state)} /></Field>
+            <Field label="CEP" htmlFor="client-zip" error={errors.zipCode?.message} className="sm:col-span-2"><BrazilianCepInput id="client-zip" value={values.zipCode ?? ""} onValueChange={(value) => setValue("zipCode", value, { shouldValidate: true, shouldDirty: true })} /></Field>
           </fieldset>
 
           <Field label="Observações" htmlFor="client-notes" error={errors.notes?.message}>
             <textarea id="client-notes" className="min-h-24 w-full rounded-[var(--radius-control)] border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/20" {...register("notes")} />
           </Field>
 
-          <footer className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+          <footer className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-6 sm:px-6">
             <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>Cancelar</Button>
             <Button type="submit" disabled={saving}>
               {saving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}

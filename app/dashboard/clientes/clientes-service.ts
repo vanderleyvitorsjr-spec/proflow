@@ -1,8 +1,8 @@
+import { normalizeAddressText, normalizeEmail, normalizeProperName, normalizeUpperCode, onlyDigits } from "@/lib/br-formatters";
 import { clientSchema, type ClientFormValues } from "./cliente-schema";
 import type { ClientRecord } from "./clientes-data";
 import { ClientsRepository, DuplicateClientError } from "./clientes-repository";
 
-const onlyDigits = (value: string) => value.replace(/\D/g, "");
 
 export class ClientsService {
   constructor(private readonly repository: ClientsRepository) {}
@@ -22,12 +22,18 @@ export class ClientsService {
     const now = new Date().toISOString();
     const record: ClientRecord = {
       ...value,
+      name: normalizeProperName(value.name),
+      street: normalizeAddressText(value.street),
+      complement: normalizeAddressText(value.complement),
+      district: normalizeProperName(value.district),
+      city: normalizeProperName(value.city),
       id: crypto.randomUUID(),
       document: onlyDigits(value.document) || undefined,
       phone: onlyDigits(value.phone),
       whatsapp: onlyDigits(value.whatsapp) || undefined,
-      email: value.email || undefined,
-      state: value.state.toLocaleUpperCase("pt-BR"),
+      email: normalizeEmail(value.email) || undefined,
+      state: normalizeUpperCode(value.state),
+      zipCode: onlyDigits(value.zipCode) || undefined,
       activeServiceOrders: 0,
       installedEquipment: 0,
       contracts: 0,
@@ -48,11 +54,17 @@ export class ClientsService {
     return this.repository.update({
       ...current,
       ...value,
+      name: normalizeProperName(value.name),
+      street: normalizeAddressText(value.street),
+      complement: normalizeAddressText(value.complement),
+      district: normalizeProperName(value.district),
+      city: normalizeProperName(value.city),
       document: onlyDigits(value.document) || undefined,
       phone: onlyDigits(value.phone),
       whatsapp: onlyDigits(value.whatsapp) || undefined,
-      email: value.email || undefined,
-      state: value.state.toLocaleUpperCase("pt-BR"),
+      email: normalizeEmail(value.email) || undefined,
+      state: normalizeUpperCode(value.state),
+      zipCode: onlyDigits(value.zipCode) || undefined,
       updatedAt: new Date().toISOString(),
     });
   }
