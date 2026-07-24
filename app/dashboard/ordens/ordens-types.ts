@@ -7,9 +7,26 @@ import type { ServiceOrderAppliedPricing } from "@/lib/contracts/ordens.contract
 
 export type OrdemChecklistItem = {
   id: string;
+  serviceOrderId: string;
   title: string;
+  description?: string;
+  category:
+    | "PRE_SERVICE"
+    | "MATERIALS"
+    | "INSTALLATION"
+    | "ELECTRICAL"
+    | "TESTS"
+    | "DOCUMENTATION"
+    | "DELIVERY"
+    | "POST_SERVICE";
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED" | "SKIPPED";
+  required: boolean;
   responsible: string;
+  dueDate?: string;
   completedAt?: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 };
 export type OrdemExecutionStatus = "NOT_STARTED" | "IN_PROGRESS" | "PAUSED" | "COMPLETED";
 export type OrdemExecutionSession = {

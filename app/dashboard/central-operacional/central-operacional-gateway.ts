@@ -1,5 +1,10 @@
 import { listAgendaEventsAction } from "@/app/dashboard/agenda/agenda-actions";
 import { listEquipmentReportAction } from "@/app/dashboard/equipamentos/equipamentos-actions";
+import { listEquipmentStateAction } from "@/app/dashboard/equipamentos/equipamentos-actions";
+import { listClientsAction } from "@/app/dashboard/clientes/actions";
+import { listCrmLeadsAction } from "@/features/crm/crm-actions";
+import { listFinancialStateAction } from "@/app/dashboard/financeiro/financeiro-actions";
+import { listStockAction } from "@/app/dashboard/estoque/estoque-actions";
 import { listOrdensAction } from "@/app/dashboard/ordens/ordens-actions";
 import { listStockReportAction } from "@/app/dashboard/estoque/estoque-actions";
 import { normalizeProperName } from "@/lib/br-formatters";
@@ -12,6 +17,9 @@ import type {
   OperationalSourceStatus,
   TechnicianStatus,
 } from "./central-operacional-types";
+import { analyzeOperationalInsights } from "@/lib/operational-insights";
+import { listFinancialSuggestionsAction } from "@/automation/suggestions/financial-suggestion-actions";
+import { financialSuggestionsToOperationalItems } from "@/automation/suggestions/financial-suggestion-operational";
 
 const terminalOrderStatuses = new Set(["COMPLETED", "CANCELED"]);
 const terminalEventStatuses = new Set(["COMPLETED", "CANCELED"]);
@@ -152,6 +160,12 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
     listAgendaEventsAction(),
     listStockReportAction(),
     listEquipmentReportAction(),
+    listClientsAction(),
+    listCrmLeadsAction(),
+    listStockAction(),
+    listEquipmentStateAction(),
+    listFinancialStateAction(),
+    listFinancialSuggestionsAction(),
   ]);
   const [ordersResult, agendaResult, stockResult, equipmentResult] = settled;
   const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
@@ -164,6 +178,26 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
     equipmentResponse && "ok" in equipmentResponse && equipmentResponse.ok
       ? equipmentResponse.data
       : undefined;
+  const clients = settled[4].status === "fulfilled" ? settled[4].value : [];
+  const leads = settled[5].status === "fulfilled" ? settled[5].value : [];
+  const stockDetails =
+    settled[6].status === "fulfilled" && settled[6].value.ok
+      ? settled[6].value.data
+      : [];
+  const equipmentState =
+    settled[7].status === "fulfilled" && settled[7].value.ok
+      ? settled[7].value.data
+      : undefined;
+  const financialState =
+    settled[8].status === "fulfilled" && settled[8].value.ok
+      ? settled[8].value.data
+      : undefined;
+  const financialSuggestions =
+    settled[9].status === "fulfilled"
+      ? settled[9].value
+      : [];
+  const automationInsights =
+    financialSuggestionsToOperationalItems(financialSuggestions);
 
   const activeOrders = orders.filter((order) => !order.archivedAt && !order.canceledAt);
   const todayOrders = activeOrders
@@ -223,10 +257,22 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
   return {
     generatedAt: now.toISOString(),
     sourceStatus: [
+      sourceStatus("CLIENTS", settled[4], clients.length),
+      sourceStatus("CRM", settled[5], leads.length),
       sourceStatus("ORDERS", ordersResult, orders.length),
       sourceStatus("AGENDA", agendaResult, events.length),
-      sourceStatus("STOCK", stockResult, stock?.items.length ?? 0),
-      sourceStatus("EQUIPMENT", equipmentResult, activeAssets.length),
+      sourceStatus("STOCK", settled[6], stockDetails.length),
+      sourceStatus("EQUIPMENT", settled[7], equipmentState?.assets.length ?? 0),
+      sourceStatus(
+        "FINANCE",
+        settled[8],
+        financialState?.transactions.length ?? 0,
+      ),
+      sourceStatus(
+        "AUTOMATION",
+        settled[9],
+        financialSuggestions.length,
+      ),
     ],
     orders: { today: todayOrders, overdue, inProgress, withoutTechnician },
     agenda: {
@@ -248,5 +294,21 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
       overdueMaintenanceCount,
       inMaintenanceCount,
     }),
+    insights: [
+      ...analyzeOperationalInsights(
+        {
+          clients,
+          leads,
+          agenda: events,
+          orders,
+          stock: stockDetails,
+          equipment: equipmentState,
+          financial: financialState,
+        },
+        now,
+      ),
+      ...automationInsights,
+    ],
+    financialSuggestions,
   };
 }

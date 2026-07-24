@@ -14,9 +14,13 @@ import { inventorySection } from "./analytics/inventory-engine";
 import { assetsSection } from "./analytics/assets-engine";
 import { pricingSection } from "./analytics/pricing-engine";
 import type { GatewayResult, ReportDataset, ReportFilter } from "./relatorios-types";
-export async function generateReport(filters: ReportFilter): Promise<ReportDataset> {
+import { projectCashFlow } from "./analytics/cash-projection-engine";
+export async function generateReport(
+  filters: ReportFilter,
+  referenceDate = new Date(),
+): Promise<ReportDataset> {
   const started = performance.now(),
-    period = rangeForPreset(filters.preset, new Date(), {
+    period = rangeForPreset(filters.preset, referenceDate, {
       start: filters.startDate,
       end: filters.endDate,
     }),
@@ -61,5 +65,6 @@ export async function generateReport(filters: ReportFilter): Promise<ReportDatas
     filters,
     sourceStatus,
     sections,
+    cashProjection: projectCashFlow(financial?.data, referenceDate),
   };
 }

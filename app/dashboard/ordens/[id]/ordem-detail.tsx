@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowLeft, Archive, Ban, ClipboardList, Pencil } from "lucide-react";
+import { ArrowLeft, Archive, Ban, CalendarDays, CircleDollarSign, ClipboardList, FileText, FolderKanban, Pencil, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ import type { OrdemFormValues } from "../ordens-schema";
 import type { OrdemRecord, OrdemWorkNote } from "../ordens-types";
 import type { ServiceOrderStatus } from "../ordens-data";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { OperationalTimeline } from "@/components/ui/operational-timeline";
+import { QuickActions } from "@/components/ui/quick-actions";
 import {
   formatCurrencyBRLFromCents,
   formatDateBR,
@@ -151,6 +153,12 @@ export function OrdemDetail({ id }: { id: string }) {
             />
           </PageHeaderIdentity>
           <PageHeaderActions>
+            <Button asChild>
+              <Link href={`/dashboard/projetos/${order.id}`}>
+                <FolderKanban className="h-4 w-4" />
+                Workspace
+              </Link>
+            </Button>
             <Button asChild variant="secondary">
               <Link href="/dashboard/ordens">
                 <ArrowLeft className="h-4 w-4" />
@@ -180,6 +188,18 @@ export function OrdemDetail({ id }: { id: string }) {
           </PageHeaderActions>
         </PageHeaderContent>
       </PageHeader>
+      {order.status === "COMPLETED" ? (
+        <QuickActions
+          title="Ordem concluída"
+          description="Continue o pós-atendimento com os registros vinculados."
+          actions={[
+            { label: "Registrar pagamento", description: "Criar ou localizar o lançamento financeiro.", href: "/dashboard/financeiro", icon: <CircleDollarSign className="h-4 w-4" /> },
+            { label: "Emitir relatório", description: "Revisar evidências e relatório técnico.", onClick: () => document.getElementById("relatorio-tecnico")?.scrollIntoView({ behavior: "smooth" }), icon: <FileText className="h-4 w-4" /> },
+            { label: "Agendar manutenção futura", description: "Programar o próximo atendimento.", href: "/dashboard/agenda", icon: <CalendarDays className="h-4 w-4" /> },
+            { label: "Abrir garantia", description: "Consultar o equipamento e sua garantia.", href: "/dashboard/equipamentos", icon: <ShieldCheck className="h-4 w-4" /> },
+          ]}
+        />
+      ) : null}
       {error ? (
         <div
           role="alert"
@@ -328,7 +348,9 @@ export function OrdemDetail({ id }: { id: string }) {
             </CardContent>
           </Card>
         </div>
-        <OrdemEvidencePanel order={order} onChanged={setOrder} />
+        <div id="relatorio-tecnico">
+          <OrdemEvidencePanel order={order} onChanged={setOrder} />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Histórico</CardTitle>
@@ -349,6 +371,7 @@ export function OrdemDetail({ id }: { id: string }) {
           </CardContent>
         </Card>
       </div>
+      <OperationalTimeline clientId={order.clientId} serviceOrderId={order.id} sourceId={order.id} />
       <OrdemFormDrawer
         open={editing}
         order={order}

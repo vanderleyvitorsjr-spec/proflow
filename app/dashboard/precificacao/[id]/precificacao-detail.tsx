@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Calculator } from "lucide-react";
+import { ArrowLeft, Calculator, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MetricItem, MetricStrip } from "@/components/ui/metric-strip";
@@ -52,6 +52,7 @@ import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
 import type { CrmPricingReference } from "@/lib/contracts/crm.contract";
 import type { ServiceOrderPricingReference } from "@/lib/contracts/ordens.contract";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { QuickActions } from "@/components/ui/quick-actions";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function PricingDetail({ simulationId }: { simulationId: string }) {
   const [simulation, setSimulation] = useState<PricingSimulation | null>(null),
@@ -164,6 +165,20 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
           </PageHeaderActions>
         </PageHeaderContent>
       </PageHeader>
+      {simulation.status === "READY" ? (
+        <QuickActions
+          title="Orçamento pronto"
+          description="A composição está pronta para seguir para a operação."
+          actions={[
+            {
+              label: "Criar Ordem de Serviço",
+              description: "Abra a área de Ordens para continuar o atendimento.",
+              href: "/dashboard/ordens",
+              icon: <ClipboardList className="h-4 w-4" />,
+            },
+          ]}
+        />
+      ) : null}
       {error ? (
         <p
           role="alert"

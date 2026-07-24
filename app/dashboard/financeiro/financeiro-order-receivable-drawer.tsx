@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { Select } from "@/components/ui/select";
 import type { FinancialRelationOrder } from "./financeiro-relations-gateway";
 import type { FinancialAccountWithBalance } from "./financeiro-types";
@@ -93,6 +94,7 @@ export function FinanceiroOrderReceivableDrawer({
                   </option>
                 ))}
               </Select>
+              <HelpHint text="Escolha a Ordem de Serviço concluída ou aprovada que dará origem à cobrança." className="mt-1.5" />
             </div>
             {order && (
               <div className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2">
@@ -127,6 +129,7 @@ export function FinanceiroOrderReceivableDrawer({
                   value={due}
                   onChange={(event) => setDue(event.target.value)}
                 />
+                <HelpHint text="Data combinada para o cliente pagar a primeira parcela." className="mt-1.5" />
               </div>
               <div>
                 <Label htmlFor="financial-order-count">Parcelas</Label>
@@ -138,6 +141,7 @@ export function FinanceiroOrderReceivableDrawer({
                   value={count}
                   onChange={(event) => setCount(Number(event.target.value))}
                 />
+                <HelpHint text="O valor total da Ordem será dividido nesta quantidade de parcelas." className="mt-1.5" />
               </div>
             </div>
             {error && (

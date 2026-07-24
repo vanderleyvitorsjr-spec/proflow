@@ -11,6 +11,7 @@ import { RelatoriosRanking } from "./relatorios-ranking";
 import { RelatoriosSourceStatus } from "./relatorios-source-status";
 import { RelatoriosLoading } from "./relatorios-loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { RelatoriosCashProjection } from "./relatorios-cash-projection";
 const initialFilters: ReportFilter = {
   preset: "LAST_30_DAYS",
   startDate: "",
@@ -102,6 +103,9 @@ export function RelatoriosPageContent() {
             generatedAt={dataset.generatedAt}
             executionTimeMs={dataset.executionTimeMs}
           />
+          {(filters.area === "ALL" || filters.area === "FINANCIAL") ? (
+            <RelatoriosCashProjection projection={dataset.cashProjection} />
+          ) : null}
           {dataset.sections.length ? (
             dataset.sections.map((section) => (
               <section

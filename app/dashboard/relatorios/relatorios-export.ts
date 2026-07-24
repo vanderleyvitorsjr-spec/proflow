@@ -42,6 +42,24 @@ export function reportCsv(dataset: ReportDataset) {
       );
     }
   }
+  if (dataset.cashProjection?.available) {
+    rows.push(
+      [],
+      ["Projeção financeira"],
+      ["Período", "Entradas previstas", "Saídas previstas", "Saldo projetado"],
+    );
+    for (const window of dataset.cashProjection.windows)
+      rows.push([
+        `Próximos ${window.days} dias`,
+        formatNumberBR(window.incomeCents / 100, 2),
+        formatNumberBR(window.expenseCents / 100, 2),
+        formatNumberBR(window.balanceCents / 100, 2),
+      ]);
+    rows.push(
+      ["Vencido a receber", formatNumberBR(dataset.cashProjection.overdueIncomeCents / 100, 2)],
+      ["Vencido a pagar", formatNumberBR(dataset.cashProjection.overdueExpenseCents / 100, 2)],
+    );
+  }
   return `\uFEFF${rows.map((row) => row.map(escape).join(";")).join("\r\n")}`;
 }
 export function downloadReportCsv(dataset: ReportDataset) {

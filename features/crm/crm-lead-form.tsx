@@ -51,20 +51,30 @@ export function CrmLeadForm({ lead, saving, onSubmit, submitLabel = "Salvar lead
   const [owners, setOwners] = useState<TeamMemberPublicReference[]>([]), [configurationWarning, setConfigurationWarning] = useState("");
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CrmLeadFormInput, unknown, CrmLeadFormValues>({ resolver: zodResolver(crmLeadSchema), defaultValues: defaults, mode: "onBlur" });
   useEffect(() => { reset(valuesFromLead(lead)); }, [lead, reset]);
-  useEffect(() => { void listCrmOwners().then((result) => { setOwners(result.items); setConfigurationWarning(result.warning ?? ""); }); }, []);
+  useEffect(() => {
+    void listCrmOwners().then((result) => {
+      setOwners(result.items);
+      setConfigurationWarning(result.warning ?? "");
+      if (!lead && result.items.length === 1) {
+        setValue("salesOwner", result.items[0].name, {
+          shouldValidate: true,
+        });
+      }
+    });
+  }, [lead, setValue]);
   const values = watch();
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <fieldset className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"><legend className="col-span-full text-sm font-semibold">Dados e contato</legend>
-        <Field label="Nome ou razão social" htmlFor="lead-name" error={errors.name?.message} required><ProperNameInput id="lead-name" autoFocus value={values.name} onValueChange={(value) => setValue("name", value, { shouldValidate: true, shouldDirty: true })} /></Field>
+        <Field label="Nome ou razão social" htmlFor="lead-name" error={errors.name?.message} help="Informe o nome completo da pessoa ou a razão social da empresa." required><ProperNameInput id="lead-name" autoFocus placeholder="Ex.: Condomínio Jardim das Águas" value={values.name} onValueChange={(value) => setValue("name", value, { shouldValidate: true, shouldDirty: true })} /></Field>
         <Field label="Tipo de contato" htmlFor="lead-type" error={errors.type?.message} help="Indique se o contato é uma pessoa ou representa uma empresa."><Select id="lead-type" {...register("type")}><option value="INDIVIDUAL">Pessoa física</option><option value="COMPANY">Pessoa jurídica</option></Select></Field>
-        <Field label="CPF ou CNPJ" htmlFor="lead-document" error={errors.document?.message}><CpfCnpjInput id="lead-document" value={values.document ?? ""} onValueChange={(value) => setValue("document", value, { shouldValidate: true, shouldDirty: true })} /></Field>
+        <Field label="CPF ou CNPJ" htmlFor="lead-document" error={errors.document?.message} help="Informe apenas números. A formatação será aplicada automaticamente."><CpfCnpjInput id="lead-document" value={values.document ?? ""} onValueChange={(value) => setValue("document", value, { shouldValidate: true, shouldDirty: true })} /></Field>
         <Field label="Telefone" htmlFor="lead-phone" error={errors.phone?.message} required><BrazilianPhoneInput id="lead-phone" placeholder="(73) 9 8893-6763" value={values.phone} onValueChange={(value) => setValue("phone", value, { shouldValidate: true, shouldDirty: true })} /></Field>
-        <Field label="WhatsApp" htmlFor="lead-whatsapp" error={errors.whatsapp?.message}><BrazilianPhoneInput id="lead-whatsapp" value={values.whatsapp ?? ""} onValueChange={(value) => setValue("whatsapp", value, { shouldValidate: true, shouldDirty: true })} /></Field>
-        <Field label="E-mail" htmlFor="lead-email" error={errors.email?.message}><Input id="lead-email" type="email" {...register("email")} /></Field>
+        <Field label="WhatsApp" htmlFor="lead-whatsapp" error={errors.whatsapp?.message} help="Informe somente quando for diferente do telefone principal."><BrazilianPhoneInput id="lead-whatsapp" placeholder="(73) 9 8893-6763" value={values.whatsapp ?? ""} onValueChange={(value) => setValue("whatsapp", value, { shouldValidate: true, shouldDirty: true })} /></Field>
+        <Field label="E-mail" htmlFor="lead-email" error={errors.email?.message} help="Usado para enviar propostas e manter o contato comercial."><Input id="lead-email" type="email" placeholder="Ex.: contato@empresa.com.br" {...register("email")} /></Field>
       </fieldset>
       <fieldset className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><legend className="col-span-full text-sm font-semibold">Endereço</legend>
-        <Field label="Endereço" htmlFor="lead-address" error={errors.address?.message} required className="xl:col-span-2"><Input id="lead-address" {...register("address")} onBlur={(event) => setValue("address", normalizeAddressText(event.currentTarget.value), { shouldValidate: true, shouldDirty: true })} /></Field>
+        <Field label="Endereço do atendimento" htmlFor="lead-address" error={errors.address?.message} help="Informe o local onde poderá ocorrer a visita ou execução do serviço." required className="xl:col-span-2"><Input id="lead-address" placeholder="Ex.: Avenida Central, 250, Sala 3" {...register("address")} onBlur={(event) => setValue("address", normalizeAddressText(event.currentTarget.value), { shouldValidate: true, shouldDirty: true })} /></Field>
         <Field label="Cidade" htmlFor="lead-city" error={errors.city?.message} required><ProperNameInput id="lead-city" value={values.city} onValueChange={(value) => setValue("city", value, { shouldValidate: true, shouldDirty: true })} /></Field>
         <Field label="UF" htmlFor="lead-state" error={errors.state?.message} required><Input id="lead-state" maxLength={2} {...register("state")} onChange={(event) => setValue("state", normalizeUpperCode(event.target.value).slice(0, 2), { shouldValidate: true, shouldDirty: true })} /></Field>
         <Field label="CEP" htmlFor="lead-zip" error={errors.zipCode?.message}><BrazilianCepInput id="lead-zip" value={values.zipCode ?? ""} onValueChange={(value) => setValue("zipCode", value, { shouldValidate: true, shouldDirty: true })} /></Field>

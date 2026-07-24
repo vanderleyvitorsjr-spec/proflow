@@ -8,12 +8,12 @@ export const financialAccountSchema = z.object({
 });
 export const financialTransactionSchema = z
   .object({
-    title: z.string().trim().min(3, "Informe o título."),
-    description: z.string().trim().min(3, "Informe a descrição."),
+    title: z.string().trim().min(3, "Informe uma identificação para o lançamento."),
+    description: z.string().trim().min(3, "Descreva o motivo da movimentação financeira."),
     nature: z.enum(["REVENUE", "EXPENSE", "INVESTMENT"]),
     direction: z.enum(["INCOME", "EXPENSE"]),
-    category: z.string().trim().min(2, "Informe a categoria."),
-    accountId: z.string().min(1, "Selecione a conta."),
+    category: z.string().trim().min(2, "Informe a categoria financeira do lançamento."),
+    accountId: z.string().min(1, "Selecione a conta que será movimentada."),
     competenceDate: date,
     issueDate: date,
     realizedAt: date,
@@ -38,10 +38,10 @@ export const financialTransactionSchema = z
 export type FinancialAccountFormValues = z.infer<typeof financialAccountSchema>;
 export type FinancialTransactionFormValues = z.infer<typeof financialTransactionSchema>;
 export const financialObligationSchema = z.object({
-  title: z.string().trim().min(3, "Informe o título."),
-  description: z.string().trim().min(3, "Informe a descrição."),
-  category: z.string().trim().min(2, "Informe a categoria."),
-  accountId: z.string().min(1, "Selecione a conta."),
+  title: z.string().trim().min(3, "Informe uma identificação para a conta."),
+  description: z.string().trim().min(3, "Descreva o que será recebido ou pago."),
+  category: z.string().trim().min(2, "Informe a categoria financeira da conta."),
+  accountId: z.string().min(1, "Selecione a conta financeira vinculada."),
   total: z.string().trim().min(1, "Informe o valor."),
   issueDate: date,
   competenceDate: date,

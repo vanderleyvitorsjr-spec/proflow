@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "outDir": "../.next/automation-tests",
+    "rootDir": "..",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "noEmit": false
+  },
+  "include": [
+    "./**/*.ts",
+    "../app/dashboard/projetos/[id]/projeto-workspace-domain.ts",
+    "../app/dashboard/relatorios/analytics/cash-projection-engine.ts"
+  ],
+  "exclude": ["./tsconfig.test.json", "./integrations/**"]
+}

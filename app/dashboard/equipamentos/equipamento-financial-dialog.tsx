@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { Select } from "@/components/ui/select";
 import {
   equipmentFinancialFormSchema,
@@ -109,6 +110,7 @@ export function EquipmentFinancialDialog({
               <option value="INVESTMENT">Investimento</option>
               <option value="EXPENSE">Despesa</option>
             </Select>
+            <HelpHint text="Investimento registra a aquisição do equipamento; despesa registra manutenção ou gasto operacional." className="mt-1.5" />
           </div>
           <div>
             <Label htmlFor="financial-account">Conta</Label>
@@ -124,10 +126,12 @@ export function EquipmentFinancialDialog({
                 </option>
               ))}
             </Select>
+            <HelpHint text="Conta bancária, carteira ou caixa que ficará vinculada ao lançamento." className="mt-1.5" />
           </div>
           <Field
             id="financial-competence"
             label="Competência"
+            help="Mês ao qual o gasto pertence, mesmo que o pagamento ocorra em outra data."
             type="date"
             value={value.competenceDate}
             onChange={(competenceDate) => setValue({ ...value, competenceDate })}
@@ -135,6 +139,7 @@ export function EquipmentFinancialDialog({
           <Field
             id="financial-due"
             label="Primeiro vencimento"
+            help="Data prevista para pagar a primeira parcela."
             type="date"
             value={value.firstDueDate}
             onChange={(firstDueDate) => setValue({ ...value, firstDueDate })}
@@ -142,6 +147,7 @@ export function EquipmentFinancialDialog({
           <Field
             id="financial-installments"
             label="Parcelas"
+            help="Quantidade de parcelas em que o valor será dividido."
             type="number"
             value={String(value.installmentCount)}
             onChange={(installmentCount) =>
@@ -166,6 +172,7 @@ export function EquipmentFinancialDialog({
             <Field
               id="financial-method"
               label="Método de pagamento"
+              help="Ex.: Pix, boleto, transferência ou cartão."
               value={value.paymentMethod}
               onChange={(paymentMethod) => setValue({ ...value, paymentMethod })}
             />
@@ -197,12 +204,14 @@ function Field({
   value,
   onChange,
   type = "text",
+  help,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  help?: string;
 }) {
   return (
     <div>
@@ -214,6 +223,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
+      {help ? <HelpHint text={help} className="mt-1.5" /> : null}
     </div>
   );
 }

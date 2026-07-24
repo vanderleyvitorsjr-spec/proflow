@@ -15,6 +15,7 @@ import {
   PageHeaderIdentity,
 } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
+import { QuickActions } from "@/components/ui/quick-actions";
 import {
   cancelEquipmentMaintenanceAction,
   completeEquipmentMaintenanceAction,
@@ -274,6 +275,17 @@ export function EquipmentDetail({ id }: { id: string }) {
           {error}
         </p>
       ) : null}
+      {records.some((record) => record.status === "COMPLETED") ? (
+        <QuickActions
+          title="Manutenção concluída"
+          description="Finalize os registros técnicos e financeiros do atendimento."
+          actions={[
+            { label: "Atualizar garantia", description: "Revisar vigência e documento da garantia.", onClick: () => setWarrantyDrawer(true) },
+            { label: "Registrar custo", description: "Abrir a manutenção concluída para gerar a despesa.", onClick: () => document.getElementById("manutencoes-do-equipamento")?.scrollIntoView({ behavior: "smooth" }) },
+            { label: "Anexar fotos", description: "Use as evidências da Ordem de Serviço vinculada.", href: activeLinks[0] ? `/dashboard/ordens/${activeLinks[0].serviceOrderId}` : "/dashboard/ordens", disabled: !activeLinks.length },
+          ]}
+        />
+      ) : null}
       {asset.archivedAt ? (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
           Arquivado em {date(asset.archivedAt)}. {asset.archiveReason}
@@ -459,7 +471,7 @@ export function EquipmentDetail({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
-      <Card>
+      <Card id="manutencoes-do-equipamento">
         <CardHeader>
           <SectionHeader
             compact

@@ -56,6 +56,12 @@ import type {
   StockSnapshot,
 } from "../../estoque-types";
 import { stockUnitLabels } from "../../estoque-data";
+import {
+  formatBrazilianPhone,
+  formatCpfCnpj,
+  formatDateTimeBR,
+} from "@/lib/br-formatters";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function EstoquePurchaseDetail({ purchaseId }: { purchaseId: string }) {
   const [purchase, setPurchase] = useState<StockPurchase | null>(null),
@@ -238,7 +244,7 @@ export function EstoquePurchaseDetail({ purchaseId }: { purchaseId: string }) {
         </p>
       ) : null}
       <MetricStrip className="sm:min-w-0 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-4">
-        <MetricItem label="Status" value={purchase.status} />
+        <MetricItem label="Situação" value={ptBrLabel(purchase.status)} />
         <MetricItem
           label="Total"
           value={money.format(purchase.totalCents / 100)}
@@ -354,11 +360,11 @@ export function EstoquePurchaseDetail({ purchaseId }: { purchaseId: string }) {
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Documento</dt>
-              <dd>{purchase.supplier.document || "Não informado"}</dd>
+              <dd>{formatCpfCnpj(purchase.supplier.document) || "Não informado"}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Telefone</dt>
-              <dd>{purchase.supplier.phone || "Não informado"}</dd>
+              <dd>{formatBrazilianPhone(purchase.supplier.phone) || "Não informado"}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">E-mail</dt>
@@ -366,11 +372,11 @@ export function EstoquePurchaseDetail({ purchaseId }: { purchaseId: string }) {
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Criada em</dt>
-              <dd>{new Date(purchase.createdAt).toLocaleString("pt-BR")}</dd>
+              <dd>{formatDateTimeBR(purchase.createdAt)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Atualizada em</dt>
-              <dd>{new Date(purchase.updatedAt).toLocaleString("pt-BR")}</dd>
+              <dd>{formatDateTimeBR(purchase.updatedAt)}</dd>
             </div>
           </dl>
         </section>

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { stockUnitLabels } from "./estoque-data";
 import type { StockOrderReference } from "./estoque-ordens-gateway";
@@ -76,8 +76,7 @@ export function StockReservationDialog({
             });
           }}
         >
-          <div>
-            <Label htmlFor="reservation-order">Ordem de Serviço</Label>
+          <Field label="Ordem de Serviço" htmlFor="reservation-order" help="Escolha o atendimento para o qual o material ficará separado.">
             <Select id="reservation-order" name="serviceOrderId" required autoFocus>
               <option value="">Selecione</option>
               {orders
@@ -88,9 +87,8 @@ export function StockReservationDialog({
                   </option>
                 ))}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="reservation-item">Item</Label>
+          </Field>
+          <Field label="Material a reservar" htmlFor="reservation-item" help="A reserva reduz a quantidade disponível, mas não altera o saldo físico.">
             <Select
               id="reservation-item"
               value={itemId}
@@ -105,20 +103,16 @@ export function StockReservationDialog({
                   </option>
                 ))}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="reservation-purpose">Finalidade</Label>
+          </Field>
+          <Field label="Como o material será usado?" htmlFor="reservation-purpose" help="Descreva a etapa ou aplicação prevista na Ordem de Serviço.">
             <Input
               id="reservation-purpose"
               name="purpose"
-              placeholder="Ex.: instalação principal"
+              placeholder="Ex.: Tubulação da instalação principal"
               required
             />
-          </div>
-          <div>
-            <Label htmlFor="reservation-quantity">
-              Quantidade {selected ? `(${stockUnitLabels[selected.item.unit]})` : ""}
-            </Label>
+          </Field>
+          <Field label={`Quantidade a reservar${selected ? ` (${stockUnitLabels[selected.item.unit]})` : ""}`} htmlFor="reservation-quantity" help="Informe somente a quantidade prevista para este atendimento.">
             <Input
               id="reservation-quantity"
               name="quantity"
@@ -127,7 +121,7 @@ export function StockReservationDialog({
               step={selected ? 1 / selected.item.unitScale : "any"}
               required
             />
-          </div>
+          </Field>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>
               Cancelar

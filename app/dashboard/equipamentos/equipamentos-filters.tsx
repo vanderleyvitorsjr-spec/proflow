@@ -72,7 +72,7 @@ export function EquipamentosFilters({
           </PageHeaderIcon>
           <PageHeaderHeading
             title="Equipamentos"
-            description="Ativos e patrimônios duráveis da operação."
+            description="Controle ferramentas, instrumentos e equipamentos usados pela empresa e pelos clientes."
           />
         </PageHeaderIdentity>
         <PageHeaderActions>

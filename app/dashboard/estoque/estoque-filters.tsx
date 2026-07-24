@@ -46,7 +46,7 @@ export function EstoqueFilters({
           </PageHeaderIcon>
           <PageHeaderHeading
             title="Estoque"
-            description="Materiais, insumos, movimentos e custos derivados."
+            description="Acompanhe materiais, quantidades, entradas, saídas e necessidades de reposição."
           />
         </PageHeaderIdentity>
         <PageHeaderActions>

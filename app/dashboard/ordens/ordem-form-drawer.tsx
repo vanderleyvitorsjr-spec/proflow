@@ -117,6 +117,8 @@ export function OrdemFormDrawer({
             category: validCategory(configuration.settings.categories[0]),
             priority: validPriority(configuration.settings.priorities[0]),
             estimatedDurationMinutes: configuration.settings.defaultDurationMinutes,
+            technician:
+              configuration.team.length === 1 ? configuration.team[0].name : "",
           });
       });
     }
@@ -206,6 +208,7 @@ export function OrdemFormDrawer({
               <ProperNameInput
                 id="os-title"
                 autoFocus
+                placeholder="Ex.: Instalação de ar-condicionado Split 18.000 BTUs"
                 value={values.title}
                 onValueChange={(value) =>
                   setValue("title", value, { shouldValidate: true, shouldDirty: true })
@@ -246,6 +249,7 @@ export function OrdemFormDrawer({
               <textarea
                 id="os-description"
                 className="min-h-20 w-full rounded-lg border bg-background p-2 text-sm"
+                placeholder="Ex.: Instalar unidade interna e externa, realizar vácuo e testar funcionamento."
                 {...register("description")}
               />
             </Field>
@@ -320,6 +324,7 @@ export function OrdemFormDrawer({
             >
               <Input
                 id="os-address"
+                placeholder="Ex.: Rua das Palmeiras, 120, Loja 2"
                 {...register("address")}
                 onBlur={(event) =>
                   setValue("address", normalizeAddressText(event.currentTarget.value), {

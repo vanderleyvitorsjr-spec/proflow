@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import type { StockReservationOperationValues } from "./estoque-schema";
 import type { StockReservation } from "./estoque-types";
 export function StockConsumptionDialog({
@@ -61,8 +61,7 @@ export function StockConsumptionDialog({
             });
           }}
         >
-          <div>
-            <Label htmlFor="consume-quantity">Quantidade</Label>
+          <Field label="Quantidade utilizada" htmlFor="consume-quantity" help="Informe quanto do material reservado foi realmente usado na Ordem de Serviço.">
             <Input
               id="consume-quantity"
               name="quantity"
@@ -72,11 +71,10 @@ export function StockConsumptionDialog({
               autoFocus
               required
             />
-          </div>
-          <div>
-            <Label htmlFor="consume-reason">Motivo</Label>
-            <Input id="consume-reason" name="reason" required />
-          </div>
+          </Field>
+          <Field label="Motivo do consumo" htmlFor="consume-reason" help="Explique de forma curta onde ou como o material foi utilizado.">
+            <Input id="consume-reason" name="reason" placeholder="Ex.: Utilizado na instalação da unidade externa" required />
+          </Field>
           <label className="block rounded-lg border border-amber-500/30 p-3 text-sm">
             <input name="administrative" type="checkbox" className="mr-2" />
             Consumir além da reserva com confirmação administrativa

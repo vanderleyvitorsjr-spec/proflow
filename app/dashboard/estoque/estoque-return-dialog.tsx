@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import type { StockMovement } from "./estoque-types";
 export function StockReturnDialog({
   movement,
@@ -44,8 +44,7 @@ export function StockReturnDialog({
             void onSave(Number(d.get("quantity")), String(d.get("reason")));
           }}
         >
-          <div>
-            <Label htmlFor="return-quantity">Quantidade</Label>
+          <Field label="Quantidade devolvida" htmlFor="return-quantity" help="Informe quanto do material consumido retornou ao estoque em condições de uso.">
             <Input
               id="return-quantity"
               name="quantity"
@@ -55,11 +54,10 @@ export function StockReturnDialog({
               autoFocus
               required
             />
-          </div>
-          <div>
-            <Label htmlFor="return-reason">Motivo</Label>
-            <Input id="return-reason" name="reason" required />
-          </div>
+          </Field>
+          <Field label="Motivo da devolução" htmlFor="return-reason" help="Explique por que o material retornou ao estoque.">
+            <Input id="return-reason" name="reason" placeholder="Ex.: Material não utilizado no atendimento" required />
+          </Field>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar

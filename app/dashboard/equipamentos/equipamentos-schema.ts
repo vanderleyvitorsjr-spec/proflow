@@ -2,8 +2,8 @@ import { z } from "zod";
 const date = z.string().regex(/^$|^\d{4}-\d{2}-\d{2}$/, "Informe uma data válida.");
 export const equipmentFormSchema = z
   .object({
-    internalCode: z.string().trim().min(2, "Informe o código interno."),
-    name: z.string().trim().min(2, "Informe o nome."),
+    internalCode: z.string().trim().min(2, "Informe o código usado para identificar o equipamento."),
+    name: z.string().trim().min(2, "Informe o nome do equipamento."),
     description: z.string().trim(),
     assetType: z.enum([
       "TECHNICAL_EQUIPMENT",
@@ -16,14 +16,14 @@ export const equipmentFormSchema = z
       "MACHINE",
       "OTHER",
     ]),
-    category: z.string().trim().min(2, "Informe a categoria."),
+    category: z.string().trim().min(2, "Informe o grupo do equipamento."),
     manufacturer: z.string().trim(),
     model: z.string().trim(),
     serialNumber: z.string().trim(),
     patrimonyNumber: z.string().trim(),
     ownership: z.enum(["COMPANY", "CUSTOMER", "THIRD_PARTY"]),
     responsible: z.string().trim(),
-    locationName: z.string().trim().min(2, "Informe a localização."),
+    locationName: z.string().trim().min(2, "Informe onde o equipamento fica guardado ou instalado."),
     locationRoom: z.string().trim(),
     locationContainer: z.string().trim(),
     locationDescription: z.string().trim(),

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { Select } from "@/components/ui/select";
 import type { StockPurchaseFormValues } from "./estoque-schema";
 import type { StockPurchase, StockSnapshot } from "./estoque-types";
@@ -126,6 +127,7 @@ export function StockPurchaseDialog({
                 defaultValue={purchase?.supplier.name}
                 required
               />
+              <HelpHint text="Nome do fornecedor responsável por esta compra." className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="supplierDocument">CPF/CNPJ</Label>
@@ -134,6 +136,7 @@ export function StockPurchaseDialog({
                 name="supplierDocument"
                 defaultValue={purchase?.supplier.document}
               />
+              <HelpHint text="Informe apenas números. A formatação será aplicada ao exibir a compra." className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="supplierPhone">Telefone</Label>
@@ -154,12 +157,14 @@ export function StockPurchaseDialog({
               />
             </div>
             <div>
-              <Label htmlFor="documentNumber">Documento</Label>
+              <Label htmlFor="documentNumber">Nota fiscal ou pedido</Label>
               <Input
                 id="documentNumber"
                 name="documentNumber"
                 defaultValue={purchase?.documentNumber}
+                placeholder="Ex.: NF 28451"
               />
+              <HelpHint text="Número usado para conferir a compra com o documento do fornecedor." className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="purchaseDate">Data da compra</Label>
@@ -174,13 +179,14 @@ export function StockPurchaseDialog({
               />
             </div>
             <div>
-              <Label htmlFor="expectedDate">Previsão</Label>
+              <Label htmlFor="expectedDate">Previsão de entrega</Label>
               <Input
                 id="expectedDate"
                 name="expectedDate"
                 type="date"
                 defaultValue={purchase?.expectedDate}
               />
+              <HelpHint text="Data estimada para receber os materiais no estoque." className="mt-1.5" />
             </div>
           </div>
           <div className="rounded-xl border">

@@ -31,9 +31,16 @@ const initial: OrdemRecord[] = serviceOrders.map((order, index) => ({
   checklist: [
     {
       id: `${order.id}-check`,
+      serviceOrderId: order.id,
       title: "Checklist operacional inicial",
+      category: "PRE_SERVICE",
+      status: order.checklistProgress === 100 ? "COMPLETED" : "PENDING",
+      required: false,
       responsible: order.technician,
       completedAt: order.checklistProgress === 100 ? order.scheduledAt : undefined,
+      order: 0,
+      createdAt: "2026-07-01T12:00:00.000Z",
+      updatedAt: "2026-07-15T12:00:00.000Z",
     },
   ],
   equipment: [],
@@ -64,6 +71,18 @@ const normalizeOrder = (order: OrdemRecord): OrdemRecord => ({
     sessions: [],
     workNotes: [],
   },
+  checklist: order.checklist.map((item, index) => ({
+    ...item,
+    serviceOrderId: item.serviceOrderId ?? order.id,
+    description: item.description ?? "",
+    category: item.category ?? "PRE_SERVICE",
+    status:
+      item.status ?? (item.completedAt ? "COMPLETED" : "PENDING"),
+    required: item.required ?? false,
+    order: item.order ?? index,
+    createdAt: item.createdAt ?? order.createdAt,
+    updatedAt: item.updatedAt ?? order.updatedAt,
+  })),
 });
 export class LocalOrdensStorageAdapter implements OrdensStorageAdapter {
   async list() {

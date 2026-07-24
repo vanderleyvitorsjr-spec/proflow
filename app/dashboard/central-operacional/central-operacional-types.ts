@@ -1,11 +1,17 @@
 import type { AgendaDisplayEvent } from "@/app/dashboard/agenda/agenda-types";
 import type { OrdemRecord } from "@/app/dashboard/ordens/ordens-types";
+import type { OperationalInsight } from "@/lib/operational-insights";
+import type { FinancialSuggestion } from "@/automation/suggestions/financial-suggestion-types";
 
 export type OperationalSource =
+  | "CLIENTS"
+  | "CRM"
   | "ORDERS"
   | "AGENDA"
   | "STOCK"
-  | "EQUIPMENT";
+  | "EQUIPMENT"
+  | "FINANCE"
+  | "AUTOMATION";
 
 export type OperationalSourceStatus = {
   source: OperationalSource;
@@ -58,4 +64,6 @@ export type OperationalCenterSnapshot = {
     expiringWarrantyCount: number;
   };
   alerts: OperationalAlert[];
+  insights: OperationalInsight[];
+  financialSuggestions: FinancialSuggestion[];
 };

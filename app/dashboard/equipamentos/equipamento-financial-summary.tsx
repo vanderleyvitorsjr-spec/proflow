@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EquipmentFinancialReconciliationStatus } from "./equipamentos-types";
 import type { EquipmentFinanceiroTransaction } from "./equipamentos-financeiro-gateway";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const money = (c: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(c / 100);
 export function EquipmentFinancialSummary({
@@ -33,12 +34,12 @@ export function EquipmentFinancialSummary({
         <Info label="Pago" value={money(transaction.paidCents)} />
         <Info label="Saldo" value={money(transaction.openCents)} />
         <Info label="Conta" value={transaction.accountName} />
-        <Info label="Status" value={transaction.status} />
+        <Info label="Situação" value={ptBrLabel(transaction.status)} />
         <Info label="Diferença" value={money(difference)} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={reconciliation === "MATCHED" ? "success" : "warning"}>
-          {reconciliation}
+          {ptBrLabel(reconciliation)}
         </Badge>
         <Button size="sm" variant="secondary" asChild>
           <Link href={`/dashboard/financeiro/${transaction.id}`}>Abrir Financeiro</Link>

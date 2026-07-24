@@ -110,5 +110,6 @@ export type ReportDataset = {
   filters: ReportFilter;
   sourceStatus: ReportSourceStatus[];
   sections: ReportSection[];
+  cashProjection?: import("./analytics/cash-projection-engine").CashProjection;
 };
 export type GatewayResult<T> = { data?: T; status: ReportSourceStatus };

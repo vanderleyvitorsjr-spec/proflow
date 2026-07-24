@@ -79,7 +79,7 @@ export function AgendaToolbar({
           </PageHeaderIcon>
           <PageHeaderHeading
             title="Agenda"
-            description="Organize atendimentos, equipes, visitas e Ordens de Serviço."
+            description="Organize visitas, serviços e compromissos da equipe em um único calendário."
           />
         </PageHeaderIdentity>
 

@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyTextInput } from "@/components/ui/br-masked-inputs";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { ptBrLabel } from "@/lib/pt-br-labels";
 import { formatMoneyCents } from "./financeiro-money";
@@ -106,26 +106,23 @@ export function FinanceiroPaymentDialog({
           {formatMoneyCents(installmentOpenCents(installment))}
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="payment-value">Valor</Label>
+          <Field label={transaction.kind === "RECEIVABLE" ? "Valor recebido" : "Valor pago"} htmlFor="payment-value" help="Informe o valor efetivamente movimentado nesta baixa.">
             <CurrencyTextInput
               id="payment-value"
               autoFocus
               value={values.amount}
               onValueChange={(amount) => setValues({ ...values, amount })}
             />
-          </div>
-          <div>
-            <Label htmlFor="payment-date">Data</Label>
+          </Field>
+          <Field label="Data da movimentação" htmlFor="payment-date" help="Dia em que o dinheiro entrou ou saiu da conta.">
             <Input
               id="payment-date"
               type="date"
               value={values.paidAt}
               onChange={(e) => setValues({ ...values, paidAt: e.target.value })}
             />
-          </div>
-          <div>
-            <Label htmlFor="payment-account">Conta</Label>
+          </Field>
+          <Field label="Conta movimentada" htmlFor="payment-account" help="Escolha a conta bancária, carteira ou caixa onde ocorreu a movimentação.">
             <Select
               id="payment-account"
               value={values.accountId}
@@ -137,9 +134,8 @@ export function FinanceiroPaymentDialog({
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="payment-method">Método</Label>
+          </Field>
+          <Field label="Forma de pagamento" htmlFor="payment-method" help="Informe como o valor foi recebido ou pago.">
             <Select
               id="payment-method"
               value={values.method}
@@ -147,23 +143,22 @@ export function FinanceiroPaymentDialog({
             >
               {methods.map((method) => <option key={method} value={method}>{ptBrLabel(method)}</option>)}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="payment-reference">Referência opcional</Label>
+          </Field>
+          <Field label="Comprovante ou referência" htmlFor="payment-reference" help="Número do comprovante, boleto, Pix ou documento relacionado.">
             <Input
               id="payment-reference"
+              placeholder="Ex.: Pix E2E ou número do comprovante"
               value={values.reference}
               onChange={(e) => setValues({ ...values, reference: e.target.value })}
             />
-          </div>
-          <div>
-            <Label htmlFor="payment-notes">Observação</Label>
+          </Field>
+          <Field label="Observações internas" htmlFor="payment-notes">
             <Input
               id="payment-notes"
               value={values.notes}
               onChange={(e) => setValues({ ...values, notes: e.target.value })}
             />
-          </div>
+          </Field>
           {(validation || error) && (
             <p
               role="alert"

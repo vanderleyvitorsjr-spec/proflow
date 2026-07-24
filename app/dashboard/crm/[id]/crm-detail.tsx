@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, BarChart3, UserPlus } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarDays, CircleDollarSign, ClipboardList, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,8 @@ import { convertCrmLeadAction, getCrmLeadAction } from "@/features/crm/crm-actio
 import { crmStages } from "@/features/crm/crm-data";
 import type { CrmLeadRecord } from "@/features/crm/crm-types";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { OperationalTimeline } from "@/components/ui/operational-timeline";
+import { QuickActions } from "@/components/ui/quick-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const date = new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeStyle: "short" });
@@ -42,7 +44,16 @@ export function CrmDetail({ id }: { id: string }) {
   if (!lead) return <EmptyState title="Lead não encontrado" description={error ?? "O registro pode ter sido arquivado."} action={<Button asChild><Link href="/dashboard/crm">Voltar ao CRM</Link></Button>} />;
   const stage = crmStages.find((item) => item.id === lead.stageId);
   return <div className="space-y-3"><PageHeader><PageHeaderContent><PageHeaderIdentity><PageHeaderIcon><BarChart3 className="h-5 w-5" /></PageHeaderIcon><PageHeaderHeading title={lead.name} description={lead.serviceInterest} /></PageHeaderIdentity><PageHeaderActions><Button asChild variant="secondary"><Link href="/dashboard/crm"><ArrowLeft className="h-4 w-4" />Voltar</Link></Button>{lead.convertedClientId ? <Button asChild><Link href={`/dashboard/clientes/${lead.convertedClientId}`}>Abrir cliente</Link></Button> : <Button onClick={() => setConvert(true)}><UserPlus className="h-4 w-4" />Converter em cliente</Button>}</PageHeaderActions></PageHeaderContent></PageHeader>
+    <QuickActions actions={[
+      { label: "Criar orçamento", description: "Preparar valores na Precificação.", href: "/dashboard/precificacao", icon: <CircleDollarSign className="h-4 w-4" /> },
+      lead.convertedClientId
+        ? { label: "Abrir cliente", description: "Consultar a ficha do cliente convertido.", href: `/dashboard/clientes/${lead.convertedClientId}`, icon: <UserPlus className="h-4 w-4" /> }
+        : { label: "Converter para cliente", description: "Revisar os dados e concluir o cadastro.", onClick: () => setConvert(true), icon: <UserPlus className="h-4 w-4" /> },
+      { label: "Agendar visita técnica", description: "Escolher data, horário e responsável.", href: "/dashboard/agenda", icon: <CalendarDays className="h-4 w-4" /> },
+      { label: "Criar Ordem de Serviço", description: "Continuar o atendimento na operação.", href: "/dashboard/ordens", icon: <ClipboardList className="h-4 w-4" /> },
+    ]} />
     <div className="grid gap-3 lg:grid-cols-[2fr_1fr]"><Card><CardHeader><CardTitle>Dados da oportunidade</CardTitle></CardHeader><CardContent className="grid gap-4 text-sm sm:grid-cols-2"><Info label="Etapa" value={stage?.title ?? lead.stageId} /><Info label="Prioridade" value={priorities[lead.priority]} /><Info label="Origem" value={lead.source} /><Info label="Responsável" value={lead.salesOwner} /><Info label="Valor estimado" value={money.format(lead.estimatedValue)} /><Info label="Data de contato" value={new Intl.DateTimeFormat("pt-BR").format(new Date(`${lead.contactDate}T12:00:00`))} /><Info label="Telefone" value={formatPhone(lead.phone)} /><Info label="E-mail" value={lead.email || "Não informado"} /><Info label="Localização" value={`${lead.city}, ${lead.state}`} /><Info label="Observações" value={lead.notes || "Sem observações"} /></CardContent></Card><Card><CardHeader><CardTitle>Histórico</CardTitle></CardHeader><CardContent className="space-y-3">{lead.history.slice().reverse().map((item) => <div key={item.id} className="border-l-2 border-sky-500 pl-3"><Badge variant="outline">{ptBrLabel(item.type)}</Badge><p className="mt-1 text-sm">{item.description}</p><time className="text-xs text-muted-foreground">{date.format(new Date(item.createdAt))}</time></div>)}</CardContent></Card></div>
+    <OperationalTimeline clientId={lead.convertedClientId} sourceId={lead.id} />
     {convert ? <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/55 p-4"><section role="dialog" aria-modal="true" aria-labelledby="convert-title" className="w-full max-w-2xl rounded-xl border bg-card p-5"><div className="mb-4 flex justify-between"><div><h2 id="convert-title" className="font-semibold">Converter em cliente</h2><p className="text-xs text-muted-foreground">Revise os dados antes de criar o cliente.</p></div><Button variant="secondary" onClick={() => setConvert(false)}>Fechar</Button></div><ConversionForm lead={lead} onDone={(updated) => { setLead(updated); setConvert(false); }} /></section></div> : null}
   </div>;
 }

@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { Table } from "@/components/ui/table";
+import { QuickActions } from "@/components/ui/quick-actions";
 import { cn } from "@/lib/utils";
 
 import {
@@ -334,6 +335,7 @@ export function ClientesPageContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deletingClient, setDeletingClient] = useState<ClientRecord | null>(null);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+  const [createdClient, setCreatedClient] = useState<ClientRecord | null>(null);
 
   const loadClients = useCallback(async () => {
     setIsLoading(true);
@@ -365,7 +367,7 @@ export function ClientesPageContent() {
     setIsSaving(true);
     try {
       if (editingClient) await updateClientAction(editingClient.id, values);
-      else await createClientAction(values);
+      else setCreatedClient(await createClientAction(values));
       setIsFormOpen(false);
       setEditingClient(null);
       setFeedback({ tone: "success", message: editingClient ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso." });
@@ -806,6 +808,20 @@ export function ClientesPageContent() {
         onClose={() => { if (!isSaving) { setIsFormOpen(false); setEditingClient(null); } }}
         onSubmit={handleSave}
       />
+
+      {createdClient ? (
+        <QuickActions
+          title={`Cliente ${createdClient.name} cadastrado`}
+          description="Escolha o próximo passo para continuar o atendimento."
+          actions={[
+            { label: "Cadastrar oportunidade", description: "Iniciar uma negociação no CRM.", href: "/dashboard/crm/novo-lead", icon: <BriefcaseBusiness className="h-4 w-4" /> },
+            { label: "Criar Ordem de Serviço", description: "Abrir o cadastro de uma nova Ordem.", href: "/dashboard/ordens", icon: <Wrench className="h-4 w-4" /> },
+            { label: "Agendar visita", description: "Escolher data, horário e responsável.", href: "/dashboard/agenda", icon: <CalendarDays className="h-4 w-4" /> },
+            { label: "Abrir histórico", description: "Ver a ficha e a linha do tempo do cliente.", href: `/dashboard/clientes/${createdClient.id}`, icon: <ClipboardList className="h-4 w-4" /> },
+            { label: "Enviar orçamento", description: "Preparar uma precificação para este atendimento.", href: "/dashboard/precificacao", icon: <CircleDollarSign className="h-4 w-4" /> },
+          ]}
+        />
+      ) : null}
 
       {deletingClient ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-[2px]">

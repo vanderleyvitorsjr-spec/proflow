@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Building2, CalendarDays, Mail, MapPin, Phone, UserRound, Wrench } from "lucide-react";
+import { ArrowLeft, BarChart3, Building2, CalendarDays, CircleDollarSign, ClipboardList, Mail, MapPin, Phone, UserRound, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader, PageHeaderActions, PageHeaderContent, PageHeaderHeading, PageHeaderIcon, PageHeaderIdentity } from "@/components/ui/page-header";
+import { OperationalTimeline } from "@/components/ui/operational-timeline";
+import { QuickActions } from "@/components/ui/quick-actions";
 
 import { getClientAction } from "../actions";
 import type { ClientRecord } from "../clientes-data";
@@ -52,6 +54,15 @@ export function ClientDetail({ id }: { id: string }) {
           <PageHeaderActions><Button asChild variant="secondary" size="sm"><Link href="/dashboard/clientes"><ArrowLeft className="h-4 w-4" />Voltar</Link></Button></PageHeaderActions>
         </PageHeaderContent>
       </PageHeader>
+      <QuickActions
+        actions={[
+          { label: "Cadastrar oportunidade", description: "Continuar a negociação no CRM.", href: "/dashboard/crm/novo-lead", icon: <BarChart3 className="h-4 w-4" /> },
+          { label: "Criar Ordem de Serviço", description: "Abrir uma nova Ordem para o cliente.", href: "/dashboard/ordens", icon: <Wrench className="h-4 w-4" /> },
+          { label: "Agendar visita", description: "Organizar uma visita técnica.", href: "/dashboard/agenda", icon: <CalendarDays className="h-4 w-4" /> },
+          { label: "Enviar orçamento", description: "Preparar valores na Precificação.", href: "/dashboard/precificacao", icon: <CircleDollarSign className="h-4 w-4" /> },
+          { label: "Abrir histórico", description: "Ir para a linha do tempo deste cliente.", onClick: () => document.getElementById("historico-operacional")?.scrollIntoView({ behavior: "smooth" }), icon: <ClipboardList className="h-4 w-4" /> },
+        ]}
+      />
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card>
@@ -71,6 +82,9 @@ export function ClientDetail({ id }: { id: string }) {
           <Card><CardContent className="space-y-3 p-4"><div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-primary" /><strong>{client.activeServiceOrders} OS ativas</strong></div><div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /><strong>{client.installedEquipment} equipamentos</strong></div><p className="border-t pt-3 text-lg font-semibold">{currencyFormatter.format(client.lifetimeValue)}</p><p className="text-xs text-muted-foreground">Valor acumulado</p></CardContent></Card>
           <EmptyState size="compact" title="Sem atividade vinculada" description="Novas Ordens de Serviço, contratos e equipamentos aparecerão aqui quando os módulos forem integrados." />
         </div>
+      </div>
+      <div id="historico-operacional">
+        <OperationalTimeline clientId={client.id} sourceId={client.id} />
       </div>
     </div>
   );

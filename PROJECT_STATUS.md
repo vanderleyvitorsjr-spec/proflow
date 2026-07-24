@@ -1,5 +1,93 @@
 # Status do Projeto ProFlow
 
+### Motor de Automações — administração, auditoria e conversão financeira (23/07/2026)
+
+- Foi criada a rota `/dashboard/automacoes`, integrada à navegação principal, com indicadores, pesquisa, filtros, listagem, estados de carregamento/erro/vazio e histórico geral filtrável.
+- A rota `/dashboard/automacoes/[id]` reúne configuração, fluxo, métricas, simulações, execuções, erros recentes e ações administrativas.
+- Workflows administrativos seguem `Page → Action → Service → Repository → Storage Adapter`, com envelope local versionado e normalização segura de estruturas anteriores.
+- O workflow obrigatório “Ordem concluída → criar sugestão financeira” possui seed idempotente, é protegido contra exclusão e permanece como o único fluxo autorizado em modo real.
+- Status `ACTIVE`, `PAUSED` e `DRAFT` e modos `SIMULATION` e `REAL` são persistidos e apresentados em português; workflows criados pelo usuário são restritos a simulação.
+- O runtime consulta a configuração atual antes de cada evento: fluxos pausados ou em rascunho não executam ações automáticas e geram auditoria como ignorados.
+- O formulário guiado cobre identificação, gatilho, condições, ações e revisão; registries tipados orientam opções e parâmetros.
+- Simulações manuais usam payload seguro editável, nunca executam ações reais e persistem relatório com aceitação, rejeições e ações planejadas.
+- O histórico local versionado registra duração, origem, entidade resumida, ações planejadas, executadas e ignoradas, sem copiar payloads pessoais completos.
+- Sugestões financeiras suportam `PENDING`, `ACCEPTED`, `DISCARDED` e `CONVERTED`, preservando leitura de registros anteriores e datas específicas de transição.
+- Aceitar prepara um formulário revisável; cancelar mantém a sugestão aceita sem criar lançamento. A confirmação explícita reutiliza a action pública e idempotente do Financeiro para criar somente uma conta a receber pendente.
+- Conversão não registra pagamento, não movimenta caixa e não altera saldo; a sugestão recebe o vínculo do lançamento e a confirmação é registrada na auditoria da automação.
+- A Central Operacional ganhou filtros e contadores por status, retomada de preenchimento, visualização de convertidas e links contextuais para Ordem e Financeiro.
+- `OperationalInsights` e `ActionCenter` recebem uma única projeção compartilhada: pendentes e aceitas permanecem acionáveis; convertidas e descartadas saem das pendências.
+- Prisma, Supabase, autenticação e banco permaneceram inalterados.
+
+### Motor de Automações — primeira integração real (23/07/2026)
+
+- A conclusão de uma Ordem de Serviço agora publica o evento tipado `SERVICE_ORDER_COMPLETED` somente quando ocorre a transição real para o estado concluído.
+- O `AutomationEventBus` encaminha o evento em modo de execução ao runtime, que reutiliza `AutomationEngine`, registries e o workflow habilitado para validar a estrutura.
+- Existe somente um workflow real: Ordem concluída → criar sugestão de recebimento.
+- A ação `CREATE_SUGGESTION` cria uma sugestão financeira local e idempotente com origem, número da Ordem, cliente, valor, data e status pendente.
+- Aceitar ou descartar altera exclusivamente o estado da sugestão; não cria lançamento financeiro, pagamento, conta, movimento de caixa ou alteração de saldo.
+- A Central Operacional apresenta as sugestões pendentes e também as incorpora aos `OperationalInsights` e ao `ActionCenter`.
+- A persistência permanece isolada em adapter local próprio, sem acesso direto das páginas ao `localStorage`.
+- Nenhuma outra automação, trigger ou action recebeu execução real.
+
+### Motor de Automações — barramento e simulação (23/07/2026)
+
+- Foi criado o barramento tipado `AutomationEventBus`, com publicação por trigger, múltiplos listeners, remoção individual, limpeza, consulta de registros e bloqueio de IDs de evento repetidos.
+- Cada trigger agora está associado ao payload esperado; os eventos incluem identificador, tipo, data e hora, origem, payload, metadados opcionais e modo exclusivamente `simulation`.
+- O `AutomationSimulator` seleciona somente workflows habilitados e compatíveis com o trigger, encaminha cada fluxo ao `AutomationEngine` e produz relatório com aceitos, rejeitados, motivos e ações que seriam executadas.
+- Relógio e gerador de IDs são injetáveis no engine e no simulador, garantindo testes determinísticos sem dependência direta de `Date.now()` ou UUID aleatório.
+- Três workflows de exemplo existem apenas como fixtures em `automation/tests`: Ordem concluída, Estoque abaixo do mínimo e Lead atualizado.
+- O projeto adotou o runner nativo `node:test`, sem instalar dependências; `npm run test:unit` compila somente `automation/` para `.next/automation-tests` e executa a suíte isolada.
+- A suíte cobre registries, validações, payload inválido, múltiplos listeners, remoção e limpeza, simulação, relatórios, histórico em memória e ausência de chamada a actions reais.
+- Barramento, simulador e testes não importam módulos funcionais, repositories, adapters, Prisma, Supabase, `localStorage`, rede ou actions de escrita.
+- Nenhuma condição é avaliada como regra de negócio e nenhuma ação real é executada; todo histórico continua exclusivamente em memória.
+
+### Motor de Automações — infraestrutura base (23/07/2026)
+
+- Foi criado o módulo compartilhado `automation/`, organizado nas camadas `triggers`, `conditions`, `actions`, `registry`, `types` e `engine`.
+- Triggers, condições e ações possuem catálogos centrais fortemente tipados, rótulos em português e parâmetros obrigatórios declarados.
+- O `AutomationRegistry` oferece consulta e listagem das capacidades disponíveis sem depender de módulos funcionais.
+- O `AutomationEngine` recebe evento, condições e ações, valida a estrutura e registra somente o resultado da simulação em memória.
+- Nenhuma condição é avaliada e nenhuma ação é executada neste lote; o histórico volátil existe apenas enquanto a instância do processo permanece ativa.
+- O módulo não importa services, repositories, adapters, Prisma, Supabase ou autenticação.
+- Banco, persistência e regras de negócio permaneceram inalterados.
+
+### Central de Ações — recomendações operacionais (23/07/2026)
+
+- O componente global `ActionCenter` transforma os resultados de `OperationalInsights` em tarefas práticas, sem duplicar ou recalcular regras analíticas.
+- Cada tarefa apresenta título, descrição, prioridade, módulo, ação principal e ação secundária quando existe um destino complementar real.
+- A Central Operacional recebeu o card “Ações recomendadas”, com filtros por prioridade, módulo e tipo.
+- A ordenação mantém Crítico, Atenção e Informativo, seguida pela data de atualização do registro que originou o insight.
+- Todas as ações apontam para rotas existentes; diálogos ou operações sem contrato navegável não são simulados.
+- Banco, Prisma, Supabase, autenticação, persistência e regras de negócio permaneceram inalterados.
+
+### Inteligência Operacional — primeira camada analítica (23/07/2026)
+
+- O componente global `OperationalInsights` passou a apresentar situações que exigem atenção, agrupadas em Crítico, Atenção e Informativo.
+- A análise cobre Clientes, CRM, Agenda, Ordens, Estoque, Equipamentos e Financeiro utilizando exclusivamente actions públicas existentes.
+- Os analisadores são funções puras: recebem snapshots já disponíveis, não acessam repositories ou adapters e não persistem resultados.
+- A Central Operacional recebeu a seção “O que precisa da sua atenção”, com módulo, descrição, prioridade e ação contextual para cada insight.
+- São detectadas lacunas cadastrais, duplicidades, inatividade comercial, compromissos vencidos ou conflitantes, Ordens sem acompanhamento, níveis críticos de Estoque, garantias e preventivas vencidas e obrigações financeiras atrasadas.
+- Centro de custo não é analisado nesta etapa porque o agregado financeiro local atual não possui esse campo; nenhuma estrutura foi alterada para simular a informação.
+- Banco, Prisma, Supabase, autenticação, persistência e regras de negócio permaneceram inalterados.
+
+### Fluxo operacional guiado — integração entre módulos (23/07/2026)
+
+- O componente global `QuickActions` passou a orientar o próximo passo após cadastro de cliente e lead, conclusão de orçamento e Ordem, reserva de material, manutenção concluída e registro de pagamento.
+- As sugestões reutilizam rotas e callbacks existentes; ações sem implementação real, como emissão de comprovante, são apresentadas como indisponíveis e não simulam conclusão.
+- A nova `OperationalTimeline` reúne atividades públicas de Clientes, CRM, Agenda, Ordens, Estoque, Financeiro, Biblioteca Técnica, Precificação e manutenções de Equipamentos em ordem cronológica.
+- O agregador da Timeline usa exclusivamente actions públicas de leitura e contratos resumidos, sem acesso direto a repositories, adapters ou `localStorage`.
+- Banco, Prisma, Supabase, autenticação, persistência, modelos e regras de negócio permaneceram inalterados.
+
+### Experiência Guiada — Ciclo 1 (23/07/2026)
+
+- Formulários de Clientes, CRM, Ordens de Serviço, Agenda, Financeiro, Estoque, Equipamentos e Fornecedores foram auditados com foco em linguagem natural, orientações curtas, exemplos, mensagens compreensíveis e apresentação em português do Brasil.
+- Os primitives existentes `Field`, `HelpHint`, máscaras brasileiras e traduções centralizadas foram reutilizados, sem criar uma segunda camada de formulários.
+- CRM, Ordens, Agenda e Equipamentos selecionam automaticamente o responsável quando existe exatamente um integrante ativo elegível, preservando a escolha manual quando há vários.
+- Agenda e Equipamentos receberam orientações adicionais para recorrência, horários, localização, patrimônio, propriedade, depreciação, vida útil e valor residual.
+- Financeiro recebeu explicações para tipo de conta, saldo inicial, categoria financeira e mês de referência.
+- Estados internos de compras, reservas e conciliações de Equipamentos passaram a ser apresentados por rótulos em português, preservando os valores internos.
+- Nenhuma regra de negócio, persistência, rota, autenticação, Prisma, Supabase ou estrutura de dados foi alterada.
+
 ### Fundação funcional — Precificação Ciclo B (16/07/2026)
 
 - Precificação passou a consumir Estoque e Equipamentos exclusivamente por contratos públicos resumidos, actions públicas aditivas e gateways próprios, sem acessar repositories, adapters ou tipos internos completos dos módulos de origem.
@@ -546,3 +634,21 @@ public/              Assets estáticos
 - O lançamento manual do Financeiro passou a explicar tipo financeiro, movimento da conta, categoria, competência, emissão, movimentação, conta e favorecido, reduzindo dúvidas sobre termos contábeis.
 - Campos obrigatórios agora possuem uma legenda padronizada no início dos formulários refinados.
 - Persistência, schemas, cálculos, valores em centavos, máscaras brasileiras, rotas e integrações permaneceram inalterados.
+## Workspace Operacional por Ordem de Serviço — 23/07/2026
+
+- Criada a rota contextual `/dashboard/projetos/[id]`, acessível pelo detalhe da Ordem, sem introduzir um novo domínio ou alterar rotas existentes.
+- O workspace compõe exclusivamente ações públicas de Ordens, Agenda, Financeiro, Estoque, Equipamentos, Precificação, Central Operacional e Automações.
+- Foram reunidos cabeçalho executivo, métricas, cronograma, lançamentos financeiros, reservas e consumos, equipamentos, checklist, timeline, automações, arquivos, custos e rentabilidade.
+- Quick Actions, Action Center, Operational Insights, Operational Timeline e primitives globais foram reutilizados sem duplicação de suas regras.
+- Nenhum schema, migration, banco, autenticação, Supabase ou contrato de persistência foi alterado.
+
+## Workspace Operacional e primeira camada de BI — 23/07/2026
+
+- O progresso da Ordem passou a ser calculado fora da interface, com pesos documentados para planejamento (15%), agendamento (15%), materiais (15%), execução (35%) e fechamento financeiro/documental (20%).
+- O checklist legado foi evoluído de forma compatível para itens com categoria, status, obrigatoriedade, responsável, prazo, ordenação e metadados; a persistência continua usando Action → Service → Repository → Storage Adapter de Ordens.
+- O workspace passou a editar e persistir o checklist, detalhar a composição do progresso e distinguir receita, custo, margem e rentabilidade previstos e realizados.
+- Custos do workspace são consolidados por origem e referência, descartando valores inválidos e evitando duplicidade dentro de cada fonte. Sugestões financeiras não entram em receita.
+- Relatórios recebeu projeção determinística de caixa para 30, 60 e 90 dias, separando vencidos, entradas, saídas e concentrações por data.
+- A exportação CSV existente passou a incluir a projeção financeira com filtros e formatação compatível com Excel brasileiro.
+- Os testes unitários foram ampliados para cobrir limites de progresso, dados parciais, checklist bloqueado, deduplicação de custos, margem negativa, receita zero e projeção financeira determinística.
+- Nenhum schema Prisma, migration, Supabase, autenticação, pagamento automático ou nova entidade Projeto foi criado.

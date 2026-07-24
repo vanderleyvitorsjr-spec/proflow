@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StockDivergence } from "./estoque-divergences";
 import { reservationRemaining } from "./estoque-selectors";
 import type { StockReservation, StockReservationDivergence } from "./estoque-types";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 export function StockReservationsList({
   reservations,
   divergences,
@@ -50,7 +51,7 @@ export function StockReservationsList({
                 <p className="text-xs text-muted-foreground">{r.purpose}</p>
               </div>
               <Badge variant={divergences[r.id] ? "warning" : "outline"}>
-                {divergences[r.id] ?? r.status}
+                {ptBrLabel(divergences[r.id] ?? r.status)}
               </Badge>
             </div>
             <div className="mt-2 grid grid-cols-4 gap-2 text-xs">

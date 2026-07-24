@@ -4,6 +4,9 @@ import { listAgendaReportAction } from "@/app/dashboard/agenda/agenda-actions";
 import { listTechnicalDocumentsAction } from "@/app/dashboard/biblioteca-tecnica/biblioteca-tecnica-actions";
 import { listPricingReportAction } from "@/app/dashboard/precificacao/precificacao-actions";
 import { listCrmReportAction } from "@/features/crm/crm-actions";
+import { listFinancialReportAction } from "@/app/dashboard/financeiro/financeiro-actions";
+import { listStockReportAction } from "@/app/dashboard/estoque/estoque-actions";
+import { listEquipmentReportAction } from "@/app/dashboard/equipamentos/equipamentos-actions";
 import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
 export async function loadGlobalActivities() {
   const settled = await Promise.allSettled([
@@ -13,6 +16,9 @@ export async function loadGlobalActivities() {
       listTechnicalDocumentsAction(),
       listPricingReportAction(),
       listCrmReportAction(),
+      listFinancialReportAction(),
+      listStockReportAction(),
+      listEquipmentReportAction(),
     ]),
     items: GlobalActivity[] = [];
   if (settled[0].status === "fulfilled")
@@ -97,6 +103,48 @@ export async function loadGlobalActivities() {
         description: x.serviceInterest,
         occurredAt: x.updatedAt,
         link: `/dashboard/crm/${x.id}`,
+      });
+  if (settled[6].status === "fulfilled" && settled[6].value.ok)
+    for (const x of settled[6].value.data.transactions)
+      items.push({
+        id: `FINANCE:${x.id}:${x.realizedAt}`,
+        source: "FINANCE",
+        sourceId: x.id,
+        sourceLabel: "Financeiro",
+        type: x.canceled ? "CANCELED" : x.kind,
+        title: x.title,
+        occurredAt: x.realizedAt,
+        clientId: x.clientId,
+        serviceOrderId: x.serviceOrderId,
+        link: `/dashboard/financeiro/${x.id}`,
+      });
+  if (settled[7].status === "fulfilled" && settled[7].value.ok)
+    for (const x of settled[7].value.data.movements)
+      items.push({
+        id: `STOCK:${x.id}:${x.date}`,
+        source: "STOCK",
+        sourceId: x.id,
+        sourceLabel: "Estoque",
+        type: x.type,
+        title: "Movimentação de estoque",
+        description: x.source,
+        occurredAt: x.date,
+        serviceOrderId: x.serviceOrderId,
+        link: `/dashboard/estoque/${x.itemId}`,
+      });
+  if (settled[8].status === "fulfilled" && settled[8].value.ok)
+    for (const x of settled[8].value.data.maintenance)
+      items.push({
+        id: `EQUIPMENT:${x.id}:${x.completedAt ?? x.scheduledAt}`,
+        source: "EQUIPMENT",
+        sourceId: x.id,
+        sourceLabel: "Equipamentos",
+        type: x.status,
+        title: "Manutenção de equipamento",
+        description: x.type,
+        occurredAt: x.completedAt ?? x.scheduledAt,
+        serviceOrderId: x.serviceOrderId,
+        link: `/dashboard/equipamentos/${x.assetId}`,
       });
   return {
     items: items.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 100),

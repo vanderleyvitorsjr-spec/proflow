@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { CurrencyCentsInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
 import { formatCurrencyInputBR, parseCurrencyBRToCents } from "@/lib/br-formatters";
@@ -14,6 +15,9 @@ import {
 } from "./equipamentos-data";
 import { equipmentFormSchema, type EquipmentFormValues } from "./equipamentos-schema";
 import type { EquipmentAsset } from "./equipamentos-types";
+import { listEquipmentResponsibles } from "./equipamentos-configuracoes-gateway";
+import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
+import { teamRoleLabel } from "@/lib/pt-br-labels";
 const empty: EquipmentFormValues = {
   internalCode: "",
   name: "",
@@ -96,12 +100,23 @@ export function EquipmentFormDrawer({
 }) {
   const [v, setV] = useState(empty),
     [validation, setValidation] = useState("");
+  const [team, setTeam] = useState<TeamMemberPublicReference[]>([]);
+  const [teamWarning, setTeamWarning] = useState("");
   useEffect(() => {
     if (open)
       queueMicrotask(() => {
         setV(asset ? fromAsset(asset) : empty);
         setValidation("");
       });
+    if (open) {
+      void listEquipmentResponsibles().then((result) => {
+        setTeam(result.items);
+        setTeamWarning(result.warning ?? "");
+        if (!asset && result.items.length === 1) {
+          setV((current) => ({ ...current, responsible: result.items[0].name }));
+        }
+      });
+    }
   }, [asset, open]);
   useEffect(() => {
     if (!open) return;
@@ -138,12 +153,14 @@ export function EquipmentFormDrawer({
           <h2 id="asset-form-title" className="text-lg font-bold">
             {asset ? "Editar equipamento" : "Novo equipamento"}
           </h2>
-          <p className="text-xs text-muted-foreground">Ativo ou patrimônio durável.</p>
+          <p className="text-xs text-muted-foreground">Cadastre ferramentas, instrumentos e equipamentos usados ou acompanhados pela empresa.</p>
         </header>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
           <NameText
             id="asset-name"
             label="Nome"
+            help="Nome pelo qual o equipamento será identificado nas listas e Ordens de Serviço."
+            placeholder="Ex.: Bomba de vácuo 12 CFM"
             value={v.name}
             onChange={(x) => set("name", x)}
             autoFocus
@@ -151,19 +168,24 @@ export function EquipmentFormDrawer({
           <Text
             id="asset-code"
             label="Código interno"
+            help="Código curto usado pela empresa para localizar o equipamento."
+            placeholder="Ex.: EQP-0042"
             value={v.internalCode}
             onChange={(x) => set("internalCode", x)}
           />
           <Choice
             id="asset-type"
             label="Tipo"
+            help="Escolha o grupo que melhor representa o uso do item."
             value={v.assetType}
             options={assetTypeLabels}
             onChange={(x) => set("assetType", x as EquipmentFormValues["assetType"])}
           />
           <Text
             id="asset-category"
-            label="Categoria"
+            label="Grupo do equipamento"
+            help="Informe uma classificação prática para pesquisa e relatórios."
+            placeholder="Ex.: Ferramentas de refrigeração"
             value={v.category}
             onChange={(x) => set("category", x)}
           />
@@ -182,31 +204,40 @@ export function EquipmentFormDrawer({
           <Text
             id="asset-serial"
             label="Número de série"
+            help="Código único informado pelo fabricante. Não altere letras ou números."
+            placeholder="Ex.: SN-A18472"
             value={v.serialNumber}
             onChange={(x) => set("serialNumber", x)}
           />
           <Text
             id="asset-patrimony"
             label="Patrimônio"
+            help="Número usado no controle patrimonial interno, quando existir."
+            placeholder="Ex.: PAT-2026-018"
             value={v.patrimonyNumber}
             onChange={(x) => set("patrimonyNumber", x)}
           />
           <Choice
             id="asset-owner"
             label="Propriedade"
+            help="Indique se o equipamento pertence à empresa, ao cliente ou a terceiros."
             value={v.ownership}
             options={ownershipLabels}
             onChange={(x) => set("ownership", x as EquipmentFormValues["ownership"])}
           />
-          <NameText
-            id="asset-responsible"
-            label="Responsável"
-            value={v.responsible}
-            onChange={(x) => set("responsible", x)}
-          />
+          <Field label="Responsável pelo equipamento" htmlFor="asset-responsible" help="Integrante que utiliza, guarda ou acompanha este equipamento.">
+            <Select id="asset-responsible" value={v.responsible} onChange={(event) => set("responsible", event.target.value)}>
+              <option value="">Sem responsável definido</option>
+              {asset?.responsible && !team.some((item) => item.name === asset.responsible) ? <option value={asset.responsible}>{asset.responsible} · cadastro anterior</option> : null}
+              {team.map((item) => <option key={item.id} value={item.name}>{item.name} · {teamRoleLabel(item.role)}</option>)}
+            </Select>
+            {teamWarning ? <p className="text-xs text-amber-600">{teamWarning}</p> : null}
+          </Field>
           <Text
             id="asset-location"
             label="Localização"
+            help="Local principal onde o equipamento fica guardado ou instalado."
+            placeholder="Ex.: Almoxarifado central"
             value={v.locationName}
             onChange={(x) => set("locationName", x)}
           />
@@ -244,6 +275,7 @@ export function EquipmentFormDrawer({
           <Choice
             id="asset-depreciation"
             label="Depreciação"
+            help="Depreciação representa a redução contábil do valor do equipamento ao longo do tempo."
             value={v.depreciationMode}
             options={{ LINEAR: "Linear", NONE: "Não depreciável" }}
             onChange={(x) => set("depreciationMode", x as "LINEAR" | "NONE")}
@@ -260,6 +292,7 @@ export function EquipmentFormDrawer({
               <Text
                 id="asset-life"
                 label="Vida útil (meses)"
+                help="Período estimado de uso antes de o equipamento atingir seu valor residual."
                 type="number"
                 value={String(v.usefulLifeMonths)}
                 onChange={(x) => set("usefulLifeMonths", Number(x))}
@@ -267,6 +300,7 @@ export function EquipmentFormDrawer({
               <MoneyText
                 id="asset-residual"
                 label="Valor residual"
+                help="Valor estimado do equipamento ao final da vida útil."
                 value={v.residualValue}
                 onChange={(x) => set("residualValue", x)}
               />
@@ -275,6 +309,7 @@ export function EquipmentFormDrawer({
           <Choice
             id="asset-status"
             label="Status"
+            help="Situação atual de disponibilidade e uso do equipamento."
             value={v.status}
             options={statusLabels}
             onChange={(x) => set("status", x as EquipmentFormValues["status"])}
@@ -282,6 +317,7 @@ export function EquipmentFormDrawer({
           <Choice
             id="asset-condition"
             label="Condição"
+            help="Estado físico e operacional observado no momento."
             value={v.condition}
             options={conditionLabels}
             onChange={(x) => set("condition", x as EquipmentFormValues["condition"])}
@@ -338,6 +374,8 @@ function Text({
   onChange,
   type = "text",
   autoFocus,
+  help,
+  placeholder,
 }: {
   id: string;
   label: string;
@@ -345,18 +383,20 @@ function Text({
   onChange: (v: string) => void;
   type?: string;
   autoFocus?: boolean;
+  help?: string;
+  placeholder?: string;
 }) {
   return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
+    <Field label={label} htmlFor={id} help={help}>
       <Input
         id={id}
         type={type}
         autoFocus={autoFocus}
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
+    </Field>
   );
 }
 function NameText({
@@ -365,23 +405,27 @@ function NameText({
   value,
   onChange,
   autoFocus,
+  help,
+  placeholder,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
   autoFocus?: boolean;
+  help?: string;
+  placeholder?: string;
 }) {
   return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
+    <Field label={label} htmlFor={id} help={help}>
       <ProperNameInput
         id={id}
         value={value}
         onValueChange={onChange}
         autoFocus={autoFocus}
+        placeholder={placeholder}
       />
-    </div>
+    </Field>
   );
 }
 
@@ -390,22 +434,23 @@ function MoneyText({
   label,
   value,
   onChange,
+  help,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
+  help?: string;
 }) {
   const cents = parseCurrencyBRToCents(value);
   return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
+    <Field label={label} htmlFor={id} help={help}>
       <CurrencyCentsInput
         id={id}
         value={cents}
         onValueChange={(nextCents) => onChange(formatCurrencyInputBR(nextCents))}
       />
-    </div>
+    </Field>
   );
 }
 
@@ -438,16 +483,17 @@ function Choice({
   value,
   options,
   onChange,
+  help,
 }: {
   id: string;
   label: string;
   value: string;
   options: Record<string, string>;
   onChange: (v: string) => void;
+  help?: string;
 }) {
   return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
+    <Field label={label} htmlFor={id} help={help}>
       <Select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
         {Object.entries(options).map(([k, l]) => (
           <option key={k} value={k}>
@@ -455,6 +501,6 @@ function Choice({
           </option>
         ))}
       </Select>
-    </div>
+    </Field>
   );
 }

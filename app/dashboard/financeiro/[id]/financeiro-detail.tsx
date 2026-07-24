@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ReceiptText } from "lucide-react";
+import { ArrowLeft, Building2, FileText, LineChart, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -41,6 +41,7 @@ import type {
 } from "../financeiro-types";
 import { accountsWithBalance } from "../financeiro-selectors";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { QuickActions } from "@/components/ui/quick-actions";
 const date = (value: string) =>
     new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`)),
   dateTime = (value: string) =>
@@ -203,6 +204,17 @@ export function FinanceiroDetail({ id }: { id: string }) {
           {notice}
         </div>
       )}
+      {notice.includes("registrado") ? (
+        <QuickActions
+          title="Pagamento registrado"
+          description="Continue a conferência financeira sem perder o vínculo de origem."
+          actions={[
+            { label: "Ver fluxo de caixa", description: "Voltar à visão consolidada do Financeiro.", href: "/dashboard/financeiro", icon: <LineChart className="h-4 w-4" /> },
+            { label: "Abrir cliente", description: transaction.clientId ? "Consultar a ficha do cliente vinculado." : "Este lançamento não possui cliente vinculado.", href: transaction.clientId ? `/dashboard/clientes/${transaction.clientId}` : undefined, disabled: !transaction.clientId, icon: <Building2 className="h-4 w-4" /> },
+            { label: "Emitir comprovante", description: "A emissão ainda não está disponível neste ciclo.", disabled: true, icon: <FileText className="h-4 w-4" /> },
+          ]}
+        />
+      ) : null}
       {error && (
         <div
           role="alert"

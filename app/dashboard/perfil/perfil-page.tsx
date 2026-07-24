@@ -60,11 +60,14 @@ import {
   saveProfileMediaAction,
   saveProfileSectionAction,
 } from "./perfil-actions";
-import { listProfileTeam } from "./perfil-configuracoes-gateway";
+import { getProfileCompany, listProfileTeam } from "./perfil-configuracoes-gateway";
 import { loadGlobalActivities } from "@/lib/integrations/global-activity-gateway";
 import { listNotificationsAction } from "@/app/dashboard/notificacoes/notificacoes-actions";
 import type { ProfileState } from "./perfil-types";
-import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
+import type {
+  CompanyPublicSettings,
+  TeamMemberPublicReference,
+} from "@/lib/contracts/configuracoes.contract";
 import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
 import type { NotificationItem } from "@/app/dashboard/notificacoes/notificacoes-types";
 import { ptBrLabel } from "@/lib/pt-br-labels";
@@ -97,6 +100,7 @@ export function PerfilPageContent() {
   const [state, setState] = useState<ProfileState | null>(null);
   const [tab, setTab] = useState<TabName>("Visão geral");
   const [team, setTeam] = useState<TeamMemberPublicReference[]>([]);
+  const [company, setCompany] = useState<CompanyPublicSettings | null>(null);
   const [activities, setActivities] = useState<GlobalActivity[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [feedback, setFeedback] = useState("");
@@ -110,6 +114,7 @@ export function PerfilPageContent() {
       setState(profileState);
       setNotifications(listNotificationsAction().items);
       void listProfileTeam().then(setTeam);
+      void getProfileCompany().then(setCompany);
       void loadGlobalActivities().then((result) => setActivities(result.items));
     });
   }, []);
@@ -214,6 +219,7 @@ export function PerfilPageContent() {
       {tab === "Visão geral" && (
         <Overview
           state={state}
+          company={company}
           activities={activities}
           notifications={unread}
           avatarUrl={avatarUrl}
@@ -238,7 +244,7 @@ export function PerfilPageContent() {
       {tab === "Disponibilidade" && <Availability state={state} save={(value) => save("availability", value)} />}
       {tab === "Notificações" && <NotificationPreferences state={state} save={(value) => save("notificationPreferences", value)} />}
       {tab === "Documentos" && <Documents state={state} update={setState} onError={setError} />}
-      {tab === "Atividade" && <ActivityList activities={activities} />}
+      {tab === "Atividade" && <ActivityList state={state} activities={activities} />}
       {tab === "Produtividade" && <Productivity state={state} activities={activities} />}
       {tab === "Segurança" && <Security />}
       {tab === "Histórico" && <HistoryList state={state} />}
@@ -249,6 +255,7 @@ export function PerfilPageContent() {
 
 function Overview({
   state,
+  company,
   activities,
   notifications,
   avatarUrl,
@@ -258,6 +265,7 @@ function Overview({
   referenceNow,
 }: {
   state: ProfileState;
+  company: CompanyPublicSettings | null;
   activities: GlobalActivity[];
   notifications: NotificationItem[];
   avatarUrl: string | null;
@@ -267,17 +275,25 @@ function Overview({
   referenceNow: number;
 }) {
   const profile = state.profile;
-  const agendaItems = activities.filter((item) => item.source === "AGENDA").slice(0, 3);
-  const recentActivities = activities
-    .filter((item) => !profile.teamMemberId || !item.actorName || normalizeProperName(item.actorName) === profile.displayName)
-    .slice(0, 4);
+  const profileNames = new Set(
+    [profile.displayName, profile.fullName, profile.teamMemberSnapshot?.name]
+      .filter(Boolean)
+      .map((name) => normalizeProperName(name)),
+  );
+  const attributableActivities = activities.filter(
+    (item) => item.actorName && profileNames.has(normalizeProperName(item.actorName)),
+  );
+  const agendaItems = attributableActivities
+    .filter((item) => item.source === "AGENDA")
+    .slice(0, 3);
+  const recentActivities = attributableActivities.slice(0, 4);
   const validDocuments = state.professionalDocuments.filter((item) => !item.archivedAt && (!item.expiresAt || item.expiresAt >= new Date().toISOString().slice(0, 10)));
   const expiringDocuments = validDocuments.filter((item) => {
     if (!item.expiresAt) return false;
     const diff = new Date(`${item.expiresAt}T12:00:00`).getTime() - referenceNow;
     return diff >= 0 && diff <= 30 * 86_400_000;
   });
-  const orderActivities = activities.filter((item) => item.source === "ORDERS");
+  const orderActivities = attributableActivities.filter((item) => item.source === "ORDERS");
   const completedOrders = orderActivities.filter((item) => /conclu/i.test(`${item.type} ${item.title}`));
 
   return (
@@ -318,6 +334,11 @@ function Overview({
         <Card>
           <CardHeader className="p-4 pb-2"><CardTitle>Informações profissionais</CardTitle></CardHeader>
           <CardContent className="grid gap-3 p-4 pt-2 md:grid-cols-3">
+            <InfoBlock
+              label="Empresa"
+              value={company?.displayName || company?.tradeName || "Empresa não informada"}
+            />
+            <InfoBlock label="Segmento" value={company?.segment || "Segmento não informado"} />
             <InfoBlock label="Cargo / função" value={profile.role || "Não informado"} />
             <div className="rounded-lg border p-3 md:col-span-2">
               <p className="text-xs text-muted-foreground">Especialidades</p>
@@ -335,7 +356,7 @@ function Overview({
           </CardContent>
         </Card>
 
-        <div className="grid gap-3 lg:grid-cols-[1.2fr_.8fr]">
+        <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
               <CardTitle>Documentos e credenciais</CardTitle>
@@ -358,17 +379,14 @@ function Overview({
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
-              <CardTitle>Compromissos e agenda</CardTitle>
+              <CardTitle>Agenda relacionada</CardTitle>
               <Link href="/dashboard/agenda" className="text-xs font-medium text-primary">Abrir agenda</Link>
             </CardHeader>
             <CardContent className="space-y-2 p-4 pt-2">
               {agendaItems.map((item) => <ActivityRow key={item.id} item={item} />)}
-              {!agendaItems.length && <CompactEmpty title="Nenhum compromisso relacionado" action="Abrir agenda" href="/dashboard/agenda" />}
+              {!agendaItems.length && <CompactEmpty title="Nenhum evento atribuível ao perfil" action="Abrir agenda" href="/dashboard/agenda" />}
             </CardContent>
           </Card>
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-[1.2fr_.8fr]">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
               <CardTitle>Atividade recente</CardTitle>
@@ -381,11 +399,11 @@ function Overview({
           </Card>
 
           <Card>
-            <CardHeader className="p-4 pb-2"><CardTitle>Resumo pessoal</CardTitle></CardHeader>
+            <CardHeader className="p-4 pb-2"><CardTitle>Resumo profissional</CardTitle></CardHeader>
             <CardContent className="grid gap-2 p-4 pt-2 sm:grid-cols-2 lg:grid-cols-1">
-              <MetricLine icon={BriefcaseBusiness} label="OS relacionadas" value={String(orderActivities.length)} />
+              <MetricLine icon={BriefcaseBusiness} label="OS atribuíveis" value={String(orderActivities.length)} />
               <MetricLine icon={CheckCircle2} label="OS concluídas" value={String(completedOrders.length)} />
-              <MetricLine icon={CalendarDays} label="Eventos relacionados" value={String(agendaItems.length)} />
+              <MetricLine icon={CalendarDays} label="Eventos atribuíveis" value={String(agendaItems.length)} />
               <MetricLine icon={FileBadge} label="Documentos válidos" value={String(validDocuments.length)} />
               <MetricLine icon={Clock3} label="Documentos vencendo" value={String(expiringDocuments.length)} />
             </CardContent>
@@ -646,10 +664,28 @@ function Documents({ state, update, onError }: { state: ProfileState; update: (s
   );
 }
 
-function ActivityList({ activities }: { activities: GlobalActivity[] }) {
+function ActivityList({
+  state,
+  activities,
+}: {
+  state: ProfileState;
+  activities: GlobalActivity[];
+}) {
+  const profileNames = new Set(
+    [
+      state.profile.displayName,
+      state.profile.fullName,
+      state.profile.teamMemberSnapshot?.name,
+    ]
+      .filter(Boolean)
+      .map((name) => normalizeProperName(name)),
+  );
+  const attributable = activities.filter(
+    (item) => item.actorName && profileNames.has(normalizeProperName(item.actorName)),
+  );
   return (
     <Section title="Atividade recente" description="Atividades relacionadas ao perfil, quando a autoria pode ser identificada com segurança.">
-      <div className="space-y-2">{activities.slice(0, 30).map((item) => <ActivityRow key={item.id} item={item} />)}{!activities.length && <CompactEmpty title="Nenhuma atividade disponível" />}</div>
+      <div className="space-y-2">{attributable.slice(0, 30).map((item) => <ActivityRow key={item.id} item={item} />)}{!attributable.length && <CompactEmpty title="Nenhuma atividade atribuível ao perfil" />}</div>
     </Section>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyTextInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { Select } from "@/components/ui/select";
 import {
   financialObligationSchema,
@@ -22,6 +23,8 @@ export function FinancialObligationFormDrawer({
   error,
   onClose,
   onSubmit,
+  initialValues,
+  title,
 }: {
   open: boolean;
   kind: "RECEIVABLE" | "PAYABLE";
@@ -31,6 +34,8 @@ export function FinancialObligationFormDrawer({
   error?: string;
   onClose: () => void;
   onSubmit: (value: FinancialObligationFormValues) => Promise<void>;
+  initialValues?: Partial<FinancialObligationFormValues>;
+  title?: string;
 }) {
   const [values, setValues] = useState<FinancialObligationFormValues>({
       title: "",
@@ -53,17 +58,18 @@ export function FinancialObligationFormDrawer({
       queueMicrotask(() =>
         setValues((current) => ({
           ...current,
+          ...initialValues,
           accountId: accounts.find((item) => item.isDefault)?.id ?? accounts[0]?.id ?? "",
-          supplier: "",
-          customerName: "",
-          clientId: "",
-          title: "",
-          description: "",
-          total: "",
-          installmentCount: 1,
+          supplier: initialValues?.supplier ?? "",
+          customerName: initialValues?.customerName ?? "",
+          clientId: initialValues?.clientId ?? "",
+          title: initialValues?.title ?? "",
+          description: initialValues?.description ?? "",
+          total: initialValues?.total ?? "",
+          installmentCount: initialValues?.installmentCount ?? 1,
         })),
       );
-  }, [accounts, open]);
+  }, [accounts, initialValues, open]);
   useEffect(() => {
     if (!open) return;
     const listener = (event: KeyboardEvent) => {
@@ -95,7 +101,7 @@ export function FinancialObligationFormDrawer({
         <header className="flex items-center justify-between border-b border-border p-5">
           <div>
             <h2 id="obligation-title" className="text-lg font-bold">
-              {kind === "RECEIVABLE" ? "Nova conta a receber" : "Nova conta a pagar"}
+              {title ?? (kind === "RECEIVABLE" ? "Nova conta a receber" : "Nova conta a pagar")}
             </h2>
             <p className="text-xs text-muted-foreground">
               As parcelas serão distribuídas em centavos sem diferença no total.
@@ -112,17 +118,19 @@ export function FinancialObligationFormDrawer({
           </Button>
         </header>
         <div className="grid flex-1 gap-4 overflow-y-auto p-4 pb-28 sm:grid-cols-2 sm:p-5">
-          <Field label="Título" id="obl-title">
+          <Field label="Identificação da conta" id="obl-title" help="Use um nome que permita reconhecer rapidamente o que será recebido ou pago.">
             <Input
               id="obl-title"
               autoFocus
+              placeholder="Ex.: Manutenção preventiva de julho"
               value={values.title}
               onChange={(e) => setValues({ ...values, title: e.target.value })}
             />
           </Field>
-          <Field label="Categoria" id="obl-category">
+          <Field label="Categoria financeira" id="obl-category" help="Classifique a conta para organizar relatórios e análises financeiras.">
             <Input
               id="obl-category"
+              placeholder="Ex.: Serviços de manutenção"
               value={values.category}
               onChange={(e) => setValues({ ...values, category: e.target.value })}
             />
@@ -165,7 +173,7 @@ export function FinancialObligationFormDrawer({
               onChange={(e) => setValues({ ...values, issueDate: e.target.value })}
             />
           </Field>
-          <Field label="Competência" id="obl-competence">
+          <Field label="Mês de referência" id="obl-competence" help="Indica a qual período financeiro esta conta pertence, mesmo que o vencimento seja em outra data.">
             <Input
               id="obl-competence"
               type="date"
@@ -258,15 +266,18 @@ function Field({
   label,
   id,
   children,
+  help,
 }: {
   label: string;
   id: string;
   children: React.ReactNode;
+  help?: string;
 }) {
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
       {children}
+      {help ? <HelpHint text={help} className="mt-1.5" /> : null}
     </div>
   );
 }

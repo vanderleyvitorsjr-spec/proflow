@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CurrencyTextInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { accountTypeLabels } from "./financeiro-data";
 import { formatMoneyCents } from "./financeiro-money";
@@ -93,17 +93,16 @@ export function FinanceiroAccountFormDrawer({
           </Button>
         </header>
         <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-28 sm:p-5">
-          <div>
-            <Label htmlFor="account-name">Nome</Label>
+          <Field label="Nome da conta" htmlFor="account-name" help="Use um nome fácil de reconhecer nos lançamentos e relatórios.">
             <ProperNameInput
               id="account-name"
               autoFocus
+              placeholder="Ex.: Conta corrente principal"
               value={values.name}
               onValueChange={(name) => setValues({ ...values, name })}
             />
-          </div>
-          <div>
-            <Label htmlFor="account-type">Tipo</Label>
+          </Field>
+          <Field label="Tipo de conta" htmlFor="account-type" help="Escolha onde o dinheiro é movimentado ou guardado.">
             <Select
               id="account-type"
               value={values.type}
@@ -120,9 +119,8 @@ export function FinanceiroAccountFormDrawer({
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="opening-balance">Saldo inicial</Label>
+          </Field>
+          <Field label="Saldo inicial" htmlFor="opening-balance" help="Informe o saldo disponível na conta antes do primeiro lançamento no ProFlow.">
             <CurrencyTextInput
               id="opening-balance"
               allowNegative
@@ -130,7 +128,7 @@ export function FinanceiroAccountFormDrawer({
               onValueChange={(openingBalance) => setValues({ ...values, openingBalance })}
               placeholder="0,00"
             />
-          </div>
+          </Field>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { CurrencyFormInput, DecimalBRInput } from "@/components/ui/br-masked-inputs";
 import { parseCurrencyBRToCents, parseDecimalBR } from "@/lib/br-formatters";
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { Select } from "@/components/ui/select";
 import { stockUnitLabels } from "./estoque-data";
 import type { StockMovementFormValues } from "./estoque-schema";
@@ -123,6 +124,7 @@ export function StockMovementDrawer({
                   </option>
                 ))}
             </Select>
+            <HelpHint text="Escolha o material que terá sua quantidade alterada." className="mt-1.5" />
           </div>
           <div>
             <Label htmlFor="movement-type">Tipo</Label>
@@ -139,6 +141,7 @@ export function StockMovementDrawer({
                   </option>
                 ))}
             </Select>
+            <HelpHint text="Entrada aumenta o saldo; saída, perda e ajuste de saída reduzem o saldo disponível." className="mt-1.5" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -175,6 +178,7 @@ export function StockMovementDrawer({
                 defaultValue={0}
                 aria-label="Custo unitário em reais"
               />
+              <HelpHint text="Valor pago por uma unidade deste material. Ele será usado no cálculo do custo médio." className="mt-1.5" />
               <div className="mt-2 flex flex-wrap gap-4 text-sm">
                 <label>
                   <input type="checkbox" name="useAverageCost" className="mr-2" />
@@ -204,6 +208,7 @@ export function StockMovementDrawer({
                     </option>
                   ))}
               </Select>
+              <HelpHint text="Vincule a saída original quando o material estiver retornando ao estoque." className="mt-1.5" />
             </div>
           ) : null}
           {type === "ADJUSTMENT_OUT" ? (
@@ -214,7 +219,8 @@ export function StockMovementDrawer({
           ) : null}
           <div>
             <Label htmlFor="movement-reason">Motivo</Label>
-            <Input id="movement-reason" name="reason" required />
+            <Input id="movement-reason" name="reason" placeholder="Ex.: Compra para reposição do almoxarifado" required />
+            <HelpHint text="Explique por que a quantidade do material está sendo alterada." className="mt-1.5" />
           </div>
           <div>
             <Label htmlFor="movement-notes">Observações</Label>

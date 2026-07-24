@@ -75,8 +75,15 @@ export class OrdensService {
       notes: value.notes,
       checklist: lines(value.checklistText).map((title) => ({
         id: crypto.randomUUID(),
+        serviceOrderId: "",
         title,
+        category: "PRE_SERVICE" as const,
+        status: "PENDING" as const,
+        required: false,
         responsible: value.technician,
+        order: 0,
+        createdAt: now,
+        updatedAt: now,
       })),
       equipment: lines(value.equipmentText),
       reservedMaterials: lines(value.materialsText),
@@ -89,6 +96,11 @@ export class OrdensService {
         ),
       ],
     };
+    record.checklist = record.checklist.map((item, order) => ({
+      ...item,
+      serviceOrderId: record.id,
+      order,
+    }));
     await this.repository.save(record);
     await this.agenda.syncSchedule(record);
     return record;
@@ -151,10 +163,22 @@ export class OrdensService {
   }
   async updateChecklist(id: string, checklist: OrdemChecklistItem[]) {
     const current = await this.require(id);
+    const now = new Date().toISOString();
+    const normalized = checklist.map((item, order) => ({
+      ...item,
+      serviceOrderId: id,
+      title: item.title.trim(),
+      description: item.description?.trim(),
+      responsible: normalizeProperName(item.responsible),
+      order,
+      completedAt: item.status === "COMPLETED" ? item.completedAt ?? now : undefined,
+      createdAt: item.createdAt || now,
+      updatedAt: now,
+    }));
     return this.repository.save({
       ...current,
-      checklist,
-      updatedAt: new Date().toISOString(),
+      checklist: normalized,
+      updatedAt: now,
       history: [...current.history, history("CHECKLIST", "Checklist atualizado.")],
     });
   }

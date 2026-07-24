@@ -349,7 +349,7 @@ export function FinanceiroPageContent() {
             </PageHeaderIcon>
             <PageHeaderHeading
               title="Financeiro"
-              description="Controle contas, receitas, despesas, investimentos e fluxo realizado."
+              description="Controle receitas, despesas, contas e o fluxo de caixa da empresa."
             />
           </PageHeaderIdentity>
           <PageHeaderActions>

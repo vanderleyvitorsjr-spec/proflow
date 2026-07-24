@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HelpHint } from "@/components/ui/help-hint";
 import { Select } from "@/components/ui/select";
 import type { StockPurchaseFinancialAccountReference } from "@/lib/contracts/financeiro.contract";
 import type { StockPurchaseFinancialFormValues } from "./estoque-schema";
@@ -109,6 +110,7 @@ export function StockFinancialSummary({
                 </option>
               ))}
             </Select>
+            <HelpHint text="Conta bancária, carteira ou caixa que será usada para pagar a compra." className="mt-1.5" />
           </div>
           <div>
             <Label htmlFor="financial-installments">Parcelas</Label>
@@ -123,7 +125,7 @@ export function StockFinancialSummary({
             />
           </div>
           <div>
-            <Label htmlFor="financial-competence">Competência</Label>
+            <Label htmlFor="financial-competence">Mês de referência</Label>
             <Input
               id="financial-competence"
               name="competenceDate"
@@ -131,6 +133,7 @@ export function StockFinancialSummary({
               defaultValue={purchase.purchaseDate}
               required
             />
+            <HelpHint text="Período financeiro ao qual a compra pertence, mesmo que o pagamento ocorra depois." className="mt-1.5" />
           </div>
           <div>
             <Label htmlFor="financial-due">Primeiro vencimento</Label>
@@ -141,6 +144,7 @@ export function StockFinancialSummary({
               defaultValue={purchase.expectedDate ?? purchase.purchaseDate}
               required
             />
+            <HelpHint text="Data prevista para pagar a primeira parcela ao fornecedor." className="mt-1.5" />
           </div>
           <Input
             name="notes"

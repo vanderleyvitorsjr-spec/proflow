@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArrowLeft, Plus } from "lucide-react";
+import { Archive, ArrowLeft, PackageCheck, Plus, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,7 @@ import type {
 } from "../estoque-types";
 import type { StockOrderReference } from "../estoque-ordens-gateway";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { QuickActions } from "@/components/ui/quick-actions";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }),
   date = new Intl.DateTimeFormat("pt-BR"),
   datetime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -282,6 +283,16 @@ export function StockDetail({ id }: { id: string }) {
           {success}
         </div>
       ) : null}
+      {success?.includes("reserv") || success?.includes("Reserv") ? (
+        <QuickActions
+          title="Material reservado"
+          description="Confira a separação ou continue para o processo de compra."
+          actions={[
+            { label: "Visualizar estoque reservado", description: "Ir para as reservas deste item.", onClick: () => document.getElementById("reservas-do-item")?.scrollIntoView({ behavior: "smooth" }), icon: <PackageCheck className="h-4 w-4" /> },
+            { label: "Abrir compra", description: "Acessar as compras na tela principal do Estoque.", href: "/dashboard/estoque", icon: <ShoppingCart className="h-4 w-4" /> },
+          ]}
+        />
+      ) : null}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ["Quantidade física", quantity(snapshot.physicalQuantity)],
@@ -349,7 +360,7 @@ export function StockDetail({ id }: { id: string }) {
           </Card>
         </div>
         <div className="space-y-3">
-          <Card>
+          <Card id="reservas-do-item">
             <CardHeader>
               <CardTitle>Reservas e Ordens vinculadas</CardTitle>
             </CardHeader>

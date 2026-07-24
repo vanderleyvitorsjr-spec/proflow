@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import type { StockReservationOperationValues } from "./estoque-schema";
 import type { StockReservation } from "./estoque-types";
 export function StockReleaseDialog({
@@ -57,8 +57,7 @@ export function StockReleaseDialog({
             });
           }}
         >
-          <div>
-            <Label htmlFor="release-quantity">Quantidade</Label>
+          <Field label="Quantidade a liberar" htmlFor="release-quantity" help="Informe quanto deixará de ficar reservado e voltará ao estoque disponível.">
             <Input
               id="release-quantity"
               name="quantity"
@@ -68,11 +67,10 @@ export function StockReleaseDialog({
               autoFocus
               required
             />
-          </div>
-          <div>
-            <Label htmlFor="release-reason">Motivo</Label>
-            <Input id="release-reason" name="reason" required />
-          </div>
+          </Field>
+          <Field label="Motivo da liberação" htmlFor="release-reason" help="Explique por que o material não será mais necessário nesta Ordem.">
+            <Input id="release-reason" name="reason" placeholder="Ex.: Serviço cancelado pelo cliente" required />
+          </Field>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar

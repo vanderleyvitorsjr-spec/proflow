@@ -36,10 +36,13 @@ import {
 } from "@/lib/br-formatters";
 import { loadOperationalCenterSnapshot } from "./central-operacional-gateway";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { OperationalInsights } from "@/components/ui/operational-insights";
+import { ActionCenter } from "@/components/ui/action-center";
 import type {
   OperationalAlert,
   OperationalCenterSnapshot,
 } from "./central-operacional-types";
+import { FinancialSuggestions } from "./financial-suggestions";
 
 const alertStyles: Record<OperationalAlert["level"], string> = {
   INFO: "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-100",
@@ -144,6 +147,13 @@ export function CentralOperacionalPage() {
             <MetricItem label="Estoque crítico" value={String(snapshot.stock.lowCount + snapshot.stock.outCount)} />
             <MetricItem label="Em manutenção" value={String(snapshot.equipment.inMaintenanceCount)} />
           </MetricStrip>
+
+          <OperationalInsights insights={snapshot.insights} />
+          <ActionCenter insights={snapshot.insights} />
+          <FinancialSuggestions
+            suggestions={snapshot.financialSuggestions}
+            onChanged={load}
+          />
 
           <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
             <Card>
