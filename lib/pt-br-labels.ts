@@ -1,3 +1,9 @@
+import {
+  translatePriority,
+  translateRole,
+  translateStatus,
+} from "@/lib/translations/pt-br";
+
 /** Rótulos de apresentação em português do Brasil para valores internos do domínio. */
 const LABELS: Record<string, string> = {
   LOW: "Baixa", NORMAL: "Normal", MEDIUM: "Média", HIGH: "Alta", URGENT: "Urgente", CRITICAL: "Crítica",
@@ -12,6 +18,25 @@ const LABELS: Record<string, string> = {
   FINANCIAL: "Financeiro", OTHER: "Outro",
   ACTIVE: "Ativo", INACTIVE: "Inativo", ATTENTION: "Requer atenção", ARCHIVED: "Arquivado",
   DRAFT: "Rascunho", OUTDATED: "Desatualizado", EXPIRED: "Expirado",
+  REVIEW: "Em Revisão", WAITING_SEND: "Aguardando Envio", SENT: "Enviado",
+  VIEWED: "Visualizado", APPROVED: "Aprovado", REJECTED: "Recusado",
+  CONVERTED: "Convertido em Ordem", WAITING_RESPONSES: "Aguardando Respostas",
+  ANALYSIS: "Em Análise", CLOSED: "Encerrada", WAITING_APPROVAL: "Aguardando Aprovação",
+  PREVENTIVE_MAINTENANCE: "Manutenção Preventiva",
+  CORRECTIVE_MAINTENANCE: "Manutenção Corretiva", CLEANING: "Higienização",
+  DIAGNOSIS: "Diagnóstico", ELECTRICAL_PROJECT: "Projeto Elétrico",
+  ELECTRICAL_INSTALLATION: "Instalação Elétrica", ELECTRICAL_MAINTENANCE: "Manutenção Elétrica",
+  ELECTRICAL_ADAPTATION: "Adequação Elétrica", INFRASTRUCTURE: "Infraestrutura",
+  CONSULTING: "Consultoria", RESIDENTIAL: "Residencial", COMMERCIAL: "Comercial",
+  INDUSTRIAL: "Industrial", CONDOMINIUM: "Condominial", PUBLIC: "Público",
+  UNIT: "Unidade", HOUR: "Hora", DAY: "Dia", METER: "Metro",
+  REFRIGERATION: "Refrigeração", SAFETY: "Segurança", CONSUMABLES: "Consumíveis",
+  PACKAGE: "Pacote", TOOL: "Ferramenta", VEHICLE: "Veículo", COMPUTER: "Computador",
+  MEASUREMENT_INSTRUMENT: "Instrumento de medição", AVAILABLE: "Disponível",
+  IN_USE: "Em uso", UNDER_MAINTENANCE: "Em manutenção", RETIRED: "Retirado",
+  LOST: "Perdido", GOOD: "Bom", DAMAGED: "Danificado", UNUSABLE: "Inutilizável",
+  SQUARE_METER: "Metro Quadrado", KILOGRAM: "Quilograma", LITER: "Litro",
+  BOX: "Caixa", ROLL: "Rolo", PAIR: "Par", SET: "Conjunto", SERVICE: "Serviço",
   ORDERED: "Pedido confirmado", PARTIALLY_RECEIVED: "Recebido parcialmente", RECEIVED: "Recebido",
   PARTIALLY_CONSUMED: "Consumido parcialmente", CONSUMED: "Consumido",
   PARTIALLY_RELEASED: "Liberado parcialmente", RELEASED: "Liberado", DIVERGENT: "Com divergência",
@@ -38,16 +63,31 @@ const LABELS: Record<string, string> = {
   REFRIGERACAO: "Refrigeração", MANUTENCAO_PREDIAL: "Manutenção predial", SERVICOS_TECNICOS: "Serviços técnicos", OUTRO: "Outro",
   NEAREST_REAL: "Real mais próximo", MULTIPLE_5: "Múltiplo de R$ 5", MULTIPLE_10: "Múltiplo de R$ 10",
   ENDING_0: "Final zero", ENDING_9: "Final nove",
+  serviceOrders: "Ordens de Serviço", financial: "Financeiro", clients: "Clientes",
+  leads: "Leads", equipment: "Equipamentos", stock: "Estoque", purchases: "Compras",
+  pricing: "Precificação", templates: "Modelos",
   sky: "Azul-claro", blue: "Azul", violet: "Violeta", emerald: "Verde", amber: "Âmbar",
 };
 
 export function ptBrLabel(value?: string | null, fallback?: string): string {
   if (!value) return fallback ?? "Não informado";
-  return LABELS[value] ?? fallback ?? humanizeCode(value);
+  return (
+    LABELS[value] ??
+    translateStatus(
+      value,
+      translatePriority(
+        value,
+        translateRole(value, fallback ?? humanizeCode(value)),
+      ),
+    )
+  );
 }
 
 export function teamRoleLabel(value?: string | null): string {
-  return ptBrLabel(value, value ? humanizeCode(value) : "Sem função definida");
+  return translateRole(
+    value,
+    value ? humanizeCode(value) : "Sem função definida",
+  );
 }
 
 export function humanizeCode(value: string): string {

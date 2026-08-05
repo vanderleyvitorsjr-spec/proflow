@@ -18,7 +18,27 @@
   "include": [
     "./**/*.ts",
     "../app/dashboard/projetos/[id]/projeto-workspace-domain.ts",
-    "../app/dashboard/relatorios/analytics/cash-projection-engine.ts"
+    "../app/dashboard/projetos/[id]/projeto-workspace-notes-domain.ts",
+    "../app/dashboard/agenda/agenda-professional-domain.ts",
+    "../app/dashboard/central-operacional/central-operacional-state.ts",
+    "../app/dashboard/projetos/[id]/workspace-checklist-domain.ts",
+    "../app/dashboard/projetos/[id]/workspace-operations-domain.ts",
+    "../features/dashboard/goals/executive-goals-domain.ts",
+    "../lib/contracts/global-activity.contract.ts",
+    "../app/dashboard/relatorios/analytics/cash-projection-engine.ts",
+    "../lib/br-formatters.ts",
+    "../lib/csv-br.ts",
+    "../lib/translations/pt-br.ts",
+    "../app/dashboard/orcamentos/orcamentos-domain.ts",
+    "../app/dashboard/precificacao/catalogo-servicos-domain.ts",
+    "../app/dashboard/fornecedores/compras-domain.ts",
+    "../app/dashboard/equipamentos/equipamento-tecnico-domain.ts",
+    "../app/dashboard/documentos/documentos-domain.ts",
+    "../app/dashboard/clientes/cliente-360-domain.ts",
+    "../lib/global-search-domain.ts",
+    "../app/dashboard/financeiro/financeiro-money.ts",
+    "../lib/auth/permissions.ts",
+    "../components/documents/professional-document-domain.ts"
   ],
   "exclude": ["./tsconfig.test.json", "./integrations/**"]
 }

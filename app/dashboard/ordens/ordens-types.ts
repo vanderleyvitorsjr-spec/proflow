@@ -12,11 +12,15 @@ export type OrdemChecklistItem = {
   description?: string;
   category:
     | "PRE_SERVICE"
+    | "ARRIVAL"
+    | "DIAGNOSIS"
     | "MATERIALS"
     | "INSTALLATION"
     | "ELECTRICAL"
     | "TESTS"
+    | "FINALIZATION"
     | "DOCUMENTATION"
+    | "FINANCIAL"
     | "DELIVERY"
     | "POST_SERVICE";
   status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED" | "SKIPPED";
@@ -24,6 +28,10 @@ export type OrdemChecklistItem = {
   responsible: string;
   dueDate?: string;
   completedAt?: string;
+  completedBy?: string;
+  note?: string;
+  evidenceReference?: string;
+  blocker?: string;
   order: number;
   createdAt: string;
   updatedAt: string;

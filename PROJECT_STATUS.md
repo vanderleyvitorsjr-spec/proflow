@@ -1,5 +1,69 @@
 # Status do Projeto ProFlow
 
+### Orçamentos, Serviços, Compras, Histórico Técnico e Documentos (30/07/2026)
+
+- Orçamentos locais ganharam numeração, versões, itens, cálculos, condições e vínculo com Ordem.
+- Precificação ganhou Catálogo de Serviços, cálculo transparente, snapshots e histórico.
+- Fornecedores ganhou Cotações, comparação justificada, Pedidos e recebimentos idempotentes.
+- Equipamentos ganhou histórico técnico, medições e planos preventivos.
+- Documentos profissionais reutilizam modelo A4, impressão e CSV protegido.
+- Novos adapters usam chaves por empresa; banco, Prisma, pagamentos e Estoque não foram alterados.
+
+### Metas, Central avançada, Timeline e Workspace operacional (30/07/2026)
+
+- Metas Executivas locais foram integradas ao Painel e aos Relatórios com CRUD,
+  progresso seguro, histórico, filtros e CSV brasileiro.
+- A Central Operacional ganhou adiamento configurável, resolução detalhada,
+  reabertura e histórico sem apagar o insight original.
+- A Linha do Tempo existente passou a agregar Metas, Pendências, observações,
+  equipe, materiais e custos, com busca, período, agrupamento e idempotência.
+- O Checklist da Ordem ganhou categorias ampliadas, modelos locais, resumo e
+  bloqueio explícito da conclusão quando há item obrigatório pendente.
+- O Workspace ganhou gestão local de Equipe, Materiais, Custos e Rentabilidade;
+  movimentações de Estoque e Financeiro continuam exigindo fluxos explícitos.
+- Novos adapters usam chave isolada por empresa. Nenhum dado legado foi
+  migrado, apagado ou enviado ao servidor.
+- Prisma, migrations, Supabase, banco, caixa e pagamentos permaneceram
+  inalterados.
+
+### Evolução operacional local e padronização pt-BR (30/07/2026)
+
+- Foi criado um catálogo central tipado para status, funções, prioridades,
+  eventos, modos de automação e entidades, preservando os valores internos.
+- O Workspace ganhou observações internas fixáveis, persistidas em adapter
+  local isolado por empresa e sem acesso direto da página ao `localStorage`.
+- A Agenda ganhou domínio testável para conflitos, filtros, alteração de data e
+  resumo diário visível, preservando dia, semana, mês e handlers existentes.
+- O Dashboard passou a se apresentar como Painel Executivo e suas preferências
+  novas usam chave por empresa, mantendo leitura não destrutiva da chave legada.
+- A exportação de Relatórios foi centralizada em CSV UTF-8 com BOM e separador
+  compatível com o Excel brasileiro.
+- A Central Operacional permite adiar e resolver recomendações localmente,
+  explica a prioridade e exibe “Tudo Organizado” quando não há pendências.
+- Foram adicionados testes puros de traduções, formatos brasileiros, Agenda,
+  Central, observações do Workspace e CSV, sem depender de banco.
+- Banco, migrations, Supabase, autenticação e regras financeiras não foram
+  alterados neste lote. A persistência operacional continua local.
+
+### Preparação de banco e segurança de dependências (30/07/2026)
+
+- Foram adicionados scripts seguros de validação, geração, status e aplicação de migrations.
+- A função auxiliar de RLS saiu do schema público e passou ao schema privado com privilégios explícitos.
+- A infraestrutura de testes de integração exige `TEST_DATABASE_URL` dedicado e não simula banco quando a variável está ausente.
+- Next.js foi atualizado para 16.2.12 e Prisma/client/adapter para 7.9.1, reduzindo o audit de 17 para 12 vulnerabilidades.
+- A aplicação da migration, o isolamento efetivo de todos os adapters e a migração de Clientes/CRM continuam pendentes por ausência de banco de desenvolvimento e não são declarados como concluídos.
+
+### Fundação segura — autenticação, multiempresa, RBAC e equipe (30/07/2026)
+
+- Supabase Auth passou a usar integração SSR, cookies, renovação em `proxy.ts`, login, logout e proteção do Dashboard.
+- `Empresa.id` é o tenant canônico; empresa, usuário interno, função e permissões são derivados da identidade autenticada.
+- O RBAC central possui oito funções, catálogo granular, matriz testada, filtro de navegação e autorização de servidor.
+- `Usuario.authUserId` vincula a identidade; o onboarding cria a primeira empresa e o primeiro `OWNER` em transação.
+- Convites usam token aleatório, hash persistido, expiração, cancelamento, aceite e proteção contra duplicidade ativa.
+- `/dashboard/equipe` lista integrantes; `/onboarding` conduz o primeiro acesso.
+- Formatadores, normalizadores e validadores brasileiros foram consolidados.
+- Os módulos operacionais permanecem locais; o helper de chave por empresa foi preparado sem importar ou apagar dados legados.
+
 ### Motor de Automações — administração, auditoria e conversão financeira (23/07/2026)
 
 - Foi criada a rota `/dashboard/automacoes`, integrada à navegação principal, com indicadores, pesquisa, filtros, listagem, estados de carregamento/erro/vazio e histórico geral filtrável.
@@ -652,3 +716,54 @@ public/              Assets estáticos
 - A exportação CSV existente passou a incluir a projeção financeira com filtros e formatação compatível com Excel brasileiro.
 - Os testes unitários foram ampliados para cobrir limites de progresso, dados parciais, checklist bloqueado, deduplicação de custos, margem negativa, receita zero e projeção financeira determinística.
 - Nenhum schema Prisma, migration, Supabase, autenticação, pagamento automático ou nova entidade Projeto foi criado.
+## 2026-07-30 — Fluxos operacionais visuais completos
+
+- Orçamentos recebeu editor profissional, condições comerciais, cálculos em tempo real, histórico, versões, visualização A4 e conversão confirmada em Ordem.
+- A conversão reutiliza a action pública de Ordens, mantém vínculo idempotente e não cria pagamentos, agenda ou movimentos de Estoque.
+- Fornecedores recebeu Central visual de Cotações, comparação justificada, Pedidos e recebimentos parciais.
+- Equipamentos recebeu ficha técnica com medições, diagnósticos, histórico e planos preventivos integrados à Central Operacional.
+- A Central de Documentos passou a registrar, pesquisar, filtrar e arquivar metadados sem duplicar entidades operacionais.
+- A persistência continua local e isolada em adapters; Prisma, Supabase, banco e migrations não foram alterados neste lote.
+- A suíte unitária passou de 248 para 356 testes, distribuídos em 31 suítes.
+
+## 2026-07-30 — Cliente 360 e descoberta operacional
+
+- A ficha do Cliente passou a registrar múltiplos contatos, endereços e observações em uma camada local isolada por empresa.
+- Duplicidades podem ser analisadas por documento, telefone, e-mail e nome semelhante; a mesclagem destrutiva permanece bloqueada até existir atualização transacional de todos os vínculos.
+- A Busca Global passou a abranger CRM, Orçamentos, Ordens, Equipamentos, Estoque, Fornecedores, Cotações, Pedidos, Documentos e Financeiro.
+- A pesquisa normaliza acentos, máscaras, espaços e pontuação e mantém debounce no componente global existente.
+- Notificações locais passaram a usar chave multiempresa sem resolver pendências operacionais ao serem lidas.
+- Financeiro, Estoque e CRM 3.0 reutilizam os fluxos seguros já existentes, sem gerar caixa ou movimentações automaticamente.
+- A suíte local totaliza 468 testes aprovados em 36 suítes.
+
+## Estabilização da fundação multiempresa
+
+- Removido fallback do Prisma para `localhost`.
+- Aceitação de convite movida para confirmação explícita via Server Action.
+- Permissões personalizadas passaram a suportar concessão e negação.
+- Principais adapters locais passaram a utilizar chave isolada por empresa.
+- Migração definitiva de Clientes e CRM para Prisma permanece em lote separado.
+
+## 2026-08-05 — Conclusão Operacional Multiempresa
+
+- Persistência remota adicionada para Clientes, CRM, Agenda, Ordens, Financeiro, Estoque e Equipamentos.
+- Estado local antigo importado automaticamente sem apagamento.
+- Workspace operacional sincronizado entre dispositivos.
+- Movimentações confirmadas do Workspace integradas ao Estoque.
+- Evidências e documentos armazenados em bucket privado do Supabase.
+- Comprovante financeiro habilitado.
+- Assistente Inteligente conectado aos dados reais da empresa.
+- Novos modelos `CompanyModuleState` e `CompanyStoredFile` adicionados.
+- Migration `20260805153000_company_module_states` criada.
+
+
+## Conclusão Operacional — Pacote Validado
+
+- Estado remoto multiempresa habilitado para os módulos operacionais principais.
+- Workspace, Estoque, evidências, documentos, comprovante e Assistente Operacional integrados.
+- Controle otimista de revisão adicionado ao estado remoto.
+- Reserva, consumo e devolução do Workspace corrigidos para impedir duplicidade.
+- Arquivos privados removidos do Storage quando o registro de metadados falha.
+- Migration nova: `20260805153000_company_module_states`.
+- Transpilação sintática dos arquivos do lote aprovada.
+- Testes completos, lint, TypeScript e build devem ser executados no ambiente local com as dependências já instaladas.

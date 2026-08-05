@@ -1,16 +1,35 @@
 -- Ensure enums exist
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactiontype') THEN
-    CREATE TYPE "TransactionType" AS ENUM ('INCOME', 'EXPENSE', 'INVESTMENT');
+  IF to_regtype('"TransactionType"') IS NULL THEN
+    CREATE TYPE "TransactionType" AS ENUM (
+      'INCOME',
+      'EXPENSE',
+      'INVESTMENT'
+    );
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'expenseclassification') THEN
-    CREATE TYPE "ExpenseClassification" AS ENUM ('FIXED', 'VARIABLE', 'NOT_APPLICABLE');
+
+  IF to_regtype('"ExpenseClassification"') IS NULL THEN
+    CREATE TYPE "ExpenseClassification" AS ENUM (
+      'FIXED',
+      'VARIABLE',
+      'NOT_APPLICABLE'
+    );
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'accounttype') THEN
-    CREATE TYPE "AccountType" AS ENUM ('CASH', 'CHECKING_ACCOUNT', 'DIGITAL_ACCOUNT', 'CREDIT_CARD', 'RESERVE', 'INVESTMENT', 'OTHER');
+
+  IF to_regtype('"AccountType"') IS NULL THEN
+    CREATE TYPE "AccountType" AS ENUM (
+      'CASH',
+      'CHECKING_ACCOUNT',
+      'DIGITAL_ACCOUNT',
+      'CREDIT_CARD',
+      'RESERVE',
+      'INVESTMENT',
+      'OTHER'
+    );
   END IF;
-END$$;
+END
+$$;
 
 -- Create table categorias_financeiras if missing
 CREATE TABLE IF NOT EXISTS "categorias_financeiras" (
@@ -34,50 +53,52 @@ CREATE TABLE IF NOT EXISTS "categorias_financeiras" (
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'categorias_financeiras_companyId_fkey'
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'categorias_financeiras_companyId_fkey'
   ) THEN
     ALTER TABLE "categorias_financeiras"
       ADD CONSTRAINT "categorias_financeiras_companyId_fkey"
-      FOREIGN KEY ("companyId") REFERENCES "empresas"("id");
+      FOREIGN KEY ("companyId")
+      REFERENCES "empresas"("id");
   END IF;
-END$$;
+END
+$$;
 
--- Create unique constraint for categories by company, name and type
+-- Ensure unique index for categories by company, name and type
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'categorias_financeiras_companyId_name_transactionType_key'
-  ) THEN
-    ALTER TABLE "categorias_financeiras"
-      ADD CONSTRAINT "categorias_financeiras_companyId_name_transactionType_key"
-      UNIQUE ("companyId", "name", "transactionType");
+  IF to_regclass(
+    '"categorias_financeiras_companyId_name_transactionType_key"'
+  ) IS NULL THEN
+    CREATE UNIQUE INDEX
+      "categorias_financeiras_companyId_name_transactionType_key"
+    ON "categorias_financeiras"
+      ("companyId", "name", "transactionType");
   END IF;
-END$$;
+END
+$$;
 
 -- Create indexes for categorias_financeiras
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'categorias_financeiras_companyId_transactionType_idx'
-  ) THEN
-    CREATE INDEX "categorias_financeiras_companyId_transactionType_idx" ON "categorias_financeiras" ("companyId", "transactionType");
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'categorias_financeiras_companyId_expenseClassification_idx'
-  ) THEN
-    CREATE INDEX "categorias_financeiras_companyId_expenseClassification_idx" ON "categorias_financeiras" ("companyId", "expenseClassification");
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'categorias_financeiras_companyId_isDefault_idx'
-  ) THEN
-    CREATE INDEX "categorias_financeiras_companyId_isDefault_idx" ON "categorias_financeiras" ("companyId", "isDefault");
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'categorias_financeiras_companyId_deletedAt_idx'
-  ) THEN
-    CREATE INDEX "categorias_financeiras_companyId_deletedAt_idx" ON "categorias_financeiras" ("companyId", "deletedAt");
-  END IF;
-END$$;
+CREATE INDEX IF NOT EXISTS
+  "categorias_financeiras_companyId_transactionType_idx"
+ON "categorias_financeiras"
+  ("companyId", "transactionType");
+
+CREATE INDEX IF NOT EXISTS
+  "categorias_financeiras_companyId_expenseClassification_idx"
+ON "categorias_financeiras"
+  ("companyId", "expenseClassification");
+
+CREATE INDEX IF NOT EXISTS
+  "categorias_financeiras_companyId_isDefault_idx"
+ON "categorias_financeiras"
+  ("companyId", "isDefault");
+
+CREATE INDEX IF NOT EXISTS
+  "categorias_financeiras_companyId_deletedAt_idx"
+ON "categorias_financeiras"
+  ("companyId", "deletedAt");
 
 -- Create table contas_financeiras if missing
 CREATE TABLE IF NOT EXISTS "contas_financeiras" (
@@ -100,35 +121,38 @@ CREATE TABLE IF NOT EXISTS "contas_financeiras" (
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'contas_financeiras_companyId_fkey'
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'contas_financeiras_companyId_fkey'
   ) THEN
     ALTER TABLE "contas_financeiras"
       ADD CONSTRAINT "contas_financeiras_companyId_fkey"
-      FOREIGN KEY ("companyId") REFERENCES "empresas"("id");
+      FOREIGN KEY ("companyId")
+      REFERENCES "empresas"("id");
   END IF;
-END$$;
+END
+$$;
 
 -- Create indexes for contas_financeiras
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'contas_financeiras_companyId_accountType_idx'
-  ) THEN
-    CREATE INDEX "contas_financeiras_companyId_accountType_idx" ON "contas_financeiras" ("companyId", "accountType");
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'contas_financeiras_companyId_isDefault_idx'
-  ) THEN
-    CREATE INDEX "contas_financeiras_companyId_isDefault_idx" ON "contas_financeiras" ("companyId", "isDefault");
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'contas_financeiras_companyId_deletedAt_idx'
-  ) THEN
-    CREATE INDEX "contas_financeiras_companyId_deletedAt_idx" ON "contas_financeiras" ("companyId", "deletedAt");
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'contas_financeiras_companyId_default_unique'
-  ) THEN
-    CREATE UNIQUE INDEX "contas_financeiras_companyId_default_unique" ON "contas_financeiras" ("companyId") WHERE "isDefault" = true AND "deletedAt" IS NULL;
-  END IF;
-END$$;
+CREATE INDEX IF NOT EXISTS
+  "contas_financeiras_companyId_accountType_idx"
+ON "contas_financeiras"
+  ("companyId", "accountType");
+
+CREATE INDEX IF NOT EXISTS
+  "contas_financeiras_companyId_isDefault_idx"
+ON "contas_financeiras"
+  ("companyId", "isDefault");
+
+CREATE INDEX IF NOT EXISTS
+  "contas_financeiras_companyId_deletedAt_idx"
+ON "contas_financeiras"
+  ("companyId", "deletedAt");
+
+CREATE UNIQUE INDEX IF NOT EXISTS
+  "contas_financeiras_companyId_default_unique"
+ON "contas_financeiras"
+  ("companyId")
+WHERE
+  "isDefault" = true
+  AND "deletedAt" IS NULL;

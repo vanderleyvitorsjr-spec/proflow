@@ -8,6 +8,14 @@ import { listFinancialReportAction } from "@/app/dashboard/financeiro/financeiro
 import { listStockReportAction } from "@/app/dashboard/estoque/estoque-actions";
 import { listEquipmentReportAction } from "@/app/dashboard/equipamentos/equipamentos-actions";
 import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
+import { uniqueGlobalActivities } from "@/lib/contracts/global-activity.contract";
+import { listExecutiveGoalsAction } from "@/features/dashboard/goals/executive-goals-actions";
+import { listOperationalItemStatesAction } from "@/app/dashboard/central-operacional/central-operacional-state-actions";
+import { listAllProjetoWorkspaceNotesAction } from "@/app/dashboard/projetos/[id]/projeto-workspace-notes-actions";
+import { getWorkspaceOperationsAction } from "@/app/dashboard/projetos/[id]/workspace-operations-actions";
+import { listQuotesAction } from "@/app/dashboard/orcamentos/orcamentos-actions";
+import { listPurchasesAction } from "@/app/dashboard/fornecedores/compras-actions";
+import { listAllEquipmentTechnicalHistoryAction } from "@/app/dashboard/equipamentos/equipamento-tecnico-actions";
 export async function loadGlobalActivities() {
   const settled = await Promise.allSettled([
       listClientsReportAction(),
@@ -19,6 +27,13 @@ export async function loadGlobalActivities() {
       listFinancialReportAction(),
       listStockReportAction(),
       listEquipmentReportAction(),
+      listExecutiveGoalsAction(),
+      listOperationalItemStatesAction(),
+      listAllProjetoWorkspaceNotesAction(),
+      getWorkspaceOperationsAction(),
+      listQuotesAction(),
+      listPurchasesAction(),
+      listAllEquipmentTechnicalHistoryAction(),
     ]),
     items: GlobalActivity[] = [];
   if (settled[0].status === "fulfilled")
@@ -146,8 +161,131 @@ export async function loadGlobalActivities() {
         serviceOrderId: x.serviceOrderId,
         link: `/dashboard/equipamentos/${x.assetId}`,
       });
+  if (settled[9].status === "fulfilled")
+    for (const goal of settled[9].value)
+      for (const history of goal.history)
+        items.push({
+          id: `GOAL:${goal.id}:${history.id}`,
+          source: "GOALS",
+          sourceId: goal.id,
+          sourceLabel: "Metas",
+          type: history.type,
+          title: goal.name,
+          description: history.description,
+          occurredAt: history.createdAt,
+          entity: "Meta",
+          entityId: goal.id,
+          status: "RECORDED",
+          link: "/dashboard/relatorios",
+        });
+  if (settled[10].status === "fulfilled")
+    for (const state of settled[10].value.items)
+      for (const history of state.history ?? [])
+        items.push({
+          id: `OPERATIONAL:${state.insightId}:${history.id}`,
+          source: "PENDING_ITEMS",
+          sourceId: state.insightId,
+          sourceLabel: "Pendências",
+          type: history.type,
+          title:
+            history.type === "SNOOZED"
+              ? "Pendência Adiada"
+              : history.type === "RESOLVED"
+                ? "Pendência Resolvida"
+                : "Pendência Reaberta",
+          description: history.reason,
+          occurredAt: history.occurredAt,
+          actorName: history.responsible,
+          responsibleName: history.responsible,
+          entity: "Pendência",
+          entityId: state.insightId,
+          status: history.type,
+          link: "/dashboard/central-operacional",
+        });
+  if (settled[11].status === "fulfilled")
+    for (const note of settled[11].value)
+      items.push({
+        id: `WORKSPACE_NOTE:${note.id}`,
+        source: "NOTES",
+        sourceId: note.id,
+        sourceLabel: "Observações",
+        type: note.pinned ? "NOTE_PINNED" : "NOTE_ADDED",
+        title: note.pinned ? "Observação Fixada" : "Observação Adicionada",
+        description: note.text,
+        occurredAt: note.createdAt,
+        serviceOrderId: note.serviceOrderId,
+        entity: "Ordem de Serviço",
+        entityId: note.serviceOrderId,
+        status: "RECORDED",
+        link: `/dashboard/projetos/${note.serviceOrderId}`,
+      });
+  if (settled[12].status === "fulfilled")
+    for (const operation of settled[12].value.events)
+      items.push({
+        id: `WORKSPACE_OPERATION:${operation.id}`,
+        source:
+          operation.type === "TEAM_UPDATED"
+            ? "TEAM"
+            : operation.type === "MATERIAL_UPDATED"
+              ? "MATERIALS"
+              : "COSTS",
+        sourceId: operation.id,
+        sourceLabel:
+          operation.type === "TEAM_UPDATED"
+            ? "Equipe"
+            : operation.type === "MATERIAL_UPDATED"
+              ? "Materiais"
+              : "Custos",
+        type: operation.type,
+        title: operation.title,
+        description: operation.description,
+        occurredAt: operation.occurredAt,
+        serviceOrderId: operation.serviceOrderId,
+        entity: "Ordem de Serviço",
+        entityId: operation.serviceOrderId,
+        status: "RECORDED",
+        link: `/dashboard/projetos/${operation.serviceOrderId}`,
+      });
+  if (settled[13].status === "fulfilled")
+    for (const quote of settled[13].value)
+      for (const event of quote.history)
+        items.push({
+          id: `QUOTE:${quote.id}:${event.id}`, source: "QUOTES", sourceId: quote.id,
+          sourceLabel: "Orçamentos", type: event.type, title: quote.number,
+          description: event.description, occurredAt: event.createdAt, clientId: quote.clientId,
+          serviceOrderId: quote.serviceOrderId, entity: "Orçamento", entityId: quote.id,
+          status: "RECORDED", link: "/dashboard/orcamentos",
+        });
+  if (settled[14].status === "fulfilled") {
+    for (const quotation of settled[14].value.quotations)
+      items.push({
+        id: `QUOTATION:${quotation.id}:${quotation.updatedAt}`, source: "PURCHASES",
+        sourceId: quotation.id, sourceLabel: "Compras", type: quotation.status,
+        title: quotation.number, description: quotation.title, occurredAt: quotation.updatedAt,
+        serviceOrderId: quotation.serviceOrderId, entity: "Cotação", entityId: quotation.id,
+        status: "RECORDED", link: "/dashboard/fornecedores/compras",
+      });
+    for (const order of settled[14].value.orders)
+      items.push({
+        id: `PURCHASE:${order.id}:${order.updatedAt}`, source: "PURCHASES",
+        sourceId: order.id, sourceLabel: "Compras", type: order.status,
+        title: order.number, description: order.supplierName, occurredAt: order.updatedAt,
+        serviceOrderId: order.serviceOrderId, entity: "Pedido de Compra", entityId: order.id,
+        status: "RECORDED", link: "/dashboard/fornecedores/compras",
+      });
+  }
+  if (settled[15].status === "fulfilled")
+    for (const event of settled[15].value.events)
+      items.push({
+        id: `EQUIPMENT_TECH:${event.id}`, source: "EQUIPMENT", sourceId: event.equipmentId,
+        sourceLabel: "Equipamentos", type: event.type, title: event.title,
+        description: event.description, occurredAt: event.occurredAt,
+        responsibleName: event.responsible, serviceOrderId: event.serviceOrderId,
+        entity: "Equipamento", entityId: event.equipmentId, status: "RECORDED",
+        link: `/dashboard/equipamentos/${event.equipmentId}`,
+      });
   return {
-    items: items.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 100),
+    items: uniqueGlobalActivities(items).slice(0, 150),
     partial: settled.some((x) => x.status === "rejected"),
   };
 }

@@ -2,8 +2,8 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'serviceordercheckliststatus') THEN
-        CREATE TYPE "ServiceOrderChecklistStatus" AS ENUM ('PENDING','IN_PROGRESS','COMPLETED','CANCELED');
+    IF to_regtype('"ServiceOrderChecklistStatus"') IS NULL THEN
+    CREATE TYPE "ServiceOrderChecklistStatus" AS ENUM ('PENDING','IN_PROGRESS','COMPLETED','CANCELED');
     END IF;
 END$$;
 

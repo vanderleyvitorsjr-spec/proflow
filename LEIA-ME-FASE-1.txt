@@ -1,0 +1,30 @@
+CONCLUSÃO FUNCIONAL — FASE 1
+
+Este pacote adiciona o ciclo de recuperação de senha e um auditor estático.
+Não migra os módulos operacionais para o banco nesta fase.
+
+APLICAÇÃO
+
+1. Pare o servidor.
+2. Extraia o ZIP na raiz do ProFlow.
+3. Aceite substituir os arquivos.
+4. No Supabase, confirme que as Redirect URLs incluem:
+   http://localhost:3000/auth/callback
+   http://localhost:3000/**
+5. Execute:
+   npm run lint
+   npx tsc --noEmit
+   npm run build
+   npm run audit:functional
+6. Limpe .next e inicie o projeto.
+
+TESTE
+
+- Abra /login.
+- Clique em “Esqueci minha senha”.
+- Informe um e-mail cadastrado.
+- Abra o link recebido.
+- Crie uma nova senha.
+- Confirme o retorno ao login.
+
+Para produção, adicione também a URL de produção nas Redirect URLs do Supabase.

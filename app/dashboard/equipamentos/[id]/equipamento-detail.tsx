@@ -79,6 +79,7 @@ import type {
   MaintenanceRecord,
   EquipmentFinancialReconciliationStatus,
 } from "../equipamentos-types";
+import { EquipmentTechnicalPanel } from "../equipamento-tecnico-panel";
 
 type FinancialSummaryState = {
   acquisition: EquipmentFinanceiroTransaction | null;
@@ -604,6 +605,7 @@ export function EquipmentDetail({ id }: { id: string }) {
           ))}
         </CardContent>
       </Card>
+      <EquipmentTechnicalPanel equipmentId={id} />
       <EquipmentFormDrawer
         open={editing}
         asset={asset}

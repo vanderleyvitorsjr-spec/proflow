@@ -1,8 +1,14 @@
 "use client";
+
+import {
+  copyLegacyBrowserDataToCompany,
+  scopedBrowserBackupKey,
+  scopedBrowserStorageKey,
+} from "@/lib/storage/company-storage-key";
 import { profileStateSchema } from "./perfil-schema";
 import type { ProfileState } from "./perfil-types";
-const KEY = "proflow:perfil:v1",
-  BACKUP = `${KEY}:backup`;
+const KEY = () => scopedBrowserStorageKey("perfil");
+const BACKUP = () => scopedBrowserBackupKey("perfil");
 const now = () => new Date().toISOString();
 const categories = [
   "CRM",
@@ -76,11 +82,12 @@ export const defaultProfileState = (): ProfileState => ({
 });
 export const profileStorage = {
   load(): ProfileState {
-    const raw = localStorage.getItem(KEY);
+    copyLegacyBrowserDataToCompany("perfil");
+    const raw = localStorage.getItem(KEY());
     if (!raw) return defaultProfileState();
     const parsed = profileStateSchema.safeParse(JSON.parse(raw));
     if (parsed.success) return parsed.data as ProfileState;
-    const backup = localStorage.getItem(BACKUP);
+    const backup = localStorage.getItem(BACKUP());
     if (backup) {
       const recovered = profileStateSchema.safeParse(JSON.parse(backup));
       if (recovered.success) return recovered.data as ProfileState;
@@ -88,15 +95,16 @@ export const profileStorage = {
     throw new Error("Perfil e backup locais estão corrompidos.");
   },
   save(state: ProfileState, expected: number) {
-    const current = localStorage.getItem(KEY);
+    copyLegacyBrowserDataToCompany("perfil");
+    const current = localStorage.getItem(KEY());
     if (current) {
       const parsed = profileStateSchema.parse(JSON.parse(current));
       if (parsed.revision !== expected)
         throw new Error(
           "O Perfil foi alterado em outra aba. Recarregue antes de salvar.",
         );
-      localStorage.setItem(BACKUP, current);
+      localStorage.setItem(BACKUP(), current);
     }
-    localStorage.setItem(KEY, JSON.stringify(profileStateSchema.parse(state)));
+    localStorage.setItem(KEY(), JSON.stringify(profileStateSchema.parse(state)));
   },
 };

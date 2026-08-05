@@ -7,6 +7,8 @@ import type { ReportDataset, ReportFilter } from "./relatorios-types";
 import { RelatoriosFilters } from "./relatorios-filters";
 import { RelatoriosSummary } from "./relatorios-summary";
 import { RelatoriosCharts } from "./relatorios-charts";
+import { ExecutiveGoalsPanel } from "@/features/dashboard/goals/executive-goals-panel";
+import { deriveGoalRealizedValues } from "@/features/dashboard/goals/executive-goals-domain";
 import { RelatoriosRanking } from "./relatorios-ranking";
 import { RelatoriosSourceStatus } from "./relatorios-source-status";
 import { RelatoriosLoading } from "./relatorios-loading";
@@ -104,8 +106,15 @@ export function RelatoriosPageContent() {
             executionTimeMs={dataset.executionTimeMs}
           />
           {(filters.area === "ALL" || filters.area === "FINANCIAL") ? (
+          <>
             <RelatoriosCashProjection projection={dataset.cashProjection} />
+          </>
           ) : null}
+          <ExecutiveGoalsPanel
+            realizedValues={deriveGoalRealizedValues(
+              dataset.sections.flatMap((section) => section.metrics),
+            )}
+          />
           {dataset.sections.length ? (
             dataset.sections.map((section) => (
               <section

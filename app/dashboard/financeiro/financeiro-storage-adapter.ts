@@ -1,3 +1,4 @@
+import { readRemoteModuleState, recoverRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { z } from "zod";
 import { initialFinancialState } from "./financeiro-data";
 import { FinancialStorageError } from "./financeiro-errors";
@@ -119,85 +120,58 @@ const stateV3 = z.object({
   accounts: z.array(accountSchema),
   transactions: z.array(transactionV3),
 });
-const KEY = "proflow:financeiro:v1",
-  BACKUP_KEY = "proflow:financeiro:backup:v1";
 export interface FinancialStorageAdapter {
   read(): Promise<FinancialStorageState>;
   write(state: FinancialStorageState): Promise<FinancialStorageState>;
 }
-export class LocalFinancialStorageAdapter implements FinancialStorageAdapter {
+export class RemoteFinancialStorageAdapter implements FinancialStorageAdapter {
   async read() {
-    if (typeof window === "undefined") return structuredClone(initialFinancialState);
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) {
-      window.localStorage.setItem(KEY, JSON.stringify(initialFinancialState));
-      return structuredClone(initialFinancialState);
-    }
+    const value = await readRemoteModuleState<unknown>("financeiro", initialFinancialState);
+    const raw = JSON.stringify(value);
     const primary = this.parseV3(raw);
     if (primary) return primary;
     const migrated = this.migrateV2(raw) ?? this.migrateV1(raw);
     if (migrated) {
-      window.localStorage.setItem(BACKUP_KEY, raw);
-      window.localStorage.setItem(KEY, JSON.stringify(migrated));
+      await writeRemoteModuleState("financeiro", migrated);
       return migrated;
     }
-    const backupRaw = window.localStorage.getItem(BACKUP_KEY);
-    if (backupRaw) {
-      const backup =
-        this.parseV3(backupRaw) ?? this.migrateV2(backupRaw) ?? this.migrateV1(backupRaw);
-      if (backup) {
-        window.localStorage.setItem(KEY, JSON.stringify(backup));
-        return backup;
-      }
-    }
     throw new FinancialStorageError(
-      "Os dados financeiros estão corrompidos e não existe backup válido. Nenhum dado foi sobrescrito.",
+      "Os dados financeiros armazenados no servidor estão inválidos.",
     );
   }
+
   async write(state: FinancialStorageState) {
-    if (typeof window === "undefined") return state;
     const parsed = stateV3.safeParse(state);
     if (!parsed.success)
-      throw new FinancialStorageError(
-        "O estado financeiro não é válido e não foi salvo.",
-      );
-    try {
-      const current = window.localStorage.getItem(KEY);
-      if (
-        current &&
-        (this.parseV3(current) || this.migrateV2(current) || this.migrateV1(current))
-      )
-        window.localStorage.setItem(BACKUP_KEY, current);
-      const next = {
-        ...parsed.data,
-        revision: parsed.data.revision + 1,
-      } satisfies FinancialStorageState;
-      window.localStorage.setItem(KEY, JSON.stringify(next));
-      return next;
-    } catch (error) {
-      if (error instanceof FinancialStorageError) throw error;
-      throw new FinancialStorageError(
-        "Não foi possível salvar os dados financeiros neste dispositivo.",
-      );
-    }
+      throw new FinancialStorageError("O estado financeiro não é válido e não foi salvo.");
+    const next = { ...parsed.data, revision: parsed.data.revision + 1 } satisfies FinancialStorageState;
+    await writeRemoteModuleState("financeiro", next);
+    return next;
   }
+
+  async recoverBackup() {
+    const value = await recoverRemoteModuleState<unknown>("financeiro");
+    const raw = JSON.stringify(value);
+    const recovered = this.parseV3(raw) ?? this.migrateV2(raw) ?? this.migrateV1(raw);
+    if (!recovered) throw new FinancialStorageError("O backup financeiro não é válido.");
+    return recovered;
+  }
+
   private parseV3(raw: string) {
     try {
       const result = stateV3.safeParse(JSON.parse(raw) as unknown);
       return result.success ? result.data : null;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
+
   private migrateV2(raw: string): FinancialStorageState | null {
     try {
       const result = stateV2.safeParse(JSON.parse(raw) as unknown);
       if (!result.success) return null;
       return { ...result.data, version: 3, revision: result.data.revision + 1 };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
+
   private migrateV1(raw: string): FinancialStorageState | null {
     try {
       const result = stateV1.safeParse(JSON.parse(raw) as unknown);
@@ -212,10 +186,8 @@ export class LocalFinancialStorageAdapter implements FinancialStorageAdapter {
           installments: [],
         })),
       };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 }
 export const financialStorageAdapter: FinancialStorageAdapter =
-  new LocalFinancialStorageAdapter();
+  new RemoteFinancialStorageAdapter();

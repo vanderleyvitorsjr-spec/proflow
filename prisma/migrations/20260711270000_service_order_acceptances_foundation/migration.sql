@@ -2,8 +2,8 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'serviceorderacceptancetype') THEN
-        CREATE TYPE "ServiceOrderAcceptanceType" AS ENUM (
+    IF to_regtype('"ServiceOrderAcceptanceType"') IS NULL THEN
+    CREATE TYPE "ServiceOrderAcceptanceType" AS ENUM (
             'SERVICE_AUTHORIZATION',
             'SERVICE_COMPLETION',
             'TECHNICAL_REPORT',
@@ -17,8 +17,8 @@ END$$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'serviceorderacceptancestatus') THEN
-        CREATE TYPE "ServiceOrderAcceptanceStatus" AS ENUM (
+    IF to_regtype('"ServiceOrderAcceptanceStatus"') IS NULL THEN
+    CREATE TYPE "ServiceOrderAcceptanceStatus" AS ENUM (
             'PENDING',
             'ACCEPTED',
             'REJECTED',
@@ -97,6 +97,8 @@ BEGIN
         ALTER TABLE "service_order_acceptances" ADD CONSTRAINT "service_order_acceptances_attachmentId_fkey" FOREIGN KEY ("attachmentId") REFERENCES "service_order_attachments"("id");
     END IF;
 END$$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "service_order_acceptances_attachmentId_key" ON "service_order_acceptances" ("attachmentId");
 
 CREATE INDEX IF NOT EXISTS "service_order_acceptances_companyId_serviceOrderId_idx" ON "service_order_acceptances" ("companyId","serviceOrderId");
 CREATE INDEX IF NOT EXISTS "service_order_acceptances_companyId_clientId_idx" ON "service_order_acceptances" ("companyId","clientId");

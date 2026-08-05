@@ -10,8 +10,10 @@ enum UserRole {
   OWNER
   ADMIN
   MANAGER
+  CUSTOMER_SERVICE
   TECHNICIAN
   FINANCE
+  INVENTORY
   SALES
   VIEWER
 }
@@ -21,6 +23,13 @@ enum UserStatus {
   INACTIVE
   INVITED
   BLOCKED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  CANCELED
+  EXPIRED
 }
 
 enum AddressType {
@@ -170,59 +179,69 @@ model Empresa {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  name         String
-  legalName    String?
-  document     String? @unique
-  email        String?
-  phone        String?
-  tradeSegment String?
-  active       Boolean @default(true)
+  name          String
+  legalName     String?
+  document      String? @unique
+  email         String?
+  phone         String?
+  tradeSegment  String?
+  active        Boolean @default(true)
+  zipCode       String?
+  street        String?
+  addressNumber String?
+  complement    String?
+  district      String?
+  city          String?
+  state         String?
 
-  usuarios               Usuario[]
-  permissoes             Permissao[]
-  clientes               Cliente[]
-  enderecos              Endereco[]
-  equipamentos           Equipamento[]
-  equipamentosInstalados EquipamentoInstalado[]
-  fornecedores           Fornecedor[]
-  veiculos               Veiculo[]
-  ferramentas            Ferramenta[]
-  estoques               Estoque[]
-  categorias             Categoria[]
-  produtos               Produto[]
-  movimentacoesEstoque   MovimentacaoEstoque[]
-  ordensServico          OrdemServico[]
-  checklists             Checklist[]
-  fotos                  Foto[]
-  checklistTemplates     ChecklistTemplate[] @relation("ChecklistTemplatesCompany")
-  checklistTemplateItems ChecklistTemplateItem[] @relation("ChecklistTemplateItemsCompany")
-  assinaturas            Assinatura[]
-  materiaisUtilizados    MaterialUtilizado[]
-  equipes                Equipe[]
-  agendas                Agenda[]
-  financeiros            Financeiro[]
-  contasReceber          ContaReceber[]
-  contasPagar            ContaPagar[]
-  fluxosCaixa            FluxoCaixa[]
-  centrosCusto           CentroCusto[]
-  orcamentos             Orcamento[]
-  contratos              Contrato[]
-  manutencoesPreventivas ManutencaoPreventiva[]
-  notificacoes           Notificacao[]
-  logsSistema            LogSistema[]
-  arquivos               Arquivo[]
-  configuracaoEmpresa    ConfiguracaoEmpresa?
-  categoriasFinanceiras  FinancialCategory[]
-  contasFinanceiras      FinancialAccount[]
-  transacoesFinanceiras  FinancialTransaction[]
-  categoriasPatrimoniais AssetCategory[]
-  patrimonios            Asset[]
-  equipamentosHistorico   EquipmentServiceHistory[]
-  serviceOrderChecklists   ServiceOrderChecklist[] @relation("ServiceOrderChecklistsCompany")
+  usuarios                   Usuario[]
+  permissoes                 Permissao[]
+  clientes                   Cliente[]
+  enderecos                  Endereco[]
+  equipamentos               Equipamento[]
+  equipamentosInstalados     EquipamentoInstalado[]
+  fornecedores               Fornecedor[]
+  veiculos                   Veiculo[]
+  ferramentas                Ferramenta[]
+  estoques                   Estoque[]
+  categorias                 Categoria[]
+  produtos                   Produto[]
+  movimentacoesEstoque       MovimentacaoEstoque[]
+  ordensServico              OrdemServico[]
+  checklists                 Checklist[]
+  fotos                      Foto[]
+  checklistTemplates         ChecklistTemplate[]         @relation("ChecklistTemplatesCompany")
+  checklistTemplateItems     ChecklistTemplateItem[]     @relation("ChecklistTemplateItemsCompany")
+  assinaturas                Assinatura[]
+  materiaisUtilizados        MaterialUtilizado[]
+  equipes                    Equipe[]
+  agendas                    Agenda[]
+  financeiros                Financeiro[]
+  contasReceber              ContaReceber[]
+  contasPagar                ContaPagar[]
+  fluxosCaixa                FluxoCaixa[]
+  centrosCusto               CentroCusto[]
+  orcamentos                 Orcamento[]
+  contratos                  Contrato[]
+  manutencoesPreventivas     ManutencaoPreventiva[]
+  notificacoes               Notificacao[]
+  logsSistema                LogSistema[]
+  arquivos                   Arquivo[]
+  configuracaoEmpresa        ConfiguracaoEmpresa?
+  categoriasFinanceiras      FinancialCategory[]
+  contasFinanceiras          FinancialAccount[]
+  transacoesFinanceiras      FinancialTransaction[]
+  categoriasPatrimoniais     AssetCategory[]
+  patrimonios                Asset[]
+  equipamentosHistorico      EquipmentServiceHistory[]
+  serviceOrderChecklists     ServiceOrderChecklist[]     @relation("ServiceOrderChecklistsCompany")
   serviceOrderChecklistItems ServiceOrderChecklistItem[] @relation("ServiceOrderChecklistItemsCompany")
-  serviceOrderAttachments ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsCompany")
-  serviceOrderAcceptances ServiceOrderAcceptance[] @relation("ServiceOrderAcceptancesCompany")
-  warranties               Warranty[]              @relation("CompanyWarranties")
+  serviceOrderAttachments    ServiceOrderAttachment[]    @relation("ServiceOrderAttachmentsCompany")
+  serviceOrderAcceptances    ServiceOrderAcceptance[]    @relation("ServiceOrderAcceptancesCompany")
+  warranties                 Warranty[]                  @relation("CompanyWarranties")
+  invitations                CompanyInvitation[]
+  moduleStates               CompanyModuleState[]
+  storedFiles                CompanyStoredFile[]
 
   @@index([name])
   @@index([deletedAt])
@@ -342,34 +361,34 @@ enum StorageProvider {
 }
 
 model ServiceOrderAttachment {
-  id                        String   @id @default(cuid())
-  companyId                 String
-  serviceOrderId            String
-  serviceOrderChecklistId   String?
+  id                          String                         @id @default(cuid())
+  companyId                   String
+  serviceOrderId              String
+  serviceOrderChecklistId     String?
   serviceOrderChecklistItemId String?
-  uploadedByUserId          String?
-  attachmentType            ServiceOrderAttachmentType
-  category                  ServiceOrderAttachmentCategory
-  fileName                  String
-  originalFileName          String?
-  mimeType                  String
-  fileSizeBytes             BigInt?  @db.BigInt
-  storageProvider           StorageProvider
-  storageBucket             String?
-  storagePath               String
-  publicUrl                 String?
-  checksum                  String?
-  title                     String?
-  description               String?
-  capturedAt                DateTime?
-  latitude                  Decimal? @db.Decimal(10,7)
-  longitude                 Decimal? @db.Decimal(10,7)
-  sortOrder                 Int?
-  isCustomerVisible         Boolean  @default(false)
-  isRequiredRecord          Boolean  @default(false)
+  uploadedByUserId            String?
+  attachmentType              ServiceOrderAttachmentType
+  category                    ServiceOrderAttachmentCategory
+  fileName                    String
+  originalFileName            String?
+  mimeType                    String
+  fileSizeBytes               BigInt?                        @db.BigInt
+  storageProvider             StorageProvider
+  storageBucket               String?
+  storagePath                 String
+  publicUrl                   String?
+  checksum                    String?
+  title                       String?
+  description                 String?
+  capturedAt                  DateTime?
+  latitude                    Decimal?                       @db.Decimal(10, 7)
+  longitude                   Decimal?                       @db.Decimal(10, 7)
+  sortOrder                   Int?
+  isCustomerVisible           Boolean                        @default(false)
+  isRequiredRecord            Boolean                        @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   company                   Empresa                    @relation("ServiceOrderAttachmentsCompany", fields: [companyId], references: [id])
@@ -377,7 +396,7 @@ model ServiceOrderAttachment {
   serviceOrderChecklist     ServiceOrderChecklist?     @relation("ServiceOrderAttachmentsChecklist", fields: [serviceOrderChecklistId], references: [id])
   serviceOrderChecklistItem ServiceOrderChecklistItem? @relation("ServiceOrderAttachmentsChecklistItem", fields: [serviceOrderChecklistItemId], references: [id])
   uploadedBy                Usuario?                   @relation("UploadedServiceOrderAttachments", fields: [uploadedByUserId], references: [id])
-  serviceOrderAcceptance   ServiceOrderAcceptance?    @relation("ServiceOrderAcceptanceAttachment")
+  serviceOrderAcceptance    ServiceOrderAcceptance?    @relation("ServiceOrderAcceptanceAttachment")
 
   @@index([companyId, serviceOrderId])
   @@index([companyId, serviceOrderChecklistId])
@@ -394,36 +413,36 @@ model ServiceOrderAttachment {
 }
 
 model ServiceOrderAcceptance {
-  id                      String                        @id @default(cuid())
-  companyId               String
-  serviceOrderId          String
-  clientId                String
-  attachmentId            String?
-  acceptanceType          ServiceOrderAcceptanceType  @default(SERVICE_COMPLETION)
-  status                  ServiceOrderAcceptanceStatus @default(PENDING)
-  signerName              String
-  signerDocument          String?
-  signerEmail             String?
-  signerPhone             String?
-  acceptedAt              DateTime?
-  rejectedAt              DateTime?
-  acceptanceTextSnapshot  String
-  termsVersion            String?
-  ipAddress               String?
-  userAgent               String?
-  latitude                Decimal?                     @db.Decimal(10,7)
-  longitude               Decimal?                     @db.Decimal(10,7)
-  rejectionReason         String?
-  notes                   String?
+  id                     String                       @id @default(cuid())
+  companyId              String
+  serviceOrderId         String
+  clientId               String
+  attachmentId           String?
+  acceptanceType         ServiceOrderAcceptanceType   @default(SERVICE_COMPLETION)
+  status                 ServiceOrderAcceptanceStatus @default(PENDING)
+  signerName             String
+  signerDocument         String?
+  signerEmail            String?
+  signerPhone            String?
+  acceptedAt             DateTime?
+  rejectedAt             DateTime?
+  acceptanceTextSnapshot String
+  termsVersion           String?
+  ipAddress              String?
+  userAgent              String?
+  latitude               Decimal?                     @db.Decimal(10, 7)
+  longitude              Decimal?                     @db.Decimal(10, 7)
+  rejectionReason        String?
+  notes                  String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  company         Empresa                @relation("ServiceOrderAcceptancesCompany", fields: [companyId], references: [id])
-  serviceOrder    OrdemServico           @relation("ServiceOrderAcceptancesOrder", fields: [serviceOrderId], references: [id])
-  client          Cliente                @relation("ServiceOrderAcceptancesClient", fields: [clientId], references: [id])
-  attachment      ServiceOrderAttachment? @relation("ServiceOrderAcceptanceAttachment", fields: [attachmentId], references: [id])
+  company      Empresa                 @relation("ServiceOrderAcceptancesCompany", fields: [companyId], references: [id])
+  serviceOrder OrdemServico            @relation("ServiceOrderAcceptancesOrder", fields: [serviceOrderId], references: [id])
+  client       Cliente                 @relation("ServiceOrderAcceptancesClient", fields: [clientId], references: [id])
+  attachment   ServiceOrderAttachment? @relation("ServiceOrderAcceptanceAttachment", fields: [attachmentId], references: [id])
 
   @@unique([attachmentId])
   @@index([companyId, serviceOrderId])
@@ -437,7 +456,7 @@ model ServiceOrderAcceptance {
 }
 
 model Warranty {
-  id                   String              @id @default(cuid())
+  id                   String               @id @default(cuid())
   companyId            String
   clientId             String
   serviceOrderId       String?
@@ -457,8 +476,8 @@ model Warranty {
   invoiceNumber        String?
   notes                String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   company            Empresa               @relation("CompanyWarranties", fields: [companyId], references: [id])
@@ -480,27 +499,27 @@ model Warranty {
 }
 
 model ServiceOrderChecklist {
-  id                    String   @id @default(cuid())
-  companyId             String
-  serviceOrderId        String
-  checklistTemplateId   String
+  id                       String                      @id @default(cuid())
+  companyId                String
+  serviceOrderId           String
+  checklistTemplateId      String
   checklistTemplateVersion Int
-  assignedToUserId      String?
-  startedAt             DateTime?
-  completedAt           DateTime?
-  status                ServiceOrderChecklistStatus @default(PENDING)
-  notes                 String?
+  assignedToUserId         String?
+  startedAt                DateTime?
+  completedAt              DateTime?
+  status                   ServiceOrderChecklistStatus @default(PENDING)
+  notes                    String?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  deletedAt             DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  company       Empresa        @relation("ServiceOrderChecklistsCompany", fields: [companyId], references: [id])
-  serviceOrder  OrdemServico   @relation("ServiceOrderChecklistsOrder", fields: [serviceOrderId], references: [id])
-  checklistTemplate ChecklistTemplate @relation("ServiceOrderChecklistsTemplate", fields: [checklistTemplateId], references: [id])
-  assignedTo    Usuario?       @relation("AssignedServiceOrderChecklists", fields: [assignedToUserId], references: [id])
-  items         ServiceOrderChecklistItem[]
-  serviceOrderAttachments ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsChecklist")
+  company                 Empresa                     @relation("ServiceOrderChecklistsCompany", fields: [companyId], references: [id])
+  serviceOrder            OrdemServico                @relation("ServiceOrderChecklistsOrder", fields: [serviceOrderId], references: [id])
+  checklistTemplate       ChecklistTemplate           @relation("ServiceOrderChecklistsTemplate", fields: [checklistTemplateId], references: [id])
+  assignedTo              Usuario?                    @relation("AssignedServiceOrderChecklists", fields: [assignedToUserId], references: [id])
+  items                   ServiceOrderChecklistItem[]
+  serviceOrderAttachments ServiceOrderAttachment[]    @relation("ServiceOrderAttachmentsChecklist")
 
   @@index([companyId, serviceOrderId])
   @@index([companyId, checklistTemplateId])
@@ -512,44 +531,44 @@ model ServiceOrderChecklist {
 }
 
 model ServiceOrderChecklistItem {
-  id                          String   @id @default(cuid())
-  companyId                   String
-  serviceOrderChecklistId     String
-  checklistTemplateItemId     String?
-  parentItemId                String?
+  id                      String  @id @default(cuid())
+  companyId               String
+  serviceOrderChecklistId String
+  checklistTemplateItemId String?
+  parentItemId            String?
 
-  titleSnapshot               String
-  descriptionSnapshot         String?
-  itemTypeSnapshot            ChecklistItemType
-  position                    Int
-  isRequired                  Boolean @default(false)
-  expectedValueSnapshot       String?
-  minValueSnapshot            Decimal? @db.Decimal(12,2)
-  maxValueSnapshot            Decimal? @db.Decimal(12,2)
-  unitSnapshot                String?
-  optionsSnapshot             Json?
+  titleSnapshot         String
+  descriptionSnapshot   String?
+  itemTypeSnapshot      ChecklistItemType
+  position              Int
+  isRequired            Boolean           @default(false)
+  expectedValueSnapshot String?
+  minValueSnapshot      Decimal?          @db.Decimal(12, 2)
+  maxValueSnapshot      Decimal?          @db.Decimal(12, 2)
+  unitSnapshot          String?
+  optionsSnapshot       Json?
 
-  responseText                String?
-  responseNumber              Decimal? @db.Decimal(12,2)
-  responseBoolean             Boolean?
-  responseDate                DateTime?
-  responseJson                Json?
-  isCompliant                 Boolean?
-  technicianNotes             String?
-  answeredByUserId            String?
-  answeredAt                  DateTime?
+  responseText     String?
+  responseNumber   Decimal?  @db.Decimal(12, 2)
+  responseBoolean  Boolean?
+  responseDate     DateTime?
+  responseJson     Json?
+  isCompliant      Boolean?
+  technicianNotes  String?
+  answeredByUserId String?
+  answeredAt       DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  company      Empresa                   @relation("ServiceOrderChecklistItemsCompany", fields: [companyId], references: [id])
-  checklist    ServiceOrderChecklist     @relation(fields: [serviceOrderChecklistId], references: [id])
-  templateItem ChecklistTemplateItem?    @relation("ExecutedTemplateItem", fields: [checklistTemplateItemId], references: [id])
-  parentItem   ServiceOrderChecklistItem? @relation("ServiceOrderChecklistItemParent", fields: [parentItemId], references: [id])
-  children     ServiceOrderChecklistItem[] @relation("ServiceOrderChecklistItemParent")
-  serviceOrderAttachments ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsChecklistItem")
-  answeredBy   Usuario?                  @relation("AnsweredServiceOrderChecklistItems", fields: [answeredByUserId], references: [id])
+  company                 Empresa                     @relation("ServiceOrderChecklistItemsCompany", fields: [companyId], references: [id])
+  checklist               ServiceOrderChecklist       @relation(fields: [serviceOrderChecklistId], references: [id])
+  templateItem            ChecklistTemplateItem?      @relation("ExecutedTemplateItem", fields: [checklistTemplateItemId], references: [id])
+  parentItem              ServiceOrderChecklistItem?  @relation("ServiceOrderChecklistItemParent", fields: [parentItemId], references: [id])
+  children                ServiceOrderChecklistItem[] @relation("ServiceOrderChecklistItemParent")
+  serviceOrderAttachments ServiceOrderAttachment[]    @relation("ServiceOrderAttachmentsChecklistItem")
+  answeredBy              Usuario?                    @relation("AnsweredServiceOrderChecklistItems", fields: [answeredByUserId], references: [id])
 
   @@index([companyId, serviceOrderChecklistId])
   @@index([companyId, checklistTemplateItemId])
@@ -570,12 +589,12 @@ model ChecklistTemplate {
   name        String
   description String?
   category    ChecklistCategory
-  version     Int      @default(1)
-  isDefault   Boolean  @default(false)
-  isActive    Boolean  @default(true)
+  version     Int               @default(1)
+  isDefault   Boolean           @default(false)
+  isActive    Boolean           @default(true)
 
-  company Empresa @relation("ChecklistTemplatesCompany", fields: [companyId], references: [id])
-  items   ChecklistTemplateItem[]
+  company                Empresa                 @relation("ChecklistTemplatesCompany", fields: [companyId], references: [id])
+  items                  ChecklistTemplateItem[]
   serviceOrderChecklists ServiceOrderChecklist[] @relation("ServiceOrderChecklistsTemplate")
 
   @@unique([companyId, name, version])
@@ -587,31 +606,31 @@ model ChecklistTemplate {
 }
 
 model ChecklistTemplateItem {
-  id                  String   @id @default(cuid())
+  id                  String  @id @default(cuid())
   companyId           String
   checklistTemplateId String
   parentItemId        String?
 
-  title       String
-  description String?
-  itemType    ChecklistItemType
-  position    Int
-  isRequired  Boolean  @default(false)
+  title         String
+  description   String?
+  itemType      ChecklistItemType
+  position      Int
+  isRequired    Boolean           @default(false)
   expectedValue String?
-  minValue    Decimal? @db.Decimal(12,2)
-  maxValue    Decimal? @db.Decimal(12,2)
-  unit        String?
-  options     Json?
-  helpText    String?
+  minValue      Decimal?          @db.Decimal(12, 2)
+  maxValue      Decimal?          @db.Decimal(12, 2)
+  unit          String?
+  options       Json?
+  helpText      String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  company           Empresa              @relation("ChecklistTemplateItemsCompany", fields: [companyId], references: [id])
-  checklistTemplate ChecklistTemplate    @relation(fields: [checklistTemplateId], references: [id])
-  parentItem        ChecklistTemplateItem? @relation("ChecklistItemParent", fields: [parentItemId], references: [id])
-  children          ChecklistTemplateItem[] @relation("ChecklistItemParent")
+  company           Empresa                     @relation("ChecklistTemplateItemsCompany", fields: [companyId], references: [id])
+  checklistTemplate ChecklistTemplate           @relation(fields: [checklistTemplateId], references: [id])
+  parentItem        ChecklistTemplateItem?      @relation("ChecklistItemParent", fields: [parentItemId], references: [id])
+  children          ChecklistTemplateItem[]     @relation("ChecklistItemParent")
   executedItems     ServiceOrderChecklistItem[] @relation("ExecutedTemplateItem")
 
   @@index([companyId, checklistTemplateId])
@@ -623,11 +642,12 @@ model ChecklistTemplateItem {
 }
 
 model Usuario {
-  id        String    @id @default(cuid())
-  companyId String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id         String    @id @default(cuid())
+  companyId  String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  authUserId String?   @unique
 
   name         String
   email        String
@@ -636,28 +656,55 @@ model Usuario {
   role         UserRole   @default(VIEWER)
   status       UserStatus @default(ACTIVE)
   lastLoginAt  DateTime?
+  jobTitle     String?
 
-  company              Empresa               @relation(fields: [companyId], references: [id])
-  permissoes           Permissao[]
-  equipes              Equipe[]              @relation("EquipeUsuarios")
-  ordensResponsavel    OrdemServico[]        @relation("ResponsavelOS")
-  agendas              Agenda[]
-  notificacoes         Notificacao[]
-  logs                 LogSistema[]
-  arquivos             Arquivo[]
-  equipmentServiceHistories EquipmentServiceHistory[]
-  financialTransactionsCreated FinancialTransaction[]
-  contasReceber        ContaReceber[]
-  movimentacoesEstoque MovimentacaoEstoque[]
-  assignedServiceOrderChecklists ServiceOrderChecklist[] @relation("AssignedServiceOrderChecklists")
+  company                            Empresa                     @relation(fields: [companyId], references: [id])
+  permissoes                         Permissao[]
+  equipes                            Equipe[]                    @relation("EquipeUsuarios")
+  ordensResponsavel                  OrdemServico[]              @relation("ResponsavelOS")
+  agendas                            Agenda[]
+  notificacoes                       Notificacao[]
+  logs                               LogSistema[]
+  arquivos                           Arquivo[]
+  equipmentServiceHistories          EquipmentServiceHistory[]
+  financialTransactionsCreated       FinancialTransaction[]
+  contasReceber                      ContaReceber[]
+  movimentacoesEstoque               MovimentacaoEstoque[]
+  assignedServiceOrderChecklists     ServiceOrderChecklist[]     @relation("AssignedServiceOrderChecklists")
   answeredServiceOrderChecklistItems ServiceOrderChecklistItem[] @relation("AnsweredServiceOrderChecklistItems")
-  uploadedServiceOrderAttachments ServiceOrderAttachment[] @relation("UploadedServiceOrderAttachments")
+  uploadedServiceOrderAttachments    ServiceOrderAttachment[]    @relation("UploadedServiceOrderAttachments")
+  createdInvitations                 CompanyInvitation[]         @relation("CreatedInvitations")
+  storedFiles                        CompanyStoredFile[]
 
   @@unique([companyId, email])
   @@index([companyId, status])
   @@index([companyId, role])
+  @@index([authUserId])
   @@index([deletedAt])
   @@map("usuarios")
+}
+
+model CompanyInvitation {
+  id          String           @id @default(cuid())
+  companyId   String
+  email       String
+  role        UserRole
+  status      InvitationStatus @default(PENDING)
+  tokenHash   String           @unique
+  expiresAt   DateTime
+  createdById String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  acceptedAt  DateTime?
+  canceledAt  DateTime?
+
+  company   Empresa @relation(fields: [companyId], references: [id])
+  createdBy Usuario @relation("CreatedInvitations", fields: [createdById], references: [id])
+
+  @@index([companyId, status])
+  @@index([companyId, email])
+  @@index([expiresAt])
+  @@map("company_invitations")
 }
 
 model Permissao {
@@ -700,20 +747,20 @@ model Cliente {
   notes     String?
   active    Boolean    @default(true)
 
-  company                Empresa                @relation(fields: [companyId], references: [id])
-  enderecos              Endereco[]
-  equipamentosInstalados EquipamentoInstalado[]
-  ordensServico          OrdemServico[]
-  agendas                Agenda[]
-  financeiros            Financeiro[]
-  contasReceber          ContaReceber[]
-  orcamentos             Orcamento[]
-  contratos              Contrato[]
-  manutencoesPreventivas ManutencaoPreventiva[]
-  financialTransactions FinancialTransaction[]
-  arquivos               Arquivo[]
+  company                 Empresa                  @relation(fields: [companyId], references: [id])
+  enderecos               Endereco[]
+  equipamentosInstalados  EquipamentoInstalado[]
+  ordensServico           OrdemServico[]
+  agendas                 Agenda[]
+  financeiros             Financeiro[]
+  contasReceber           ContaReceber[]
+  orcamentos              Orcamento[]
+  contratos               Contrato[]
+  manutencoesPreventivas  ManutencaoPreventiva[]
+  financialTransactions   FinancialTransaction[]
+  arquivos                Arquivo[]
   serviceOrderAcceptances ServiceOrderAcceptance[] @relation("ServiceOrderAcceptancesClient")
-  warranties             Warranty[]              @relation("ClientWarranties")
+  warranties              Warranty[]               @relation("ClientWarranties")
 
   @@unique([companyId, document])
   @@index([companyId, name])
@@ -793,13 +840,13 @@ model EquipamentoInstalado {
   status        String    @default("ACTIVE")
   notes         String?
 
-  company                Empresa                @relation(fields: [companyId], references: [id])
-  cliente                Cliente                @relation(fields: [clientId], references: [id])
-  equipamento            Equipamento            @relation(fields: [equipmentId], references: [id])
+  company                Empresa                   @relation(fields: [companyId], references: [id])
+  cliente                Cliente                   @relation(fields: [clientId], references: [id])
+  equipamento            Equipamento               @relation(fields: [equipmentId], references: [id])
   ordensServico          OrdemServico[]
   manutencoesPreventivas ManutencaoPreventiva[]
   serviceHistories       EquipmentServiceHistory[]
-  warranties             Warranty[]              @relation("EquipmentWarrantiesInstalledEquipment")
+  warranties             Warranty[]                @relation("EquipmentWarrantiesInstalledEquipment")
 
   @@unique([companyId, serialNumber])
   @@index([companyId, clientId])
@@ -827,46 +874,46 @@ enum EquipmentHistoryEventType {
 }
 
 model EquipmentServiceHistory {
-  id                    String   @id @default(cuid())
-  companyId             String
-  installedEquipmentId  String
-  serviceOrderId        String?
-  technicianUserId      String?
+  id                   String  @id @default(cuid())
+  companyId            String
+  installedEquipmentId String
+  serviceOrderId       String?
+  technicianUserId     String?
 
-  eventType             EquipmentHistoryEventType
-  title                 String
-  description           String?
-  serviceDate           DateTime
-  operatingHours        Decimal? @db.Decimal(12,2)
-  odometerReading       Decimal? @db.Decimal(12,2)
-  previousStatus        String?
-  resultingStatus       String?
-  diagnosis             String?
-  solution              String?
-  recommendations       String?
-  measurements          Json?
-  partsReplaced         String?
-  refrigerantAdded      Decimal? @db.Decimal(12,2)
-  refrigerantType       String?
-  pressureLowSide       Decimal? @db.Decimal(8,2)
-  pressureHighSide      Decimal? @db.Decimal(8,2)
-  inputVoltage          Decimal? @db.Decimal(8,2)
-  currentDraw           Decimal? @db.Decimal(8,2)
-  temperatureBefore     Decimal? @db.Decimal(6,2)
-  temperatureAfter      Decimal? @db.Decimal(6,2)
-  warrantyUntil         DateTime?
+  eventType                  EquipmentHistoryEventType
+  title                      String
+  description                String?
+  serviceDate                DateTime
+  operatingHours             Decimal?                  @db.Decimal(12, 2)
+  odometerReading            Decimal?                  @db.Decimal(12, 2)
+  previousStatus             String?
+  resultingStatus            String?
+  diagnosis                  String?
+  solution                   String?
+  recommendations            String?
+  measurements               Json?
+  partsReplaced              String?
+  refrigerantAdded           Decimal?                  @db.Decimal(12, 2)
+  refrigerantType            String?
+  pressureLowSide            Decimal?                  @db.Decimal(8, 2)
+  pressureHighSide           Decimal?                  @db.Decimal(8, 2)
+  inputVoltage               Decimal?                  @db.Decimal(8, 2)
+  currentDraw                Decimal?                  @db.Decimal(8, 2)
+  temperatureBefore          Decimal?                  @db.Decimal(6, 2)
+  temperatureAfter           Decimal?                  @db.Decimal(6, 2)
+  warrantyUntil              DateTime?
   nextRecommendedServiceDate DateTime?
-  customerSignatureName String?
-  notes                 String?
+  customerSignatureName      String?
+  notes                      String?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  deletedAt             DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  company               Empresa  @relation(fields: [companyId], references: [id])
-  installedEquipment    EquipamentoInstalado @relation(fields: [installedEquipmentId], references: [id])
-  ordemServico          OrdemServico? @relation(fields: [serviceOrderId], references: [id])
-  technician            Usuario? @relation(fields: [technicianUserId], references: [id])
+  company            Empresa              @relation(fields: [companyId], references: [id])
+  installedEquipment EquipamentoInstalado @relation(fields: [installedEquipmentId], references: [id])
+  ordemServico       OrdemServico?        @relation(fields: [serviceOrderId], references: [id])
+  technician         Usuario?             @relation(fields: [technicianUserId], references: [id])
 
   @@index([companyId, installedEquipmentId])
   @@index([companyId, serviceDate])
@@ -892,9 +939,9 @@ model Fornecedor {
   category String?
   active   Boolean @default(true)
 
-  company     Empresa      @relation(fields: [companyId], references: [id])
-  produtos    Produto[]
-  contasPagar ContaPagar[]
+  company               Empresa                @relation(fields: [companyId], references: [id])
+  produtos              Produto[]
+  contasPagar           ContaPagar[]
   financialTransactions FinancialTransaction[]
 
   @@unique([companyId, document])
@@ -1083,27 +1130,27 @@ model OrdemServico {
   totalAmount          Decimal              @default(0) @db.Decimal(12, 2)
   notes                String?
 
-  company              Empresa               @relation(fields: [companyId], references: [id])
-  cliente              Cliente               @relation(fields: [clientId], references: [id])
-  endereco             Endereco?             @relation(fields: [addressId], references: [id])
-  equipamentoInstalado EquipamentoInstalado? @relation(fields: [installedEquipmentId], references: [id])
-  responsavel          Usuario?              @relation("ResponsavelOS", fields: [responsibleId], references: [id])
-  equipe               Equipe?               @relation(fields: [teamId], references: [id])
-  checklists           Checklist[]
-  fotos                Foto[]
-  assinaturas          Assinatura[]
-  materiaisUtilizados  MaterialUtilizado[]
-  agendas              Agenda[]
-  movimentacoesEstoque MovimentacaoEstoque[]
-  financeiros          Financeiro[]
-  financialTransactions FinancialTransaction[]
-  contasReceber        ContaReceber[]
-  arquivos             Arquivo[]
+  company                   Empresa                   @relation(fields: [companyId], references: [id])
+  cliente                   Cliente                   @relation(fields: [clientId], references: [id])
+  endereco                  Endereco?                 @relation(fields: [addressId], references: [id])
+  equipamentoInstalado      EquipamentoInstalado?     @relation(fields: [installedEquipmentId], references: [id])
+  responsavel               Usuario?                  @relation("ResponsavelOS", fields: [responsibleId], references: [id])
+  equipe                    Equipe?                   @relation(fields: [teamId], references: [id])
+  checklists                Checklist[]
+  fotos                     Foto[]
+  assinaturas               Assinatura[]
+  materiaisUtilizados       MaterialUtilizado[]
+  agendas                   Agenda[]
+  movimentacoesEstoque      MovimentacaoEstoque[]
+  financeiros               Financeiro[]
+  financialTransactions     FinancialTransaction[]
+  contasReceber             ContaReceber[]
+  arquivos                  Arquivo[]
   equipmentServiceHistories EquipmentServiceHistory[]
-  serviceOrderChecklists       ServiceOrderChecklist[] @relation("ServiceOrderChecklistsOrder")
-  serviceOrderAttachments      ServiceOrderAttachment[] @relation("ServiceOrderAttachmentsOrder")
-  serviceOrderAcceptances      ServiceOrderAcceptance[] @relation("ServiceOrderAcceptancesOrder")
-  warranties                    Warranty[]             @relation("ServiceOrderWarrantiesOrder")
+  serviceOrderChecklists    ServiceOrderChecklist[]   @relation("ServiceOrderChecklistsOrder")
+  serviceOrderAttachments   ServiceOrderAttachment[]  @relation("ServiceOrderAttachmentsOrder")
+  serviceOrderAcceptances   ServiceOrderAcceptance[]  @relation("ServiceOrderAcceptancesOrder")
+  warranties                Warranty[]                @relation("ServiceOrderWarrantiesOrder")
 
   @@unique([companyId, code])
   @@index([companyId, clientId])
@@ -1288,11 +1335,11 @@ model Financeiro {
 }
 
 model ContaReceber {
-  id                     String             @id @default(cuid())
-  companyId              String
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
-  deletedAt              DateTime?
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   financialTransactionId String?
   clientId               String
@@ -1302,31 +1349,31 @@ model ContaReceber {
   createdById            String?
   costCenterId           String?
 
-  description            String
-  amount                 Decimal            @db.Decimal(12, 2)
-  grossAmount            Decimal            @default(0) @db.Decimal(12, 2)
-  discountAmount         Decimal            @default(0) @db.Decimal(12, 2)
-  interestAmount         Decimal            @default(0) @db.Decimal(12, 2)
-  penaltyAmount          Decimal            @default(0) @db.Decimal(12, 2)
-  netAmount              Decimal            @default(0) @db.Decimal(12, 2)
-  dueDate                DateTime
-  receivedAt             DateTime?
-  status                 ReceivableStatus  @default(PENDING)
-  installmentNumber      Int?
-  installmentCount       Int?
-  paymentMethod          PaymentMethod?
-  notes                  String?
-  invoiceNumber          String?
+  description       String
+  amount            Decimal          @db.Decimal(12, 2)
+  grossAmount       Decimal          @default(0) @db.Decimal(12, 2)
+  discountAmount    Decimal          @default(0) @db.Decimal(12, 2)
+  interestAmount    Decimal          @default(0) @db.Decimal(12, 2)
+  penaltyAmount     Decimal          @default(0) @db.Decimal(12, 2)
+  netAmount         Decimal          @default(0) @db.Decimal(12, 2)
+  dueDate           DateTime
+  receivedAt        DateTime?
+  status            ReceivableStatus @default(PENDING)
+  installmentNumber Int?
+  installmentCount  Int?
+  paymentMethod     PaymentMethod?
+  notes             String?
+  invoiceNumber     String?
 
-  company             Empresa             @relation(fields: [companyId], references: [id])
+  company              Empresa               @relation(fields: [companyId], references: [id])
   financialTransaction FinancialTransaction? @relation(fields: [financialTransactionId], references: [id])
-  cliente             Cliente             @relation(fields: [clientId], references: [id])
-  ordemServico        OrdemServico?       @relation(fields: [serviceOrderId], references: [id])
-  contrato            Contrato?           @relation(fields: [contractId], references: [id])
-  financialAccount    FinancialAccount?   @relation(fields: [financialAccountId], references: [id])
-  createdBy           Usuario?            @relation(fields: [createdById], references: [id])
-  centroCusto         CentroCusto?        @relation(fields: [costCenterId], references: [id])
-  fluxosCaixa         FluxoCaixa[]
+  cliente              Cliente               @relation(fields: [clientId], references: [id])
+  ordemServico         OrdemServico?         @relation(fields: [serviceOrderId], references: [id])
+  contrato             Contrato?             @relation(fields: [contractId], references: [id])
+  financialAccount     FinancialAccount?     @relation(fields: [financialAccountId], references: [id])
+  createdBy            Usuario?              @relation(fields: [createdById], references: [id])
+  centroCusto          CentroCusto?          @relation(fields: [costCenterId], references: [id])
+  fluxosCaixa          FluxoCaixa[]
 
   @@index([companyId, clientId])
   @@index([companyId, serviceOrderId])
@@ -1407,7 +1454,7 @@ model CentroCusto {
   color       String?
   icon        String?
   parentId    String?
-  isActive    Boolean @map("active") @default(true)
+  isActive    Boolean @default(true) @map("active")
 
   company       Empresa        @relation(fields: [companyId], references: [id])
   contasReceber ContaReceber[]
@@ -1482,17 +1529,17 @@ model Contrato {
 }
 
 model AssetCategory {
-  id         String   @id @default(cuid())
-  companyId  String
-  name       String
+  id          String    @id @default(cuid())
+  companyId   String
+  name        String
   description String?
-  icon       String?
-  color      String?
-  isDefault  Boolean  @default(false)
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deletedAt  DateTime?
+  icon        String?
+  color       String?
+  isDefault   Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   company Empresa @relation(fields: [companyId], references: [id])
 
@@ -1505,35 +1552,35 @@ model AssetCategory {
 }
 
 model Asset {
-  id                 String        @id @default(cuid())
-  companyId          String
-  categoryId         String?
-  responsibleUserId  String?
+  id                String  @id @default(cuid())
+  companyId         String
+  categoryId        String?
+  responsibleUserId String?
 
-  name               String
-  description        String?
-  assetCode          String
-  serialNumber       String?
-  manufacturer       String?
-  model              String?
-  purchaseDate       DateTime?
-  purchaseValue      Decimal       @default(0) @db.Decimal(12, 2)
-  currentValue       Decimal       @default(0) @db.Decimal(12, 2)
-  residualValue      Decimal       @default(0) @db.Decimal(12, 2)
+  name                      String
+  description               String?
+  assetCode                 String
+  serialNumber              String?
+  manufacturer              String?
+  model                     String?
+  purchaseDate              DateTime?
+  purchaseValue             Decimal        @default(0) @db.Decimal(12, 2)
+  currentValue              Decimal        @default(0) @db.Decimal(12, 2)
+  residualValue             Decimal        @default(0) @db.Decimal(12, 2)
   estimatedUsefulLifeMonths Int?
-  status             AssetStatus   @default(ACTIVE)
-  condition          AssetCondition @default(GOOD)
-  location           String?
-  supplierId         String?
-  invoiceNumber      String?
-  warrantyUntil      DateTime?
-  notes              String?
+  status                    AssetStatus    @default(ACTIVE)
+  condition                 AssetCondition @default(GOOD)
+  location                  String?
+  supplierId                String?
+  invoiceNumber             String?
+  warrantyUntil             DateTime?
+  notes                     String?
 
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  deletedAt          DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  company Empresa @relation(fields: [companyId], references: [id])
+  company  Empresa        @relation(fields: [companyId], references: [id])
   category AssetCategory? @relation(fields: [categoryId], references: [id])
 
   @@unique([companyId, assetCode])
@@ -1553,27 +1600,27 @@ model ManutencaoPreventiva {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  clientId             String
-  contractId           String?
-  installedEquipmentId String?
-  title                String
-  frequencyDays        Int
-  frequencyType        MaintenanceFrequencyType?
-  frequencyInterval    Int?
-  startDate            DateTime?
-  nextServiceDate      DateTime?
-  lastServiceDate      DateTime?
-  lastDoneAt           DateTime?
-  status               PreventiveStatus @default(ACTIVE)
-  checklistTemplate    Json?
-  description          String?
+  clientId                 String
+  contractId               String?
+  installedEquipmentId     String?
+  title                    String
+  frequencyDays            Int
+  frequencyType            MaintenanceFrequencyType?
+  frequencyInterval        Int?
+  startDate                DateTime?
+  nextServiceDate          DateTime?
+  lastServiceDate          DateTime?
+  lastDoneAt               DateTime?
+  status                   PreventiveStatus          @default(ACTIVE)
+  checklistTemplate        Json?
+  description              String?
   estimatedDurationMinutes Int?
-  estimatedTechnicians Int?
-  estimatedCost        Decimal? @db.Decimal(12, 2)
-  isActive             Boolean   @default(true)
-  autoCreateServiceOrder Boolean @default(false)
-  advanceNoticeDays    Int?
-  notes                String?
+  estimatedTechnicians     Int?
+  estimatedCost            Decimal?                  @db.Decimal(12, 2)
+  isActive                 Boolean                   @default(true)
+  autoCreateServiceOrder   Boolean                   @default(false)
+  advanceNoticeDays        Int?
+  notes                    String?
 
   company              Empresa               @relation(fields: [companyId], references: [id])
   cliente              Cliente               @relation(fields: [clientId], references: [id])
@@ -1691,11 +1738,11 @@ enum AccountType {
 }
 
 model FinancialCategory {
-  id                    String               @id @default(cuid())
-  companyId             String
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  deletedAt             DateTime?
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   name                  String
   description           String?
@@ -1703,10 +1750,12 @@ model FinancialCategory {
   expenseClassification ExpenseClassification
   color                 String?
   icon                  String?
-  isDefault             Boolean              @default(false)
-  isActive              Boolean              @default(true)
+  isDefault             Boolean               @default(false)
+  isActive              Boolean               @default(true)
 
   company Empresa @relation(fields: [companyId], references: [id])
+
+  financialTransactions FinancialTransaction[]
 
   @@unique([companyId, name, transactionType])
   @@index([companyId, transactionType])
@@ -1714,34 +1763,32 @@ model FinancialCategory {
   @@index([companyId, isDefault])
   @@index([companyId, deletedAt])
   @@map("categorias_financeiras")
-
-  financialTransactions FinancialTransaction[]
 }
 
 model FinancialAccount {
-  id                 String    @id @default(cuid())
-  companyId          String
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deletedAt          DateTime?
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   name               String
   accountType        AccountType
   bankName           String?
-  initialBalance     Decimal   @default(0) @db.Decimal(12, 2)
+  initialBalance     Decimal     @default(0) @db.Decimal(12, 2)
   initialBalanceDate DateTime
-  isDefault          Boolean   @default(false)
-  isActive           Boolean   @default(true)
+  isDefault          Boolean     @default(false)
+  isActive           Boolean     @default(true)
 
   company Empresa @relation(fields: [companyId], references: [id])
+
+  financialTransactions FinancialTransaction[]
+  contasReceber         ContaReceber[]
 
   @@index([companyId, accountType])
   @@index([companyId, isDefault])
   @@index([companyId, deletedAt])
   @@map("contas_financeiras")
-
-  financialTransactions FinancialTransaction[]
-  contasReceber        ContaReceber[]
 }
 
 enum TransactionStatus {
@@ -1768,11 +1815,11 @@ enum PaymentMethod {
 }
 
 model FinancialTransaction {
-  id                 String             @id @default(cuid())
-  companyId          String
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  deletedAt          DateTime?
+  id        String    @id @default(cuid())
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   financialCategoryId String
   financialAccountId  String
@@ -1781,24 +1828,24 @@ model FinancialTransaction {
   supplierId          String?
   createdById         String
 
-  description         String
-  amount              Decimal            @db.Decimal(12, 2)
-  transactionType     TransactionType
-  status              TransactionStatus
-  paymentMethod       PaymentMethod?
-  competenceDate      DateTime
-  dueDate             DateTime?
-  paidAt              DateTime?
-  notes               String?
+  description     String
+  amount          Decimal           @db.Decimal(12, 2)
+  transactionType TransactionType
+  status          TransactionStatus
+  paymentMethod   PaymentMethod?
+  competenceDate  DateTime
+  dueDate         DateTime?
+  paidAt          DateTime?
+  notes           String?
 
-  company             Empresa            @relation(fields: [companyId], references: [id])
-  financialCategory   FinancialCategory  @relation(fields: [financialCategoryId], references: [id])
-  financialAccount    FinancialAccount   @relation(fields: [financialAccountId], references: [id])
-  cliente             Cliente?           @relation(fields: [clientId], references: [id])
-  contasReceber       ContaReceber[]
-  ordemServico        OrdemServico?      @relation(fields: [serviceOrderId], references: [id])
-  fornecedor          Fornecedor?        @relation(fields: [supplierId], references: [id])
-  createdBy           Usuario            @relation(fields: [createdById], references: [id])
+  company           Empresa           @relation(fields: [companyId], references: [id])
+  financialCategory FinancialCategory @relation(fields: [financialCategoryId], references: [id])
+  financialAccount  FinancialAccount  @relation(fields: [financialAccountId], references: [id])
+  cliente           Cliente?          @relation(fields: [clientId], references: [id])
+  contasReceber     ContaReceber[]
+  ordemServico      OrdemServico?     @relation(fields: [serviceOrderId], references: [id])
+  fornecedor        Fornecedor?       @relation(fields: [supplierId], references: [id])
+  createdBy         Usuario           @relation(fields: [createdById], references: [id])
 
   @@index([companyId, financialCategoryId])
   @@index([companyId, financialAccountId])
@@ -1832,4 +1879,53 @@ model ConfiguracaoEmpresa {
 
   @@index([deletedAt])
   @@map("configuracoes_empresa")
+}
+
+
+model CompanyModuleState {
+  id        String   @id @default(cuid())
+  companyId String
+  module    String
+  version   Int      @default(1)
+  revision  Int      @default(0)
+  payload   Json
+  backup    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Empresa @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, module])
+  @@index([companyId, updatedAt])
+  @@map("company_module_states")
+}
+
+
+model CompanyStoredFile {
+  id           String         @id @default(cuid())
+  companyId    String
+  uploadedById String?
+  entityType   String
+  entityId     String?
+  category     String?
+  name         String
+  originalName String?
+  mimeType     String
+  sizeBytes    BigInt?        @db.BigInt
+  bucket       String
+  storagePath  String
+  visibility   FileVisibility @default(COMPANY)
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  company    Empresa  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  uploadedBy Usuario? @relation(fields: [uploadedById], references: [id])
+
+  @@index([companyId, entityType, entityId])
+  @@index([companyId, category])
+  @@index([companyId, createdAt])
+  @@index([companyId, deletedAt])
+  @@map("company_stored_files")
 }

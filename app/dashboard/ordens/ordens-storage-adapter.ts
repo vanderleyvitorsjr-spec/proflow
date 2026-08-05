@@ -1,3 +1,4 @@
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { serviceOrders } from "./ordens-data";
 import type { OrdemRecord } from "./ordens-types";
 export interface OrdensStorageAdapter {
@@ -5,8 +6,6 @@ export interface OrdensStorageAdapter {
   replace(records: OrdemRecord[]): Promise<void>;
   nextNumber(): Promise<string>;
 }
-const DATA_KEY = "proflow:ordens:v1",
-  SEQUENCE_KEY = "proflow:ordens:sequence:v1";
 const initial: OrdemRecord[] = serviceOrders.map((order, index) => ({
   id: order.id,
   orderNumber: order.orderNumber,
@@ -84,39 +83,34 @@ const normalizeOrder = (order: OrdemRecord): OrdemRecord => ({
     updatedAt: item.updatedAt ?? order.updatedAt,
   })),
 });
-export class LocalOrdensStorageAdapter implements OrdensStorageAdapter {
+export type OrdensRemoteState = { records: OrdemRecord[]; sequence: number };
+
+export class RemoteOrdensStorageAdapter implements OrdensStorageAdapter {
+  private async state(): Promise<OrdensRemoteState> {
+    return readRemoteModuleState<OrdensRemoteState>("ordens", {
+      records: initial,
+      sequence: 106,
+    });
+  }
+
   async list() {
-    if (typeof window === "undefined") return [];
-    const raw = window.localStorage.getItem(DATA_KEY);
-    if (!raw) {
-      await this.replace(initial);
-      return structuredClone(initial).map(normalizeOrder);
-    }
-    try {
-      return (JSON.parse(raw) as OrdemRecord[]).map(normalizeOrder);
-    } catch {
-      throw new Error("Não foi possível ler as Ordens armazenadas.");
-    }
+    return (await this.state()).records.map(normalizeOrder);
   }
+
   async replace(records: OrdemRecord[]) {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(DATA_KEY, JSON.stringify(records));
-    } catch {
-      throw new Error("Não foi possível salvar as Ordens neste dispositivo.");
-    }
+    const state = await this.state();
+    await writeRemoteModuleState("ordens", { ...state, records });
   }
+
   async nextNumber() {
-    if (typeof window === "undefined") return "OS-2026-0001";
-    const stored = Number(window.localStorage.getItem(SEQUENCE_KEY) ?? "106");
-    const records = await this.list();
-    const highest = records.reduce(
+    const state = await this.state();
+    const highest = state.records.reduce(
       (max, item) => Math.max(max, Number(item.orderNumber.split("-").at(-1)) || 0),
-      stored,
+      state.sequence,
     );
     const next = highest + 1;
-    window.localStorage.setItem(SEQUENCE_KEY, String(next));
+    await writeRemoteModuleState("ordens", { ...state, sequence: next });
     return `OS-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`;
   }
 }
-export const ordensStorageAdapter: OrdensStorageAdapter = new LocalOrdensStorageAdapter();
+export const ordensStorageAdapter: OrdensStorageAdapter = new RemoteOrdensStorageAdapter();

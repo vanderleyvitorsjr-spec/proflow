@@ -1,0 +1,52 @@
+PROFLOW — CONCLUSÃO OPERACIONAL VALIDADA
+
+Este pacote deve ser extraído na raiz do projeto, aceitando a substituição dos arquivos.
+
+ANTES DE APLICAR
+- Faça uma cópia da pasta atual do projeto.
+- Não apague .env.local.
+- Confirme que SUPABASE_SERVICE_ROLE_KEY está configurada somente no servidor.
+- Pare o servidor com Ctrl + C.
+
+PASSOS
+
+1. Extraia este ZIP na raiz do ProFlow.
+
+2. Gere o Prisma Client:
+   npm run db:generate
+
+3. Verifique as migrations:
+   npm run db:status
+
+4. Aplique a migration somente no Supabase de desenvolvimento:
+   npm run db:migrate:deploy
+
+5. Verifique novamente:
+   npm run db:status
+
+6. Execute as validações:
+   npm run test:unit
+   npm run lint
+   npx tsc --noEmit
+   npm run build
+
+7. Limpe o cache e inicie:
+   Remove-Item -Recurse -Force .next
+   npm run dev
+
+TESTES MANUAIS OBRIGATÓRIOS
+- Alterar um Cliente, recarregar e conferir em outra janela.
+- Testar CRM, Agenda, Ordens, Financeiro, Estoque e Equipamentos.
+- No Workspace, reservar um material, marcar como utilizado e depois devolvido.
+- Confirmar que repetir a mesma situação não duplica reserva, consumo ou devolução.
+- Em uma Ordem, enviar uma imagem, abrir e baixar em outra janela.
+- Na Central de Documentos, enviar um PDF, baixar e remover.
+- Registrar um recebimento ou pagamento e abrir o comprovante.
+- Fazer perguntas no Assistente Inteligente.
+
+OBSERVAÇÕES
+- O bucket privado é criado automaticamente no primeiro upload.
+- A primeira leitura de cada módulo importa o estado local antigo somente quando ainda não existe estado remoto.
+- Os dados locais antigos não são apagados automaticamente.
+- O endpoint bloqueia módulos desconhecidos e usa revisão para reduzir sobrescritas concorrentes.
+- Não execute prisma db push nem prisma migrate reset.

@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   MetricItem,
   MetricStrip,
@@ -38,11 +39,24 @@ import { loadOperationalCenterSnapshot } from "./central-operacional-gateway";
 import { ptBrLabel } from "@/lib/pt-br-labels";
 import { OperationalInsights } from "@/components/ui/operational-insights";
 import { ActionCenter } from "@/components/ui/action-center";
+import { OperationalTimeline } from "@/components/ui/operational-timeline";
 import type {
   OperationalAlert,
   OperationalCenterSnapshot,
 } from "./central-operacional-types";
 import { FinancialSuggestions } from "./financial-suggestions";
+import {
+  listOperationalItemStatesAction,
+  reopenOperationalItemAction,
+  resolveOperationalItemAction,
+  snoozeOperationalItemAction,
+} from "./central-operacional-state-actions";
+import {
+  priorityExplanation,
+  visibleOperationalInsightIds,
+  type OperationalStateEnvelope,
+} from "./central-operacional-state";
+import { OperationalItemDialog } from "./operational-item-dialog";
 
 const alertStyles: Record<OperationalAlert["level"], string> = {
   INFO: "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-100",
@@ -56,6 +70,15 @@ export function CentralOperacionalPage() {
   const [snapshot, setSnapshot] = useState<OperationalCenterSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [itemStates, setItemStates] = useState<OperationalStateEnvelope>({
+    version: 2,
+    items: [],
+  });
+  const [dialog, setDialog] = useState<{
+    mode: "SNOOZE" | "RESOLVE" | "REOPEN";
+    insightId: string;
+    title: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,11 +98,19 @@ export function CentralOperacionalPage() {
 
   useEffect(() => {
     queueMicrotask(() => void load());
+    void listOperationalItemStatesAction().then(setItemStates);
   }, [load]);
 
   const unhealthy =
     snapshot?.sourceStatus.filter((source) => !source.available || source.partial) ?? [];
-
+  const visibleInsightIds = new Set(
+    visibleOperationalInsightIds(
+      snapshot?.insights.map((item) => item.id) ?? [],
+      itemStates,
+    ),
+  );
+  const visibleInsights =
+    snapshot?.insights.filter((insight) => visibleInsightIds.has(insight.id)) ?? [];
   return (
     <div className="space-y-4">
       <PageHeader>
@@ -148,12 +179,82 @@ export function CentralOperacionalPage() {
             <MetricItem label="Em manutenção" value={String(snapshot.equipment.inMaintenanceCount)} />
           </MetricStrip>
 
-          <OperationalInsights insights={snapshot.insights} />
-          <ActionCenter insights={snapshot.insights} />
+          {visibleInsights.length ? (
+            <>
+              <OperationalInsights insights={visibleInsights} />
+              <div className="rounded-xl border bg-card px-4 py-3 text-xs text-muted-foreground">
+                {priorityExplanation(visibleInsights[0]!)}
+              </div>
+              <ActionCenter
+                insights={visibleInsights}
+                onResolve={(insightId) =>
+                  setDialog({
+                    mode: "RESOLVE",
+                    insightId,
+                    title: snapshot.insights.find((item) => item.id === insightId)?.title ?? "Pendência Operacional",
+                  })
+                }
+                onSnooze={(insightId) =>
+                  setDialog({
+                    mode: "SNOOZE",
+                    insightId,
+                    title: snapshot.insights.find((item) => item.id === insightId)?.title ?? "Pendência Operacional",
+                  })
+                }
+              />
+            </>
+          ) : (
+            <EmptyState
+              icon={<CheckCircle2 className="h-5 w-5" />}
+              title="Tudo Organizado"
+              description="Não existem pendências prioritárias neste momento."
+            />
+          )}
           <FinancialSuggestions
             suggestions={snapshot.financialSuggestions}
             onChanged={load}
           />
+          {itemStates.items.length ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Histórico de Pendências</CardTitle>
+              </CardHeader>
+              <CardContent className="divide-y rounded-xl border p-0">
+                {itemStates.items
+                  .slice()
+                  .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+                  .map((item) => (
+                    <div key={item.insightId} className="flex flex-wrap items-center justify-between gap-3 p-3">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {snapshot.insights.find((insight) => insight.id === item.insightId)?.title ?? "Pendência Registrada"}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {ptBrLabel(item.status)} · {formatDateTimeBR(item.updatedAt)}
+                          {item.snoozedUntil ? ` · Retorna em ${formatDateTimeBR(item.snoozedUntil)}` : ""}
+                        </p>
+                      </div>
+                      {item.status === "RESOLVED" ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            setDialog({
+                              mode: "REOPEN",
+                              insightId: item.insightId,
+                              title: "Reabrir Pendência",
+                            })
+                          }
+                        >
+                          Reabrir
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          ) : null}
+          <OperationalTimeline limit={12} />
 
           <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
             <Card>
@@ -262,6 +363,45 @@ export function CentralOperacionalPage() {
             <StatusCard icon={CalendarClock} title="Agenda" value={`${snapshot.agenda.today.length} compromisso(s)`} description={`${snapshot.agenda.upcoming.length} próximos listados`} href="/dashboard/agenda" />
           </div>
         </>
+      ) : null}
+      {dialog ? (
+        <OperationalItemDialog
+          mode={dialog.mode}
+          title={dialog.title}
+          onClose={() => setDialog(null)}
+          onConfirm={async (value) => {
+            if (dialog.mode === "SNOOZE") {
+              setItemStates(
+                await snoozeOperationalItemAction({
+                  insightId: dialog.insightId,
+                  until: value.until ?? "",
+                  reason: value.reason,
+                  note: value.note,
+                  responsible: value.responsible,
+                  priority: value.priority,
+                }),
+              );
+            } else if (dialog.mode === "RESOLVE") {
+              setItemStates(
+                await resolveOperationalItemAction({
+                  insightId: dialog.insightId,
+                  resolution: value.reason,
+                  note: value.note,
+                  responsible: value.responsible,
+                  result: value.result ?? "Resolvido",
+                }),
+              );
+            } else {
+              setItemStates(
+                await reopenOperationalItemAction(
+                  dialog.insightId,
+                  value.reason,
+                  value.responsible,
+                ),
+              );
+            }
+          }}
+        />
       ) : null}
     </div>
   );

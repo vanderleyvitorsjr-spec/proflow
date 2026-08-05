@@ -2,8 +2,8 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'maintenancefrequencytype') THEN
-        CREATE TYPE "MaintenanceFrequencyType" AS ENUM ('DAYS','WEEKS','MONTHS','YEARS','OPERATING_HOURS','CUSTOM');
+    IF to_regtype('"MaintenanceFrequencyType"') IS NULL THEN
+    CREATE TYPE "MaintenanceFrequencyType" AS ENUM ('DAYS','WEEKS','MONTHS','YEARS','OPERATING_HOURS','CUSTOM');
     END IF;
 END$$;
 

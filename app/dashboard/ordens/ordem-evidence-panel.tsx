@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, FileSignature, ImagePlus, Printer, Save, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,8 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDateTimeBR } from "@/lib/br-formatters";
-import { addOrdemMediaAction, removeOrdemMediaAction, updateOrdemTechnicalReportAction } from "./ordens-actions";
-import { deleteOrdemMediaBlob, getOrdemMediaBlob, saveOrdemMediaBlob } from "./ordens-media-adapter";
+import { updateOrdemTechnicalReportAction } from "./ordens-actions";
+import { deleteOrderEvidenceAction, listOrderEvidenceAction, uploadOrderEvidenceAction } from "./ordem-evidence-actions";
 import type { OrdemMediaKind, OrdemRecord, OrdemTechnicalReport } from "./ordens-types";
 
 type Props = {
@@ -39,37 +39,35 @@ export function OrdemEvidencePanel({ order, onChanged }: Props) {
     clientAcknowledgement: "",
   });
 
-  const media = useMemo(() => order.media ?? [], [order.media]);
+  const [media, setMedia] = useState<Array<{ id: string; category: string; fileName: string; mimeType: string; size: number; createdAt: string }>>([]);
+
+  async function refreshMedia() {
+    setMedia(await listOrderEvidenceAction(order.id));
+  }
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void refreshMedia();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [order.id]);
 
   async function upload(file: File | null) {
     if (!file) return;
     setFeedback("");
-    if (!acceptedImageTypes.includes(file.type)) {
-      setFeedback("Use uma imagem JPG, PNG ou WEBP.");
-      return;
-    }
-    const maxSize = kind.includes("SIGNATURE") ? 3 * 1024 * 1024 : 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setFeedback(kind.includes("SIGNATURE") ? "A assinatura deve ter até 3 MB." : "A foto deve ter até 10 MB.");
-      return;
-    }
     setBusy(true);
-    const id = crypto.randomUUID();
     try {
-      await saveOrdemMediaBlob(id, file);
-      const updated = await addOrdemMediaAction(order.id, {
-        id,
-        kind,
-        fileName: file.name,
-        mimeType: file.type,
-        size: file.size,
-        createdAt: new Date().toISOString(),
-        createdBy: order.technician,
-      });
-      onChanged(updated);
-      setFeedback("Arquivo adicionado com sucesso.");
+      const formData = new FormData();
+      formData.set("serviceOrderId", order.id);
+      formData.set("kind", kind);
+      formData.set("file", file);
+      await uploadOrderEvidenceAction(formData);
+      await refreshMedia();
+      setFeedback("Arquivo enviado e armazenado com segurança.");
     } catch (error) {
-      await deleteOrdemMediaBlob(id).catch(() => undefined);
       setFeedback(error instanceof Error ? error.message : "Não foi possível salvar o arquivo.");
     } finally {
       setBusy(false);
@@ -77,29 +75,24 @@ export function OrdemEvidencePanel({ order, onChanged }: Props) {
   }
 
   async function openMedia(id: string, fileName: string, download: boolean) {
-    const blob = await getOrdemMediaBlob(id);
-    if (!blob) {
-      setFeedback("O arquivo local não está disponível neste dispositivo.");
-      return;
-    }
-    const url = URL.createObjectURL(blob);
+    const url = `/api/arquivos/${encodeURIComponent(id)}`;
     if (download) {
       const link = document.createElement("a");
       link.href = url;
       link.download = fileName;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
       link.click();
     } else {
       window.open(url, "_blank", "noopener,noreferrer");
     }
-    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   }
 
   async function remove(id: string) {
     setBusy(true);
     try {
-      const updated = await removeOrdemMediaAction(order.id, id);
-      await deleteOrdemMediaBlob(id);
-      onChanged(updated);
+      await deleteOrderEvidenceAction(id);
+      await refreshMedia();
       setFeedback("Arquivo removido.");
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Não foi possível remover o arquivo.");
@@ -138,9 +131,9 @@ export function OrdemEvidencePanel({ order, onChanged }: Props) {
           </div>
           {media.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{media.map((item) => (
             <div key={item.id} className="rounded-xl border p-3">
-              <div className="flex items-start justify-between gap-2"><Badge variant="outline">{kindLabels[item.kind]}</Badge><span className="text-[11px] text-muted-foreground">{formatBytes(item.size)}</span></div>
+              <div className="flex items-start justify-between gap-2"><Badge variant="outline">{attachmentCategoryLabel(item.category)}</Badge><span className="text-[11px] text-muted-foreground">{formatBytes(item.size)}</span></div>
               <p className="mt-2 line-clamp-1 text-sm font-medium">{item.fileName}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{formatDateTimeBR(item.createdAt)}{item.createdBy ? ` · ${item.createdBy}` : ""}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{formatDateTimeBR(item.createdAt)}</p>
               <div className="mt-3 flex gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => void openMedia(item.id, item.fileName, false)}>Abrir</Button><Button type="button" size="icon" variant="ghost" onClick={() => void openMedia(item.id, item.fileName, true)} aria-label="Baixar arquivo"><Download className="h-4 w-4" /></Button><Button type="button" size="icon" variant="ghost" onClick={() => void remove(item.id)} disabled={busy} aria-label="Remover arquivo"><Trash2 className="h-4 w-4" /></Button></div>
             </div>
           ))}</div> : <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">Nenhuma foto ou assinatura adicionada.</p>}
@@ -162,6 +155,17 @@ export function OrdemEvidencePanel({ order, onChanged }: Props) {
       {feedback ? <div role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">{feedback}</div> : null}
     </div>
   );
+}
+
+function attachmentCategoryLabel(category: string) {
+  const labels: Record<string, string> = {
+    BEFORE_SERVICE: "Antes",
+    AFTER_SERVICE: "Depois",
+    CUSTOMER_SIGNATURE: "Assinatura do cliente",
+    TECHNICAL_REPORT: "Assinatura do técnico",
+    GENERAL: "Geral",
+  };
+  return labels[category] ?? "Arquivo";
 }
 
 function formatBytes(size: number) {

@@ -69,6 +69,12 @@ export function formatBrazilianPhone(value: string | undefined | null): string {
   return `(${area}) ${rest.slice(0, 1)} ${rest.slice(1, 5)}-${rest.slice(5)}`;
 }
 
+export const formatPhoneBR = formatBrazilianPhone;
+export const normalizeDigits = onlyDigits;
+export const normalizeDisplayName = normalizeProperName;
+export const formatPersonName = normalizeProperName;
+export const formatCompanyName = normalizeProperName;
+
 export function formatCpf(value: string | undefined | null): string {
   const digits = onlyDigits(value).slice(0, 11);
   return digits
@@ -137,6 +143,16 @@ export function isValidCnpj(value: string | undefined | null): boolean {
   return calculate(12) === Number(cnpj[12]) && calculate(13) === Number(cnpj[13]);
 }
 
+export const validateCpf = isValidCpf;
+export const validateCnpj = isValidCnpj;
+export function validatePhoneBR(value: string | undefined | null): boolean {
+  const digits = onlyDigits(value);
+  return (digits.length === 10 || digits.length === 11) && !allEqual(digits);
+}
+export function validateCep(value: string | undefined | null): boolean {
+  return onlyDigits(value).length === 8;
+}
+
 export function formatCurrencyBRLFromCents(value: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
     value / 100,
@@ -159,6 +175,10 @@ export function formatNumberBR(value: number, minimumFractionDigits = 2): string
   }).format(value);
 }
 
+export function formatPercentageBR(value: number): string {
+  return `${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}%`;
+}
+
 export function formatPercentageFromBasisPoints(value: number): string {
   return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value / 100)}%`;
 }
@@ -178,6 +198,15 @@ export function formatDateTimeBR(value: string | undefined | null): string {
   if (Number.isNaN(date.getTime())) return "Não informado";
   return `${new Intl.DateTimeFormat("pt-BR").format(date)} às ${new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(date)}`;
 }
+
+export function formatMonthYearBR(value: string | Date | undefined | null): string {
+  if (!value) return "Não informado";
+  const date = value instanceof Date ? value : /^\d{4}-\d{2}$/.test(value) ? new Date(`${value}-15T12:00:00`) : new Date(value);
+  return Number.isNaN(date.getTime()) ? "Não informado" : new Intl.DateTimeFormat("pt-BR", { month: "2-digit", year: "numeric" }).format(date);
+}
+
+export const formatCurrencyBRL = formatCurrencyBRLFromCents;
+export const parseCurrencyBRL = parseCurrencyBRToCents;
 
 export function normalizeSearchText(value: string | undefined | null): string {
   return String(value ?? "")

@@ -20,6 +20,8 @@ import type {
 import { analyzeOperationalInsights } from "@/lib/operational-insights";
 import { listFinancialSuggestionsAction } from "@/automation/suggestions/financial-suggestion-actions";
 import { financialSuggestionsToOperationalItems } from "@/automation/suggestions/financial-suggestion-operational";
+import { listAllEquipmentTechnicalHistoryAction } from "@/app/dashboard/equipamentos/equipamento-tecnico-actions";
+import { maintenanceSituation } from "@/app/dashboard/equipamentos/equipamento-tecnico-domain";
 
 const terminalOrderStatuses = new Set(["COMPLETED", "CANCELED"]);
 const terminalEventStatuses = new Set(["COMPLETED", "CANCELED"]);
@@ -99,6 +101,7 @@ function buildAlerts(input: {
   outCount: number;
   overdueMaintenanceCount: number;
   inMaintenanceCount: number;
+  localPreventiveOverdueCount: number;
 }): OperationalAlert[] {
   const alerts: OperationalAlert[] = [];
   if (input.overdue.length)
@@ -141,6 +144,14 @@ function buildAlerts(input: {
       description: "Equipamentos com manutenção vencida precisam de revisão.",
       link: "/dashboard/equipamentos",
     });
+  if (input.localPreventiveOverdueCount)
+    alerts.push({
+      id: "local-preventive-overdue",
+      level: "CRITICAL",
+      title: `${input.localPreventiveOverdueCount} plano(s) preventivo(s) vencido(s)`,
+      description: "Revise os planos preventivos locais e confirme a próxima ação.",
+      link: "/dashboard/equipamentos",
+    });
   if (input.inMaintenanceCount)
     alerts.push({
       id: "equipment-maintenance",
@@ -166,6 +177,7 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
     listEquipmentStateAction(),
     listFinancialStateAction(),
     listFinancialSuggestionsAction(),
+    listAllEquipmentTechnicalHistoryAction(),
   ]);
   const [ordersResult, agendaResult, stockResult, equipmentResult] = settled;
   const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
@@ -198,6 +210,10 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
       : [];
   const automationInsights =
     financialSuggestionsToOperationalItems(financialSuggestions);
+  const technicalPlans = settled[10].status === "fulfilled" ? settled[10].value.preventivePlans : [];
+  const localPreventiveOverdueCount = technicalPlans.filter(
+    (plan) => plan.active && maintenanceSituation(plan.nextMaintenanceAt, now) === "OVERDUE",
+  ).length;
 
   const activeOrders = orders.filter((order) => !order.archivedAt && !order.canceledAt);
   const todayOrders = activeOrders
@@ -283,6 +299,7 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
     stock: { lowCount, outCount, activeReservations },
     equipment: {
       inMaintenanceCount,
+      localPreventiveOverdueCount,
       overdueMaintenanceCount,
       expiringWarrantyCount,
     },
@@ -293,6 +310,7 @@ export async function loadOperationalCenterSnapshot(): Promise<OperationalCenter
       outCount,
       overdueMaintenanceCount,
       inMaintenanceCount,
+      localPreventiveOverdueCount,
     }),
     insights: [
       ...analyzeOperationalInsights(

@@ -1,3 +1,4 @@
+import { scopedBrowserBackupKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
 import { z } from "zod";
 import { calculatePricing } from "./precificacao-selectors";
 import { PricingDomainError } from "./precificacao-errors";
@@ -9,8 +10,8 @@ import type {
   PricingStorageState,
   PricingTemplate,
 } from "./precificacao-types";
-const KEY = "proflow:precificacao:v1",
-  BACKUP = `${KEY}:backup`;
+const KEY = () => scopedBrowserStorageKey("precificacao");
+const BACKUP = () => scopedBrowserBackupKey("precificacao");
 const history = z.object({
   id: z.string(),
   type: z.string(),
@@ -481,22 +482,22 @@ export interface PricingStorageAdapter {
 export class LocalPricingStorageAdapter implements PricingStorageAdapter {
   async read() {
     if (typeof window === "undefined") return initialState();
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY());
     if (!raw) {
       const state = initialState();
-      localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(KEY(), JSON.stringify(state));
       return structuredClone(state);
     }
     const parsed = this.parse(raw);
     if (parsed && this.isLegacy(raw)) {
-      localStorage.setItem(BACKUP, raw);
-      localStorage.setItem(KEY, JSON.stringify(parsed));
+      localStorage.setItem(BACKUP(), raw);
+      localStorage.setItem(KEY(), JSON.stringify(parsed));
     }
     if (parsed) return parsed;
-    const backup = localStorage.getItem(BACKUP),
+    const backup = localStorage.getItem(BACKUP()),
       recovered = backup && this.parse(backup);
     if (recovered) {
-      localStorage.setItem(KEY, JSON.stringify(recovered));
+      localStorage.setItem(KEY(), JSON.stringify(recovered));
       return recovered;
     }
     throw new PricingDomainError(
@@ -512,24 +513,24 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
         "VALIDATION",
         "O estado da Precificação é inválido e não foi salvo.",
       );
-    const raw = localStorage.getItem(KEY),
+    const raw = localStorage.getItem(KEY()),
       current = raw && this.parse(raw);
     if (current && current.revision !== state.revision)
       throw new PricingDomainError(
         "CONFLICT",
         "A Precificação foi alterada em outra aba. Recarregue antes de salvar.",
       );
-    if (raw && current) localStorage.setItem(BACKUP, raw);
+    if (raw && current) localStorage.setItem(BACKUP(), raw);
     const next = { ...state, revision: state.revision + 1 };
-    localStorage.setItem(KEY, JSON.stringify(next));
+    localStorage.setItem(KEY(), JSON.stringify(next));
     return next;
   }
   async recoverBackup() {
     if (typeof window === "undefined") return initialState();
-    const raw = localStorage.getItem(BACKUP),
+    const raw = localStorage.getItem(BACKUP()),
       parsed = raw && this.parse(raw);
     if (!parsed) throw new PricingDomainError("NOT_FOUND", "Não existe backup válido.");
-    localStorage.setItem(KEY, JSON.stringify(parsed));
+    localStorage.setItem(KEY(), JSON.stringify(parsed));
     return parsed;
   }
   private parse(raw: string) {

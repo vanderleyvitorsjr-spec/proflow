@@ -8,14 +8,19 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { OrdemChecklistItem } from "./ordens-types";
+import { checklistSummary, checklistTemplateFor } from "@/app/dashboard/projetos/[id]/workspace-checklist-domain";
 
 const categories: Array<[OrdemChecklistItem["category"], string]> = [
   ["PRE_SERVICE", "Pré-atendimento"],
+  ["ARRIVAL", "Chegada ao Local"],
+  ["DIAGNOSIS", "Diagnóstico"],
   ["MATERIALS", "Materiais"],
   ["INSTALLATION", "Instalação"],
   ["ELECTRICAL", "Elétrica"],
   ["TESTS", "Testes"],
+  ["FINALIZATION", "Finalização"],
   ["DOCUMENTATION", "Documentação"],
+  ["FINANCIAL", "Financeiro"],
   ["DELIVERY", "Entrega"],
   ["POST_SERVICE", "Pós-atendimento"],
 ];
@@ -24,7 +29,7 @@ const statuses: Array<[OrdemChecklistItem["status"], string]> = [
   ["IN_PROGRESS", "Em andamento"],
   ["COMPLETED", "Concluído"],
   ["BLOCKED", "Bloqueado"],
-  ["SKIPPED", "Ignorado"],
+  ["SKIPPED", "Não Aplicável"],
 ];
 
 export function OrdemChecklist({
@@ -49,6 +54,7 @@ export function OrdemChecklist({
     [draft, filter],
   );
   const completed = draft.filter((item) => item.status === "COMPLETED").length;
+  const summary = checklistSummary(draft);
   const update = (id: string, patch: Partial<OrdemChecklistItem>) =>
     setDraft((current) =>
       current.map((item) => (item.id === id ? { ...item, ...patch } : item)),
@@ -88,8 +94,9 @@ export function OrdemChecklist({
         <div>
           <h2 className="text-sm font-semibold">Checklist operacional</h2>
           <p className="text-xs text-muted-foreground">
-            {draft.length ? Math.round((completed / draft.length) * 100) : 0}% concluído
+            {draft.length ? Math.round((completed / draft.length) * 100) : 0}% concluído · {summary.pending} pendente(s) · {summary.blocked} bloqueado(s)
           </p>
+          {summary.nextTask ? <p className="text-xs text-muted-foreground">Próxima Tarefa: {summary.nextTask}{summary.responsible ? ` · ${summary.responsible}` : ""}</p> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Select
@@ -106,6 +113,32 @@ export function OrdemChecklist({
             <Plus className="h-4 w-4" />
             Adicionar
           </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const now = new Date().toISOString();
+              const template = checklistTemplateFor("INSTALLATION");
+              setDraft((current) => [
+                ...current,
+                ...template.map((title, index) => ({
+                  id: crypto.randomUUID(),
+                  serviceOrderId: current[0]?.serviceOrderId ?? "",
+                  title,
+                  description: "",
+                  category: (index < 3 ? "PRE_SERVICE" : index < 5 ? "TESTS" : "FINALIZATION") as OrdemChecklistItem["category"],
+                  status: "PENDING" as const,
+                  required: true,
+                  responsible: "",
+                  order: current.length + index,
+                  createdAt: now,
+                  updatedAt: now,
+                })),
+              ]);
+            }}
+          >
+            Aplicar Modelo de Instalação
+          </Button>
         </div>
       </div>
 
@@ -119,6 +152,12 @@ export function OrdemChecklist({
                   onChange={(event) => update(item.id, { title: event.target.value })}
                   placeholder="Ex.: Confirmar tensão elétrica do equipamento"
                   aria-label="Título do item"
+                />
+                <Input
+                  value={item.note ?? ""}
+                  onChange={(event) => update(item.id, { note: event.target.value })}
+                  placeholder="Observação do item"
+                  aria-label="Observação do item"
                 />
                 <Input
                   value={item.description ?? ""}

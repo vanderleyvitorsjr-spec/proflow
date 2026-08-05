@@ -275,6 +275,15 @@ export class OrdensService {
   }
   async completeExecution(id: string) {
     let current = await this.require(id);
+    const requiredPending = current.checklist.filter(
+      (item) => item.required && !["COMPLETED", "SKIPPED"].includes(item.status),
+    );
+    if (requiredPending.length)
+      throw new Error(
+        `Conclua os itens obrigatórios antes de finalizar a Ordem: ${requiredPending
+          .map((item) => item.title)
+          .join(", ")}.`,
+      );
     if (current.execution?.status === "IN_PROGRESS")
       current = await this.pauseExecution(id);
     const now = new Date().toISOString(),

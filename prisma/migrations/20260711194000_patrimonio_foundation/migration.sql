@@ -1,10 +1,10 @@
 -- Create enums for assets
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'assetstatus') THEN
+  IF to_regtype('"AssetStatus"') IS NULL THEN
     CREATE TYPE "AssetStatus" AS ENUM ('ACTIVE', 'IN_MAINTENANCE', 'LOST', 'SOLD', 'DISCARDED', 'INACTIVE');
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'assetcondition') THEN
+  IF to_regtype('"AssetCondition"') IS NULL THEN
     CREATE TYPE "AssetCondition" AS ENUM ('NEW', 'EXCELLENT', 'GOOD', 'REGULAR', 'POOR', 'DAMAGED');
   END IF;
 END$$;

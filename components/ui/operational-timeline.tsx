@@ -9,9 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { loadGlobalActivities } from "@/lib/integrations/global-activity-gateway";
 import { ptBrLabel } from "@/lib/pt-br-labels";
-import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
+import {
+  activityDateGroup,
+  filterGlobalActivities,
+  type GlobalActivity,
+} from "@/lib/contracts/global-activity.contract";
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -32,6 +38,10 @@ export function OperationalTimeline({
   const [activities, setActivities] = useState<GlobalActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [partial, setPartial] = useState(false);
+  const [search, setSearch] = useState("");
+  const [source, setSource] = useState("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -51,15 +61,22 @@ export function OperationalTimeline({
 
   const filtered = useMemo(
     () =>
-      activities
-        .filter(
+      filterGlobalActivities(
+        activities.filter(
           (item) =>
+            (!clientId && !serviceOrderId && !sourceId) ||
             (clientId && item.clientId === clientId) ||
             (serviceOrderId && item.serviceOrderId === serviceOrderId) ||
             (sourceId && item.sourceId === sourceId),
-        )
+        ),
+        { search, source, startDate, endDate },
+      )
         .slice(0, limit),
-    [activities, clientId, limit, serviceOrderId, sourceId],
+    [activities, clientId, endDate, limit, search, serviceOrderId, source, sourceId, startDate],
+  );
+  const sources = useMemo(
+    () => [...new Map(activities.map((item) => [item.source, item.sourceLabel])).entries()],
+    [activities],
   );
 
   return (
@@ -72,6 +89,15 @@ export function OperationalTimeline({
         />
       </CardHeader>
       <CardContent className="p-4">
+        <div className="mb-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-[1fr_11rem_10rem_10rem]">
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar Atividade..." aria-label="Pesquisar na Linha do Tempo" />
+          <Select value={source} onChange={(event) => setSource(event.target.value)} aria-label="Filtrar por módulo">
+            <option value="ALL">Todos os Módulos</option>
+            {sources.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </Select>
+          <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} aria-label="Data inicial" />
+          <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} aria-label="Data final" />
+        </div>
         {loading ? (
           <div className="space-y-3" aria-label="Carregando linha do tempo">
             {[0, 1, 2].map((item) => (
@@ -82,6 +108,11 @@ export function OperationalTimeline({
           <ol className="space-y-0">
             {filtered.map((item, index) => (
               <li key={item.id} className="relative grid grid-cols-[1.25rem_1fr] gap-3 pb-4 last:pb-0">
+                {index === 0 || activityDateGroup(filtered[index - 1]!.occurredAt) !== activityDateGroup(item.occurredAt) ? (
+                  <h3 className="col-span-2 mb-1 text-xs font-semibold text-muted-foreground">
+                    {activityDateGroup(item.occurredAt)}
+                  </h3>
+                ) : null}
                 {index < filtered.length - 1 ? (
                   <span className="absolute left-[0.6rem] top-5 h-full w-px bg-border" />
                 ) : null}

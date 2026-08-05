@@ -1,3 +1,4 @@
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { z } from "zod";
 import { initialEquipmentState } from "./equipamentos-data";
 import { EquipmentStorageError } from "./equipamentos-errors";
@@ -40,49 +41,25 @@ const v3Schema = z.object({
   maintenanceRecords: z.array(maintenanceSchema),
   serviceOrderLinks: z.array(linkSchema),
 });
-const KEY = "proflow:equipamentos:v1";
-const BACKUP = "proflow:equipamentos:backup:v1";
-
 export interface EquipmentStorageAdapter {
   read(): Promise<EquipmentStorageState>;
   write(state: EquipmentStorageState): Promise<EquipmentStorageState>;
 }
 
-export class LocalEquipmentStorageAdapter implements EquipmentStorageAdapter {
+export class RemoteEquipmentStorageAdapter implements EquipmentStorageAdapter {
   async read() {
-    if (typeof window === "undefined") return structuredClone(initialEquipmentState);
-    const raw = localStorage.getItem(KEY);
-    if (!raw) {
-      localStorage.setItem(KEY, JSON.stringify(initialEquipmentState));
-      return structuredClone(initialEquipmentState);
-    }
-    const primary = this.parse(raw);
-    if (primary) {
-      if (primary.migrated) {
-        localStorage.setItem(BACKUP, raw);
-        localStorage.setItem(KEY, JSON.stringify(primary.state));
-      }
-      return primary.state;
-    }
-    const backupRaw = localStorage.getItem(BACKUP);
-    const recovered = backupRaw ? this.parse(backupRaw) : null;
-    if (recovered) {
-      localStorage.setItem(KEY, JSON.stringify(recovered.state));
-      return recovered.state;
-    }
-    throw new EquipmentStorageError(
-      "Os dados de Equipamentos estão corrompidos e não existe backup válido. Nada foi sobrescrito.",
-    );
+    const value = await readRemoteModuleState<unknown>("equipamentos", initialEquipmentState);
+    const parsed = this.parse(JSON.stringify(value));
+    if (!parsed) throw new EquipmentStorageError("Os dados de Equipamentos armazenados no servidor estão inválidos.");
+    if (parsed.migrated) await writeRemoteModuleState("equipamentos", parsed.state);
+    return parsed.state;
   }
 
   async write(state: EquipmentStorageState) {
-    if (typeof window === "undefined") return state;
     if (!v3Schema.safeParse(state).success)
       throw new EquipmentStorageError("O estado de Equipamentos é inválido e não foi salvo.");
-    const current = localStorage.getItem(KEY);
-    if (current && this.parse(current)) localStorage.setItem(BACKUP, current);
     const next = { ...state, revision: state.revision + 1 };
-    localStorage.setItem(KEY, JSON.stringify(next));
+    await writeRemoteModuleState("equipamentos", next);
     return next;
   }
 
@@ -90,8 +67,7 @@ export class LocalEquipmentStorageAdapter implements EquipmentStorageAdapter {
     try {
       const value: unknown = JSON.parse(raw);
       const current = v3Schema.safeParse(value);
-      if (current.success)
-        return { state: current.data as EquipmentStorageState, migrated: false };
+      if (current.success) return { state: current.data as EquipmentStorageState, migrated: false };
       const previous = v2Schema.safeParse(value);
       if (previous.success)
         return { migrated: true, state: { ...(previous.data as unknown as Omit<EquipmentStorageState, "version">), version: 3 } };
@@ -106,9 +82,7 @@ export class LocalEquipmentStorageAdapter implements EquipmentStorageAdapter {
           serviceOrderLinks: [],
         },
       };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 }
-export const equipmentStorageAdapter = new LocalEquipmentStorageAdapter();
+export const equipmentStorageAdapter = new RemoteEquipmentStorageAdapter();

@@ -60,6 +60,7 @@ export type OperationalCenterSnapshot = {
   };
   equipment: {
     inMaintenanceCount: number;
+    localPreventiveOverdueCount: number;
     overdueMaintenanceCount: number;
     expiringWarrantyCount: number;
   };

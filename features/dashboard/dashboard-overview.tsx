@@ -29,6 +29,10 @@ import type {
   ReportMetric,
   ReportSection,
 } from "@/app/dashboard/relatorios/relatorios-types";
+import { RelatoriosCharts } from "@/app/dashboard/relatorios/relatorios-charts";
+import { ExecutiveGoalsPanel } from "./goals/executive-goals-panel";
+import { deriveGoalRealizedValues } from "./goals/executive-goals-domain";
+import { OperationalTimeline } from "@/components/ui/operational-timeline";
 import { loadDashboardSnapshot } from "./dashboard-gateway";
 import {
   dashboardPreferencesAdapter,
@@ -102,8 +106,8 @@ export function DashboardOverview() {
           <PageHeaderIdentity>
             <LayoutDashboard className="h-5 w-5" />
             <PageHeaderHeading
-              title="Dashboard"
-              description="Visão executiva dos dados reais do ProFlow."
+              title="Painel Executivo"
+              description="Visão consolidada da operação, do comercial e das finanças com dados reais do ProFlow."
             />
           </PageHeaderIdentity>
           <PageHeaderActions>
@@ -123,7 +127,7 @@ export function DashboardOverview() {
             </Select>
             <Button size="sm" variant="secondary" onClick={() => setEditing(!editing)}>
               <Settings2 className="h-4 w-4" />
-              Widgets
+              Personalizar indicadores
             </Button>
             <Button
               size="icon"
@@ -217,6 +221,17 @@ export function DashboardOverview() {
               />
             ))}
           </section>
+          <RelatoriosCharts
+            charts={(dataset?.sections ?? [])
+              .flatMap((section) => section.charts)
+              .filter((chart) => !chart.empty)
+              .slice(0, 4)}
+          />
+          <ExecutiveGoalsPanel
+            compact
+            realizedValues={deriveGoalRealizedValues(allMetrics)}
+          />
+          <OperationalTimeline limit={6} />
           <div className="grid gap-4 xl:grid-cols-2">
             {(dataset?.sections ?? []).map((section) => {
               const metrics = section.metrics.filter(

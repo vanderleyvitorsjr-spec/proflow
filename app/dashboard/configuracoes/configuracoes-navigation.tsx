@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/providers/theme-provider";
 import {
   Building2,
   Calculator,
@@ -62,6 +62,65 @@ const csv = (values: string[]) => values.join(", "),
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
+
+const localizedCsv = (values: string[]) =>
+  values.map((value) => ptBrLabel(value)).join(", ");
+
+const INTERNAL_BY_PT_BR = new Map<string, string>(
+  [
+    "OPEN",
+    "SCHEDULED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CANCELED",
+    "LOW",
+    "NORMAL",
+    "HIGH",
+    "URGENT",
+    "CLIMATIZATION",
+    "ELECTRICAL",
+    "PREVENTIVE",
+    "CORRECTIVE",
+    "INSTALLATION",
+    "REFRIGERATION",
+    "SAFETY",
+    "CONSUMABLES",
+    "CLEANING",
+    "OTHER",
+    "UNIT",
+    "PAIR",
+    "METER",
+    "KILOGRAM",
+    "LITER",
+    "BOX",
+    "PACKAGE",
+    "ROLL",
+    "TOOL",
+    "VEHICLE",
+    "COMPUTER",
+    "MEASUREMENT_INSTRUMENT",
+    "AVAILABLE",
+    "IN_USE",
+    "UNDER_MAINTENANCE",
+    "INACTIVE",
+    "RETIRED",
+    "LOST",
+    "GOOD",
+    "ATTENTION",
+    "DAMAGED",
+    "UNUSABLE",
+  ].flatMap((value) => [
+    [ptBrLabel(value).toLocaleLowerCase("pt-BR"), value],
+    [value.toLocaleLowerCase("pt-BR"), value],
+  ]),
+);
+
+const parseLocalizedCsv = (value: string) =>
+  parseCsv(value).map(
+    (item) =>
+      INTERNAL_BY_PT_BR.get(item.toLocaleLowerCase("pt-BR")) ??
+      item.toLocaleUpperCase("pt-BR").replace(/\s+/g, "_"),
+  );
 const field = "space-y-1 text-xs font-medium text-foreground";
 export function ConfigurationCenter() {
   const [state, setState] = useState<ConfigState>(),
@@ -134,7 +193,11 @@ export function ConfigurationCenter() {
         root.dataset.density = result.data.appearanceSettings.density;
         root.dataset.contrast = result.data.appearanceSettings.contrast;
         root.dataset.fontSize = result.data.appearanceSettings.fontSize;
-        root.dataset.reducedMotion = String(result.data.appearanceSettings.reducedMotion);
+        root.dataset.reducedMotion = String(
+          result.data.appearanceSettings.reducedMotion,
+        );
+        root.dataset.accent = result.data.appearanceSettings.accent;
+        root.dataset.radius = result.data.appearanceSettings.radius;
       }
     } else setError(result.error.message);
     setSaving(false);
@@ -462,8 +525,8 @@ export function ConfigurationCenter() {
             {label}
             <Input
               className="mt-1"
-              value={csv(values)}
-              onChange={(e) => change(parseCsv(e.target.value))}
+              value={localizedCsv(values)}
+              onChange={(e) => change(parseLocalizedCsv(e.target.value))}
             />
           </label>
         );
@@ -723,7 +786,7 @@ export function ConfigurationCenter() {
         <div className="grid gap-3 md:grid-cols-2">
           {Object.entries(state.numberingSettings).map(([key, item]) => (
             <fieldset key={key} className="rounded-lg border p-3">
-              <legend className="px-1 text-xs font-semibold">{key}</legend>
+              <legend className="px-1 text-xs font-semibold">{ptBrLabel(key)}</legend>
               <div className="grid grid-cols-2 gap-2">
                 <label className={field}>
                   Prefixo
@@ -863,6 +926,17 @@ export function ConfigurationCenter() {
             </Select>
           </label>
           <label className={field}>
+            Arredondamento
+            <Select
+              className="mt-1"
+              value={a.radius}
+              onChange={(e) => set("radius", e.target.value)}
+            >
+              <option value="default">Padrão</option>
+              <option value="rounded">Mais arredondado</option>
+            </Select>
+          </label>
+          <label className={field}>
             Fonte
             <Select
               className="mt-1"
@@ -916,7 +990,7 @@ export function ConfigurationCenter() {
             </Select>
           </label>
           <label className={field}>
-            Timezone
+            Fuso horário
             <Input
               className="mt-1"
               value={p.timezone}

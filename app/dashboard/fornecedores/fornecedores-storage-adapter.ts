@@ -1,9 +1,10 @@
+import { scopedBrowserBackupKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
 import { z } from "zod";
 import { initialSupplierState } from "./fornecedores-data";
 import type { SupplierStorageState } from "./fornecedores-types";
 
-const KEY = "proflow:fornecedores:v1";
-const BACKUP = "proflow:fornecedores:v1:backup";
+const KEY = () => scopedBrowserStorageKey("fornecedores");
+const BACKUP = () => scopedBrowserBackupKey("fornecedores");
 const schema = z.object({
   version: z.literal(1),
   revision: z.number().int().nonnegative(),
@@ -16,25 +17,25 @@ export interface SupplierStorageAdapter { read(): Promise<SupplierStorageState>;
 export class LocalSupplierStorageAdapter implements SupplierStorageAdapter {
   async read(): Promise<SupplierStorageState> {
     if (typeof window === "undefined") return structuredClone(initialSupplierState);
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY());
     if (!raw) {
-      localStorage.setItem(KEY, JSON.stringify(initialSupplierState));
+      localStorage.setItem(KEY(), JSON.stringify(initialSupplierState));
       return structuredClone(initialSupplierState);
     }
     const primary = this.parse(raw);
     if (primary) return primary;
-    const backupRaw = localStorage.getItem(BACKUP);
+    const backupRaw = localStorage.getItem(BACKUP());
     const backup = backupRaw ? this.parse(backupRaw) : null;
-    if (backup) { localStorage.setItem(KEY, JSON.stringify(backup)); return backup; }
+    if (backup) { localStorage.setItem(KEY(), JSON.stringify(backup)); return backup; }
     throw new Error("Os dados de Fornecedores estão corrompidos e não existe backup válido. Nada foi sobrescrito.");
   }
   async write(state: SupplierStorageState): Promise<SupplierStorageState> {
     if (typeof window === "undefined") return state;
     if (!schema.safeParse(state).success) throw new Error("O estado de Fornecedores é inválido e não foi salvo.");
-    const current = localStorage.getItem(KEY);
-    if (current && this.parse(current)) localStorage.setItem(BACKUP, current);
+    const current = localStorage.getItem(KEY());
+    if (current && this.parse(current)) localStorage.setItem(BACKUP(), current);
     const next = { ...state, revision: state.revision + 1 };
-    localStorage.setItem(KEY, JSON.stringify(next));
+    localStorage.setItem(KEY(), JSON.stringify(next));
     return next;
   }
   private parse(raw: string): SupplierStorageState | null {

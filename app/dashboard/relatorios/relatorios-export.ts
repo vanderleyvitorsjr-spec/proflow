@@ -1,6 +1,6 @@
 import { formatDateBR, formatDateTimeBR, formatNumberBR } from "@/lib/br-formatters";
+import { toBrazilianCsv } from "@/lib/csv-br";
 import type { ReportDataset } from "./relatorios-types";
-const escape = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 export function reportCsv(dataset: ReportDataset) {
   const rows: unknown[][] = [
     ["Relatório ProFlow"],
@@ -60,7 +60,7 @@ export function reportCsv(dataset: ReportDataset) {
       ["Vencido a pagar", formatNumberBR(dataset.cashProjection.overdueExpenseCents / 100, 2)],
     );
   }
-  return `\uFEFF${rows.map((row) => row.map(escape).join(";")).join("\r\n")}`;
+  return toBrazilianCsv(rows);
 }
 export function downloadReportCsv(dataset: ReportDataset) {
   if (

@@ -309,3 +309,60 @@ tbody tr {
     transform: none !important;
   }
 }
+
+
+/* Preferências visuais do ProFlow */
+html[data-density="compact"] {
+  --proflow-control-height: 2rem;
+  --proflow-content-gap: 0.5rem;
+}
+
+html[data-density="compact"] .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+}
+
+html[data-density="compact"] input,
+html[data-density="compact"] select,
+html[data-density="compact"] textarea,
+html[data-density="compact"] button {
+  min-height: var(--proflow-control-height);
+}
+
+html[data-radius="rounded"] {
+  --radius: 0.9rem;
+}
+
+html[data-accent="sky"] {
+  --primary: #0284c7;
+  --primary-foreground: #f8fafc;
+  --accent: #38bdf8;
+  --ring: #38bdf8;
+}
+
+html[data-accent="blue"] {
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --accent: #60a5fa;
+  --ring: #60a5fa;
+}
+
+html[data-accent="violet"] {
+  --primary: #7c3aed;
+  --primary-foreground: #faf5ff;
+  --accent: #a78bfa;
+  --ring: #a78bfa;
+}
+
+html[data-accent="emerald"] {
+  --primary: #059669;
+  --primary-foreground: #ecfdf5;
+  --accent: #34d399;
+  --ring: #34d399;
+}
+
+html[data-accent="amber"] {
+  --primary: #d97706;
+  --primary-foreground: #fffbeb;
+  --accent: #fbbf24;
+  --ring: #fbbf24;
+}

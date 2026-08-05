@@ -14,6 +14,7 @@ import { QuickActions } from "@/components/ui/quick-actions";
 
 import { getClientAction } from "../actions";
 import type { ClientRecord } from "../clientes-data";
+import { Client360Panel } from "../cliente-360-panel";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" });
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -86,6 +87,7 @@ export function ClientDetail({ id }: { id: string }) {
       <div id="historico-operacional">
         <OperationalTimeline clientId={client.id} sourceId={client.id} />
       </div>
+      <Client360Panel clientId={client.id} />
     </div>
   );
 }

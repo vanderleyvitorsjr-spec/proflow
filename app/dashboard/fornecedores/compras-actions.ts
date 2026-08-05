@@ -1,0 +1,14 @@
+"use client";
+import { purchasesService } from "./compras-service";
+export const listPurchasesAction = () => Promise.resolve(purchasesService.list());
+export const getQuotationAction = (id: string) => Promise.resolve(purchasesService.getQuotation(id));
+export const getPurchaseOrderAction = (id: string) => Promise.resolve(purchasesService.getOrder(id));
+export const updateQuotationAction = (id: string, changes: Parameters<typeof purchasesService.updateQuotation>[1]) => Promise.resolve(purchasesService.updateQuotation(id, changes));
+export const createQuotationAction = (input: Parameters<typeof purchasesService.createQuotation>[0]) => Promise.resolve(purchasesService.createQuotation(input));
+export const addQuotationSupplierAction = (quotationId: string, supplierId: string) => Promise.resolve(purchasesService.addSupplier(quotationId, supplierId));
+export const addQuotationResponseAction = (quotationId: string, response: Parameters<typeof purchasesService.addResponse>[1]) => Promise.resolve(purchasesService.addResponse(quotationId, response));
+export const selectQuotationResponseAction = (quotationId: string, responseId: string, reason?: string) => Promise.resolve(purchasesService.select(quotationId, responseId, reason));
+export const createPurchaseOrderAction = (input: Parameters<typeof purchasesService.createOrder>[0]) => Promise.resolve(purchasesService.createOrder(input));
+export const receivePurchaseOrderAction = (orderId: string, input: Parameters<typeof purchasesService.receive>[1], confirmStockMovement = false) => Promise.resolve(purchasesService.receive(orderId, input, confirmStockMovement));
+export const createOrdersFromQuotationAction = (quotationId: string) => Promise.resolve(purchasesService.createOrdersFromQuotation(quotationId));
+export const markPurchaseOrderSentAction = (id: string) => Promise.resolve(purchasesService.markOrderSent(id));

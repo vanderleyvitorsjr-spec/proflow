@@ -1,7 +1,7 @@
 -- Create enum EquipmentHistoryEventType and table for equipment service history
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'equipmenthistoryeventtype') THEN
+  IF to_regtype('"EquipmentHistoryEventType"') IS NULL THEN
     CREATE TYPE "EquipmentHistoryEventType" AS ENUM (
       'INSTALLATION', 'PREVENTIVE_MAINTENANCE', 'CORRECTIVE_MAINTENANCE', 'CLEANING', 'INSPECTION', 'DIAGNOSIS',
       'PART_REPLACEMENT', 'REFRIGERANT_CHARGE', 'ELECTRICAL_REPAIR', 'CALIBRATION', 'WARRANTY_SERVICE', 'REMOVAL',

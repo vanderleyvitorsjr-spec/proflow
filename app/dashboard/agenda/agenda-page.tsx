@@ -19,6 +19,10 @@ import type { AgendaEventFormValues } from "./agenda-schema";
 import type { AgendaDisplayEvent } from "./agenda-types";
 import type { AgendaEventType, AgendaTeam, AgendaView } from "./agenda-data";
 import { getAgendaConfiguration } from "./agenda-configuracoes-gateway";
+import {
+  detectAgendaConflicts,
+  summarizeAgendaDay,
+} from "./agenda-professional-domain";
 
 const periodFormatter = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
@@ -67,23 +71,6 @@ function movePeriod(date: Date, view: AgendaView, direction: number) {
   else result.setMonth(result.getMonth() + direction);
   return result;
 }
-function conflicts(events: AgendaDisplayEvent[]) {
-  return events.filter(
-    (event, index) =>
-      event.status !== "CANCELED" &&
-      events
-        .slice(index + 1)
-        .some(
-          (other) =>
-            other.status !== "CANCELED" &&
-            event.technician.toLocaleLowerCase("pt-BR") ===
-              other.technician.toLocaleLowerCase("pt-BR") &&
-            event.startAt < other.endAt &&
-            event.endAt > other.startAt,
-        ),
-  ).length;
-}
-
 export function AgendaPageContent() {
   const [view, setView] = useState<AgendaView>("week");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -229,7 +216,7 @@ export function AgendaPageContent() {
     },
     {
       label: "Conflitos detectados",
-      value: conflicts(filteredEvents),
+      value: detectAgendaConflicts(filteredEvents).length,
       icon: AlertTriangle,
       tone: "warning" as const,
     },
@@ -246,6 +233,7 @@ export function AgendaPageContent() {
       tone: "violet" as const,
     },
   ];
+  const dailySummary = summarizeAgendaDay(filteredEvents, currentDate);
   return (
     <div className="space-y-3">
       <AgendaToolbar
@@ -294,6 +282,33 @@ export function AgendaPageContent() {
           );
         })}
       </MetricStrip>
+      <div
+        className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border bg-card px-4 py-2.5 text-xs"
+        aria-label="Resumo do dia selecionado"
+      >
+        <strong className="text-foreground">Resumo do dia</strong>
+        <span className="text-muted-foreground">
+          {dailySummary.total} compromisso(s)
+        </span>
+        <span className="text-muted-foreground">
+          {dailySummary.pending} pendente(s)
+        </span>
+        <span className="text-muted-foreground">
+          {dailySummary.completed} concluído(s)
+        </span>
+        <span className="text-muted-foreground">
+          {dailySummary.urgent} urgente(s)
+        </span>
+        {dailySummary.conflicts ? (
+          <span className="font-medium text-amber-700 dark:text-amber-300">
+            {dailySummary.conflicts} conflito(s) de responsável e horário
+          </span>
+        ) : (
+          <span className="font-medium text-emerald-700 dark:text-emerald-300">
+            Sem conflitos no dia
+          </span>
+        )}
+      </div>
       {loading ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Carregando Agenda...

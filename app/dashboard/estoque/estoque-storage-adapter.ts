@@ -1,3 +1,4 @@
+import { readRemoteModuleState, recoverRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { z } from "zod";
 import { stockSeeds, stockUnitScales } from "./estoque-data";
 import { StockStorageError } from "./estoque-errors";
@@ -8,8 +9,6 @@ import type {
   StockStorageState,
 } from "./estoque-types";
 
-const KEY = "proflow:estoque:v1",
-  BACKUP = "proflow:estoque:v1:backup";
 const historySchema = z.object({
   id: z.string(),
   type: z.string(),
@@ -289,58 +288,30 @@ export interface StockStorageAdapter {
   write(state: StockStorageState): Promise<StockStorageState>;
   recoverBackup(): Promise<StockStorageState>;
 }
-export class LocalStockStorageAdapter implements StockStorageAdapter {
+export class RemoteStockStorageAdapter implements StockStorageAdapter {
   async read() {
-    if (typeof window === "undefined") return initialState();
-    const raw = localStorage.getItem(KEY);
-    if (!raw) {
-      const state = initialState();
-      localStorage.setItem(KEY, JSON.stringify(state));
-      return structuredClone(state);
-    }
-    const parsed = this.parse(raw);
-    if (parsed) {
-      if (parsed.migrated) {
-        localStorage.setItem(BACKUP, raw);
-        localStorage.setItem(KEY, JSON.stringify(parsed.state));
-      }
-      return parsed.state;
-    }
-    const backup = localStorage.getItem(BACKUP),
-      recovered = backup && this.parse(backup);
-    if (recovered) {
-      localStorage.setItem(KEY, JSON.stringify(recovered.state));
-      return recovered.state;
-    }
-    throw new StockStorageError(
-      "Os dados do Estoque e o backup estão corrompidos. Nada foi sobrescrito.",
-    );
-  }
-  async write(state: StockStorageState) {
-    if (typeof window === "undefined") return state;
-    const valid = stateSchema.safeParse(state);
-    if (!valid.success)
-      throw new StockStorageError("O estado do Estoque é inválido e não foi salvo.");
-    const raw = localStorage.getItem(KEY),
-      current = raw && this.parse(raw);
-    if (current && current.state.revision !== state.revision)
-      throw new StockStorageError(
-        "O Estoque foi alterado em outra aba. Recarregue antes de salvar.",
-      );
-    if (raw && current) localStorage.setItem(BACKUP, raw);
-    const next = { ...state, revision: state.revision + 1 };
-    localStorage.setItem(KEY, JSON.stringify(next));
-    return next;
-  }
-  async recoverBackup() {
-    if (typeof window === "undefined") return initialState();
-    const raw = localStorage.getItem(BACKUP),
-      parsed = raw && this.parse(raw);
-    if (!parsed)
-      throw new StockStorageError("Não existe backup válido para recuperação.");
-    localStorage.setItem(KEY, JSON.stringify(parsed.state));
+    const value = await readRemoteModuleState<unknown>("estoque", initialState());
+    const parsed = this.parse(JSON.stringify(value));
+    if (!parsed) throw new StockStorageError("Os dados do Estoque armazenados no servidor estão inválidos.");
+    if (parsed.migrated) await writeRemoteModuleState("estoque", parsed.state);
     return parsed.state;
   }
+
+  async write(state: StockStorageState) {
+    const valid = stateSchema.safeParse(state);
+    if (!valid.success) throw new StockStorageError("O estado do Estoque é inválido e não foi salvo.");
+    const next = { ...state, revision: state.revision + 1 };
+    await writeRemoteModuleState("estoque", next);
+    return next;
+  }
+
+  async recoverBackup() {
+    const value = await recoverRemoteModuleState<unknown>("estoque");
+    const parsed = this.parse(JSON.stringify(value));
+    if (!parsed) throw new StockStorageError("Não existe backup válido para recuperação.");
+    return parsed.state;
+  }
+
   private parse(raw: string): { state: StockStorageState; migrated: boolean } | null {
     try {
       const value: unknown = JSON.parse(raw),
@@ -362,10 +333,7 @@ export class LocalStockStorageAdapter implements StockStorageAdapter {
       if (!legacy.success) return null;
       return {
         state: {
-          ...(legacy.data as unknown as Omit<
-            StockStorageState,
-            "version" | "reservations" | "nextPurchaseSequence"
-          >),
+          ...(legacy.data as unknown as Omit<StockStorageState, "version" | "reservations" | "nextPurchaseSequence">),
           version: 3 as const,
           nextPurchaseSequence: 1,
           reservations: [],
@@ -373,9 +341,7 @@ export class LocalStockStorageAdapter implements StockStorageAdapter {
         } as StockStorageState,
         migrated: true,
       };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 }
-export const stockStorageAdapter = new LocalStockStorageAdapter();
+export const stockStorageAdapter = new RemoteStockStorageAdapter();

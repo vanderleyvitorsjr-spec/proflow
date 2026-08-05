@@ -11,6 +11,7 @@ import {
   FolderKanban,
   LoaderCircle,
   PackageCheck,
+  Pin,
   ReceiptText,
   Settings2,
   Users,
@@ -53,12 +54,20 @@ import {
   saveProjetoChecklist,
   type ProjetoWorkspaceSnapshot,
 } from "./projeto-workspace-gateway";
+import {
+  addProjetoWorkspaceNoteAction,
+  listProjetoWorkspaceNotesAction,
+  pinProjetoWorkspaceNoteAction,
+} from "./projeto-workspace-notes-actions";
+import type { WorkspaceNote } from "./projeto-workspace-notes-domain";
+import { WorkspaceOperationsPanel } from "./workspace-operations-panel";
 
 const tabs = [
   "Visão Geral",
   "Cronograma",
   "Ordens",
   "Financeiro",
+  "Equipe",
   "Materiais",
   "Equipamentos",
   "Checklist",
@@ -76,6 +85,9 @@ export function ProjetoWorkspace({ id }: { id: string }) {
   const [notFound, setNotFound] = useState(false);
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("Visão Geral");
+  const [notes, setNotes] = useState<WorkspaceNote[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [noteError, setNoteError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -91,6 +103,9 @@ export function ProjetoWorkspace({ id }: { id: string }) {
     return () => {
       active = false;
     };
+  }, [id]);
+  useEffect(() => {
+    void listProjetoWorkspaceNotesAction(id).then(setNotes);
   }, [id]);
 
   if (loading)
@@ -199,6 +214,84 @@ export function ProjetoWorkspace({ id }: { id: string }) {
               { label: "Abrir Financeiro", href: "/dashboard/financeiro" },
             ]}
           />
+          <Card>
+            <CardHeader className="pb-2">
+              <SectionHeader
+                compact
+                title="Observações internas"
+                description="Notas locais vinculadas somente a esta Ordem."
+              />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <label className="block text-xs font-medium text-muted-foreground">
+                Nova observação
+                <textarea
+                  className="mt-1 min-h-20 w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+                  value={noteText}
+                  onChange={(event) => setNoteText(event.target.value)}
+                  placeholder="Ex.: Confirmar acesso à casa de máquinas antes da visita."
+                  aria-describedby={noteError ? "workspace-note-error" : undefined}
+                />
+              </label>
+              {noteError ? (
+                <p id="workspace-note-error" role="alert" className="text-xs text-rose-600">
+                  {noteError}
+                </p>
+              ) : null}
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setNotes(await addProjetoWorkspaceNoteAction(id, noteText));
+                    setNoteText("");
+                    setNoteError("");
+                  } catch (cause) {
+                    setNoteError(
+                      cause instanceof Error
+                        ? cause.message
+                        : "Não foi possível salvar a observação.",
+                    );
+                  }
+                }}
+              >
+                Adicionar observação
+              </Button>
+              {notes.length ? (
+                <div className="space-y-2">
+                  {notes.map((note) => (
+                    <article key={note.id} className="rounded-lg border p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm leading-5">{note.text}</p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={note.pinned ? "Desafixar observação" : "Fixar observação"}
+                          onClick={async () =>
+                            setNotes(
+                              await pinProjetoWorkspaceNoteAction(
+                                id,
+                                note.id,
+                                !note.pinned,
+                              ),
+                            )
+                          }
+                        >
+                          <Pin className={`h-4 w-4 ${note.pinned ? "fill-current text-primary" : ""}`} />
+                        </Button>
+                      </div>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {formatDateTimeBR(note.createdAt)}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Nenhuma observação interna registrada.
+                </p>
+              )}
+            </CardContent>
+          </Card>
           <OperationalInsights insights={snapshot.insights} />
           <ActionCenter insights={snapshot.insights} />
         </aside>
@@ -331,8 +424,21 @@ function WorkspaceContent({
     );
   if (activeTab === "Financeiro")
     return <FinancialTable snapshot={snapshot} />;
+  if (activeTab === "Equipe")
+    return (
+      <Panel title="Equipe da Ordem" icon={<Users className="h-4 w-4" />}>
+        <WorkspaceOperationsPanel serviceOrderId={order.id} section="TEAM" />
+      </Panel>
+    );
   if (activeTab === "Materiais")
-    return <MaterialsPanel snapshot={snapshot} />;
+    return (
+      <div className="space-y-4">
+        <Panel title="Gestão Local de Materiais" icon={<Boxes className="h-4 w-4" />}>
+          <WorkspaceOperationsPanel serviceOrderId={order.id} section="MATERIALS" />
+        </Panel>
+        <MaterialsPanel snapshot={snapshot} />
+      </div>
+    );
   if (activeTab === "Equipamentos")
     return <EquipmentPanel snapshot={snapshot} />;
   if (activeTab === "Checklist")
@@ -363,6 +469,15 @@ function WorkspaceContent({
     return <FilesPanel snapshot={snapshot} />;
   if (activeTab === "Custos")
     return (
+      <div className="space-y-4">
+      <Panel title="Custos Locais da Ordem" icon={<ReceiptText className="h-4 w-4" />}>
+        <WorkspaceOperationsPanel
+          serviceOrderId={order.id}
+          section="COSTS"
+          expectedRevenueCents={Math.round(order.estimatedValue * 100)}
+          receivedRevenueCents={snapshot.financial.receivedCents}
+        />
+      </Panel>
       <Panel title="Custos vinculados" icon={<ReceiptText className="h-4 w-4" />}>
         <InfoGrid items={[
         ["Despesas financeiras", formatCurrencyBRLFromReais(snapshot.financial.expenseCents / 100)],
@@ -378,8 +493,18 @@ function WorkspaceContent({
           }))}
         />
       </Panel>
+      </div>
     );
   return (
+    <div className="space-y-4">
+    <Panel title="Rentabilidade Local" icon={<ReceiptText className="h-4 w-4" />}>
+      <WorkspaceOperationsPanel
+        serviceOrderId={order.id}
+        section="PROFITABILITY"
+        expectedRevenueCents={Math.round(order.estimatedValue * 100)}
+        receivedRevenueCents={snapshot.financial.receivedCents}
+      />
+    </Panel>
     <Panel title="Rentabilidade prevista" icon={<ReceiptText className="h-4 w-4" />}>
       <InfoGrid items={[
         ["Receita prevista", formatCurrencyBRLFromReais(order.estimatedValue)],
@@ -393,6 +518,7 @@ function WorkspaceContent({
       ]} />
       {!snapshot.pricing ? <p className="mt-3 text-xs text-muted-foreground">A margem completa será exibida quando uma precificação for aplicada à Ordem.</p> : null}
     </Panel>
+    </div>
   );
 }
 

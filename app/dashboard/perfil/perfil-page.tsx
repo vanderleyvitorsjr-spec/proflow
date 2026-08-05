@@ -702,15 +702,25 @@ function Productivity({ state, activities }: { state: ProfileState; activities: 
         <Stat label="Atividades recentes" value={String(attributable.length)} />
         <Stat label="Período analisado" value="Dados disponíveis" compact />
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">Sem autenticação real, atividades sem autoria confiável não são atribuídas ao usuário local.</p>
+      <p className="mt-3 text-xs text-muted-foreground">Atividades sem autoria identificável não são atribuídas ao perfil, preservando a precisão dos indicadores pessoais.</p>
     </Section>
   );
 }
 
 function Security() {
   return (
-    <Section title="Segurança da conta" description="A estrutura está preparada, mas não simula recursos que dependem de autenticação real.">
-      <div className="flex items-start gap-3 rounded-lg border bg-muted/20 p-4"><div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Shield className="h-5 w-5" /></div><div><p className="font-medium">Autenticação ainda não conectada</p><p className="mt-1 text-sm text-muted-foreground">Senha, autenticação em duas etapas, sessões e dispositivos serão habilitados quando a autenticação real for conectada. Nenhuma senha ou credencial é armazenada localmente.</p></div></div>
+    <Section title="Segurança da conta" description="A autenticação é protegida pelo Supabase e vinculada à empresa do usuário.">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex items-start gap-3 rounded-lg border bg-muted/20 p-4">
+          <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Shield className="h-5 w-5" /></div>
+          <div><p className="font-medium">Autenticação ativa</p><p className="mt-1 text-sm text-muted-foreground">O acesso pode ser realizado com e-mail e senha ou pela conta Google configurada.</p></div>
+        </div>
+        <div className="rounded-lg border bg-muted/20 p-4">
+          <p className="font-medium">Redefinição de senha</p>
+          <p className="mt-1 text-sm text-muted-foreground">Solicite um link seguro caso precise trocar ou recuperar a senha.</p>
+          <Button asChild variant="secondary" className="mt-3"><Link href="/recuperar-senha">Recuperar ou alterar senha</Link></Button>
+        </div>
+      </div>
     </Section>
   );
 }

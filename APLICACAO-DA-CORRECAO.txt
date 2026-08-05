@@ -1,0 +1,16 @@
+ESTABILIZAÇÃO DA FUNDAÇÃO DO PROFLOW
+
+1. Extraia este ZIP na raiz do ProFlow e aceite substituir os arquivos.
+2. Não remova o arquivo .env.local.
+3. Execute:
+   npm run db:generate
+   npm run test:unit
+   npm run lint
+   npx tsc --noEmit
+   npm run build
+4. Teste login, troca de páginas, convite e módulos locais.
+
+ATENÇÃO
+- As chaves locais agora dependem do contexto da empresa carregado pelo Dashboard.
+- Dados antigos em chaves globais não são apagados nem importados automaticamente.
+- Clientes e CRM ainda não foram migrados para Prisma neste pacote.

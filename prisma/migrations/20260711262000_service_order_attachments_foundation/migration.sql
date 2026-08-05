@@ -2,8 +2,8 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'serviceorderattachmenttype') THEN
-        CREATE TYPE "ServiceOrderAttachmentType" AS ENUM (
+    IF to_regtype('"ServiceOrderAttachmentType"') IS NULL THEN
+    CREATE TYPE "ServiceOrderAttachmentType" AS ENUM (
             'IMAGE','VIDEO','AUDIO','DOCUMENT','SIGNATURE','RECEIPT','INVOICE','REPORT','OTHER'
         );
     END IF;
@@ -11,8 +11,8 @@ END$$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'serviceorderattachmentcategory') THEN
-        CREATE TYPE "ServiceOrderAttachmentCategory" AS ENUM (
+    IF to_regtype('"ServiceOrderAttachmentCategory"') IS NULL THEN
+    CREATE TYPE "ServiceOrderAttachmentCategory" AS ENUM (
             'BEFORE_SERVICE','DURING_SERVICE','AFTER_SERVICE','DIAGNOSIS','EQUIPMENT','INSTALLATION','CHECKLIST','CUSTOMER_SIGNATURE','TECHNICAL_REPORT','WARRANTY','PAYMENT','GENERAL'
         );
     END IF;
@@ -20,8 +20,8 @@ END$$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'storageprovider') THEN
-        CREATE TYPE "StorageProvider" AS ENUM (
+    IF to_regtype('"StorageProvider"') IS NULL THEN
+    CREATE TYPE "StorageProvider" AS ENUM (
             'SUPABASE','LOCAL','S3','GOOGLE_DRIVE','OTHER'
         );
     END IF;

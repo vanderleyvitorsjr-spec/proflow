@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, ListChecks, RotateCcw } from "lucide-react";
+import { CheckCircle2, Clock3, ListChecks, RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,15 @@ const moduleLabels: Record<OperationalInsightModule, string> = {
   FINANCE: "Financeiro",
 };
 
-export function ActionCenter({ insights }: { insights: OperationalInsight[] }) {
+export function ActionCenter({
+  insights,
+  onResolve,
+  onSnooze,
+}: {
+  insights: OperationalInsight[];
+  onResolve?: (insightId: string) => void;
+  onSnooze?: (insightId: string) => void;
+}) {
   const tasks = useMemo(() => transformInsightsToActions(insights), [insights]);
   const [priority, setPriority] = useState("ALL");
   const [module, setModule] = useState("ALL");
@@ -126,7 +134,14 @@ export function ActionCenter({ insights }: { insights: OperationalInsight[] }) {
 
         {filtered.length ? (
           <div className="divide-y rounded-xl border">
-            {filtered.map((task) => <ActionRow key={task.id} task={task} />)}
+            {filtered.map((task) => (
+              <ActionRow
+                key={task.id}
+                task={task}
+                onResolve={onResolve}
+                onSnooze={onSnooze}
+              />
+            ))}
           </div>
         ) : (
           <EmptyState
@@ -150,7 +165,16 @@ function Filter({ label, children }: { label: string; children: React.ReactNode 
   );
 }
 
-function ActionRow({ task }: { task: ActionCenterTask }) {
+function ActionRow({
+  task,
+  onResolve,
+  onSnooze,
+}: {
+  task: ActionCenterTask;
+  onResolve?: (insightId: string) => void;
+  onSnooze?: (insightId: string) => void;
+}) {
+  const insightId = task.id.replace(/^action-/, "");
   return (
     <article className="grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
       <div className="min-w-0">
@@ -167,6 +191,28 @@ function ActionRow({ task }: { task: ActionCenterTask }) {
         </p>
       </div>
       <div className="flex flex-wrap gap-2 lg:justify-end">
+        {onSnooze ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onSnooze(insightId)}
+            aria-label={`Adiar ${task.title}`}
+          >
+            <Clock3 className="h-4 w-4" aria-hidden="true" />
+            Adiar
+          </Button>
+        ) : null}
+        {onResolve ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onResolve(insightId)}
+            aria-label={`Marcar ${task.title} como resolvido`}
+          >
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            Resolver
+          </Button>
+        ) : null}
         {task.secondaryAction ? (
           <Button asChild size="sm" variant="secondary">
             <Link href={task.secondaryAction.href}>{task.secondaryAction.label}</Link>

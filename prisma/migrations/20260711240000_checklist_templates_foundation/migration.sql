@@ -2,8 +2,8 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklistcategory') THEN
-        CREATE TYPE "ChecklistCategory" AS ENUM (
+    IF to_regtype('"ChecklistCategory"') IS NULL THEN
+    CREATE TYPE "ChecklistCategory" AS ENUM (
             'INSTALLATION','PREVENTIVE_MAINTENANCE','CORRECTIVE_MAINTENANCE','CLEANING','ELECTRICAL_INSPECTION','SAFETY','COMMISSIONING','WARRANTY','OTHER'
         );
     END IF;
@@ -11,8 +11,8 @@ END$$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklistitemtype') THEN
-        CREATE TYPE "ChecklistItemType" AS ENUM (
+    IF to_regtype('"ChecklistItemType"') IS NULL THEN
+    CREATE TYPE "ChecklistItemType" AS ENUM (
             'BOOLEAN','TEXT','LONG_TEXT','NUMBER','DECIMAL','DATE','TIME','SINGLE_CHOICE','MULTIPLE_CHOICE','MEASUREMENT','PHOTO_REQUIRED','SIGNATURE_REQUIRED','SECTION','INFORMATION'
         );
     END IF;
