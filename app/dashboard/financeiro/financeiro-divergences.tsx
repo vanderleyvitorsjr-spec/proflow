@@ -73,11 +73,7 @@ export function FinanceiroDivergences({
                 value={`${formatMoneyCents(item.paidCents)} / ${formatMoneyCents(item.openCents)}`}
               />
               <div className="flex flex-wrap gap-1">
-                <Button asChild size="sm" variant="secondary">
-                  <Link href={`/dashboard/ordens/${item.transaction.serviceOrderId}`}>
-                    Abrir OS
-                  </Link>
-                </Button>
+                <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground">OS vinculada</span>
                 {item.transaction.clientId && (
                   <Button asChild size="sm" variant="secondary">
                     <Link href={`/dashboard/clientes/${item.transaction.clientId}`}>

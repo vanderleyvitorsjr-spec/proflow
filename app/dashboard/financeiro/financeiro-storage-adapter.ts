@@ -1,4 +1,5 @@
-import { readRemoteModuleState, recoverRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/storage/remote-module-state";
+import { copyLegacyBrowserDataToCompany, scopedBrowserBackupKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
 import { z } from "zod";
 import { initialFinancialState } from "./financeiro-data";
 import { FinancialStorageError } from "./financeiro-errors";
@@ -30,6 +31,19 @@ const accountSchema = z.object({
   archivedAt: z.string().optional(),
   history: z.array(historySchema).default([]),
 });
+const allocationSchema = z.object({
+  salaryCents: z.number().int().nonnegative(),
+  companyCents: z.number().int().nonnegative(),
+  reserveCents: z.number().int().nonnegative(),
+  salaryBasisPoints: z.number().int().nonnegative(),
+  companyBasisPoints: z.number().int().nonnegative(),
+  reserveBasisPoints: z.number().int().nonnegative(),
+});
+const distributionSchema = z.object({
+  salaryBasisPoints: z.number().int().nonnegative(),
+  companyBasisPoints: z.number().int().nonnegative(),
+  reserveBasisPoints: z.number().int().nonnegative(),
+});
 const paymentSchema = z.object({
   id: z.string(),
   amountCents: z.number().int().positive(),
@@ -42,6 +56,8 @@ const paymentSchema = z.object({
   reversedAt: z.string().optional(),
   reversalReason: z.string().optional(),
   history: z.array(historySchema),
+  allocation: allocationSchema.optional(),
+  fundingBucket: z.enum(["SALARY", "COMPANY", "RESERVE"]).optional(),
 });
 const installmentSchema = z.object({
   id: z.string(),
@@ -98,11 +114,14 @@ const transactionV3 = transactionV2.extend({
   idempotencyKey: z.string().optional(),
   manuallyModified: z.boolean().optional(),
   reconciliationReviewedAt: z.string().optional(),
+  allocation: allocationSchema.optional(),
+  fundingBucket: z.enum(["SALARY", "COMPANY", "RESERVE"]).optional(),
 });
 const stateV1 = z.object({
   version: z.literal(1),
   revision: z.number().int().nonnegative(),
   nextSequence: z.number().int().positive(),
+  distribution: distributionSchema.default({ salaryBasisPoints: 4000, companyBasisPoints: 4000, reserveBasisPoints: 2000 }),
   accounts: z.array(accountSchema),
   transactions: z.array(transactionBase),
 });
@@ -110,6 +129,7 @@ const stateV2 = z.object({
   version: z.literal(2),
   revision: z.number().int().nonnegative(),
   nextSequence: z.number().int().positive(),
+  distribution: distributionSchema.default({ salaryBasisPoints: 4000, companyBasisPoints: 4000, reserveBasisPoints: 2000 }),
   accounts: z.array(accountSchema),
   transactions: z.array(transactionV2),
 });
@@ -117,61 +137,90 @@ const stateV3 = z.object({
   version: z.literal(3),
   revision: z.number().int().nonnegative(),
   nextSequence: z.number().int().positive(),
+  distribution: distributionSchema.default({ salaryBasisPoints: 4000, companyBasisPoints: 4000, reserveBasisPoints: 2000 }),
   accounts: z.array(accountSchema),
   transactions: z.array(transactionV3),
 });
+const KEY = () => scopedBrowserStorageKey("financeiro");
+const BACKUP = () => scopedBrowserBackupKey("financeiro");
 export interface FinancialStorageAdapter {
   read(): Promise<FinancialStorageState>;
   write(state: FinancialStorageState): Promise<FinancialStorageState>;
 }
-export class RemoteFinancialStorageAdapter implements FinancialStorageAdapter {
+export class LocalFinancialStorageAdapter implements FinancialStorageAdapter {
   async read() {
-    const value = await readRemoteModuleState<unknown>("financeiro", initialFinancialState);
-    const raw = JSON.stringify(value);
+    if (typeof window === "undefined") return structuredClone(initialFinancialState);
+    copyLegacyBrowserDataToCompany("financeiro");
+    const raw = window.localStorage.getItem(KEY());
+    if (!raw) {
+      window.localStorage.setItem(KEY(), JSON.stringify(initialFinancialState));
+      return structuredClone(initialFinancialState);
+    }
     const primary = this.parseV3(raw);
     if (primary) return primary;
     const migrated = this.migrateV2(raw) ?? this.migrateV1(raw);
     if (migrated) {
-      await writeRemoteModuleState("financeiro", migrated);
+      window.localStorage.setItem(BACKUP(), raw);
+      window.localStorage.setItem(KEY(), JSON.stringify(migrated));
       return migrated;
     }
+    const backupRaw = window.localStorage.getItem(BACKUP());
+    if (backupRaw) {
+      const backup =
+        this.parseV3(backupRaw) ?? this.migrateV2(backupRaw) ?? this.migrateV1(backupRaw);
+      if (backup) {
+        window.localStorage.setItem(KEY(), JSON.stringify(backup));
+        return backup;
+      }
+    }
     throw new FinancialStorageError(
-      "Os dados financeiros armazenados no servidor estão inválidos.",
+      "Os dados financeiros estão corrompidos e não existe backup válido. Nenhum dado foi sobrescrito.",
     );
   }
-
   async write(state: FinancialStorageState) {
+    if (typeof window === "undefined") return state;
     const parsed = stateV3.safeParse(state);
     if (!parsed.success)
-      throw new FinancialStorageError("O estado financeiro não é válido e não foi salvo.");
-    const next = { ...parsed.data, revision: parsed.data.revision + 1 } satisfies FinancialStorageState;
-    await writeRemoteModuleState("financeiro", next);
-    return next;
+      throw new FinancialStorageError(
+        "O estado financeiro não é válido e não foi salvo.",
+      );
+    try {
+      const current = window.localStorage.getItem(KEY());
+      if (
+        current &&
+        (this.parseV3(current) || this.migrateV2(current) || this.migrateV1(current))
+      )
+        window.localStorage.setItem(BACKUP(), current);
+      const next = {
+        ...parsed.data,
+        revision: parsed.data.revision + 1,
+      } satisfies FinancialStorageState;
+      window.localStorage.setItem(KEY(), JSON.stringify(next));
+      return next;
+    } catch (error) {
+      if (error instanceof FinancialStorageError) throw error;
+      throw new FinancialStorageError(
+        "Não foi possível salvar os dados financeiros neste dispositivo.",
+      );
+    }
   }
-
-  async recoverBackup() {
-    const value = await recoverRemoteModuleState<unknown>("financeiro");
-    const raw = JSON.stringify(value);
-    const recovered = this.parseV3(raw) ?? this.migrateV2(raw) ?? this.migrateV1(raw);
-    if (!recovered) throw new FinancialStorageError("O backup financeiro não é válido.");
-    return recovered;
-  }
-
   private parseV3(raw: string) {
     try {
       const result = stateV3.safeParse(JSON.parse(raw) as unknown);
       return result.success ? result.data : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
-
   private migrateV2(raw: string): FinancialStorageState | null {
     try {
       const result = stateV2.safeParse(JSON.parse(raw) as unknown);
       if (!result.success) return null;
       return { ...result.data, version: 3, revision: result.data.revision + 1 };
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
-
   private migrateV1(raw: string): FinancialStorageState | null {
     try {
       const result = stateV1.safeParse(JSON.parse(raw) as unknown);
@@ -186,8 +235,39 @@ export class RemoteFinancialStorageAdapter implements FinancialStorageAdapter {
           installments: [],
         })),
       };
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 }
-export const financialStorageAdapter: FinancialStorageAdapter =
-  new RemoteFinancialStorageAdapter();
+class SyncedFinancialStorageAdapter implements FinancialStorageAdapter {
+  private readonly local = new LocalFinancialStorageAdapter();
+  async read(): Promise<FinancialStorageState> {
+    try {
+      const remote = await readRemoteModuleState<FinancialStorageState>("financeiro");
+      if (remote.data) {
+        const parsed = stateV3.safeParse(remote.data);
+        if (parsed.success) {
+          const normalized = parsed.data as FinancialStorageState;
+          if (typeof window !== "undefined") window.localStorage.setItem(KEY(), JSON.stringify(normalized));
+          return normalized;
+        }
+      }
+    } catch { /* usa espelho local */ }
+    const local = await this.local.read();
+    try { await writeRemoteModuleState("financeiro", local); } catch { /* mantém espelho */ }
+    return local;
+  }
+  async write(state: FinancialStorageState): Promise<FinancialStorageState> {
+    if (!stateV3.safeParse(state).success) throw new FinancialStorageError("O estado financeiro não é válido e não foi salvo.");
+    const next = { ...state, revision: state.revision + 1 } satisfies FinancialStorageState;
+    await writeRemoteModuleState("financeiro", next);
+    if (typeof window !== "undefined") {
+      const current = window.localStorage.getItem(KEY());
+      if (current) window.localStorage.setItem(BACKUP(), current);
+      window.localStorage.setItem(KEY(), JSON.stringify(next));
+    }
+    return next;
+  }
+}
+export const financialStorageAdapter: FinancialStorageAdapter = new SyncedFinancialStorageAdapter();

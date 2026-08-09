@@ -20,6 +20,7 @@ import type {
   StockPurchaseFinancialTransactionReference,
 } from "@/lib/contracts/financeiro.contract";
 import type { ReportFinancialSource } from "@/lib/contracts/relatorios-financeiro.contract";
+import type { FinancialDistribution } from "./financeiro-types";
 import { accountsWithBalance } from "./financeiro-selectors";
 import {
   transactionOpenCents,
@@ -55,6 +56,8 @@ async function action<T>(operation: () => Promise<T>): Promise<ActionResult<T>> 
   }
 }
 export const listFinancialStateAction = () => action(() => service.listState());
+export const updateFinancialDistributionAction = (distribution: FinancialDistribution) =>
+  action(() => service.updateDistribution(distribution));
 export const listFinancialReportAction = () =>
   action(async (): Promise<ReportFinancialSource> => {
     const state = await service.listState();

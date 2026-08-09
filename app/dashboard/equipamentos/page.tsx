@@ -1,5 +1,7 @@
-import EquipamentosPageContent from "./equipamentos-page";
+import { requirePermission } from "@/lib/auth/context";
+import EquipamentosPageContent from "../_equipamentos/equipamentos-page";
 
-export default function EquipamentosPage() {
+export default async function EquipamentosPage() {
+  await requirePermission("EQUIPMENT_VIEW");
   return <EquipamentosPageContent />;
 }

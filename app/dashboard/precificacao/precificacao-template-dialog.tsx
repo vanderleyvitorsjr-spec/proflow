@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 import type { PricingTemplateFormValues } from "./precificacao-schema";
 import type { PricingTemplate } from "./precificacao-types";
 const categories = [
@@ -51,7 +52,7 @@ export function PricingTemplateDialog({
         className="w-full max-w-2xl rounded-xl border bg-background p-5 shadow-2xl"
       >
         <h2 id="template-title" className="text-lg font-semibold">
-          {template ? "Editar template" : "Novo template"}
+          {template ? "Editar modelo" : "Novo modelo"}
         </h2>
         {error ? (
           <p role="alert" className="mt-3 text-sm text-red-600">
@@ -128,7 +129,7 @@ export function PricingTemplateDialog({
               defaultValue={template?.category ?? "OTHER"}
             >
               {categories.map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>{ptBrLabel(c)}</option>
               ))}
             </Select>
           </div>
@@ -164,7 +165,7 @@ export function PricingTemplateDialog({
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
-            <Button disabled={busy}>{busy ? "Salvando..." : "Salvar template"}</Button>
+            <Button disabled={busy}>{busy ? "Salvando..." : "Salvar modelo"}</Button>
           </div>
         </form>
       </div>

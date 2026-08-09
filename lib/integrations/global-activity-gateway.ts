@@ -1,21 +1,21 @@
 import { listClientsReportAction } from "@/app/dashboard/clientes/actions";
-import { listServiceOrdersReportAction } from "@/app/dashboard/ordens/ordens-actions";
-import { listAgendaReportAction } from "@/app/dashboard/agenda/agenda-actions";
-import { listTechnicalDocumentsAction } from "@/app/dashboard/biblioteca-tecnica/biblioteca-tecnica-actions";
+import { listServiceOrdersReportAction } from "@/app/dashboard/_ordens/ordens-actions";
+import { listAgendaReportAction } from "@/app/dashboard/_agenda/agenda-actions";
+import { listTechnicalDocumentsAction } from "@/app/dashboard/_biblioteca-tecnica/biblioteca-tecnica-actions";
 import { listPricingReportAction } from "@/app/dashboard/precificacao/precificacao-actions";
 import { listCrmReportAction } from "@/features/crm/crm-actions";
 import { listFinancialReportAction } from "@/app/dashboard/financeiro/financeiro-actions";
-import { listStockReportAction } from "@/app/dashboard/estoque/estoque-actions";
-import { listEquipmentReportAction } from "@/app/dashboard/equipamentos/equipamentos-actions";
+import { listStockReportAction } from "@/app/dashboard/_estoque/estoque-actions";
+import { listEquipmentReportAction } from "@/app/dashboard/_equipamentos/equipamentos-actions";
 import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
 import { uniqueGlobalActivities } from "@/lib/contracts/global-activity.contract";
 import { listExecutiveGoalsAction } from "@/features/dashboard/goals/executive-goals-actions";
-import { listOperationalItemStatesAction } from "@/app/dashboard/central-operacional/central-operacional-state-actions";
-import { listAllProjetoWorkspaceNotesAction } from "@/app/dashboard/projetos/[id]/projeto-workspace-notes-actions";
-import { getWorkspaceOperationsAction } from "@/app/dashboard/projetos/[id]/workspace-operations-actions";
-import { listQuotesAction } from "@/app/dashboard/orcamentos/orcamentos-actions";
-import { listPurchasesAction } from "@/app/dashboard/fornecedores/compras-actions";
-import { listAllEquipmentTechnicalHistoryAction } from "@/app/dashboard/equipamentos/equipamento-tecnico-actions";
+import { listOperationalItemStatesAction } from "@/app/dashboard/_central-operacional/central-operacional-state-actions";
+import { listAllProjetoWorkspaceNotesAction } from "@/app/dashboard/_projetos/[id]/projeto-workspace-notes-actions";
+import { getWorkspaceOperationsAction } from "@/app/dashboard/_projetos/[id]/workspace-operations-actions";
+import { listQuotesAction } from "@/app/dashboard/_orcamentos/orcamentos-actions";
+import { listPurchasesAction } from "@/app/dashboard/_fornecedores/compras-actions";
+import { listAllEquipmentTechnicalHistoryAction } from "@/app/dashboard/_equipamentos/equipamento-tecnico-actions";
 export async function loadGlobalActivities() {
   const settled = await Promise.allSettled([
       listClientsReportAction(),

@@ -1,7 +1,7 @@
 export class ConfigurationError extends Error {
   constructor(
     public code:
-      "CORRUPTED" | "REVISION_CONFLICT" | "DUPLICATE" | "NOT_FOUND" | "VALIDATION",
+      "CORRUPTED" | "REVISION_CONFLICT" | "DUPLICATE" | "NOT_FOUND" | "VALIDATION" | "STORAGE_UNAVAILABLE",
     message: string,
   ) {
     super(message);

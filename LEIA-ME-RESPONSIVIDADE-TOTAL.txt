@@ -1,0 +1,65 @@
+PROFLOW — RESPONSIVIDADE TOTAL
+
+Esta versão consolida as atualizações anteriores e aplica uma revisão de responsividade às áreas principais do sistema.
+
+DISPOSITIVOS E CENÁRIOS CONSIDERADOS
+- Android e iPhone;
+- tablets Android e iPad;
+- notebooks Windows em tela cheia e janela dividida;
+- MacBook em tela cheia e Split View;
+- computadores desktop em tela cheia, meia tela e janelas estreitas;
+- dispositivos touch e modo instalado/PWA.
+
+PRINCIPAIS MUDANÇAS
+1. Entrada/login unificados e responsivos por largura e altura.
+   - Em notebook/desktop a tela cabe no viewport sem exigir scroll apenas para chegar ao login.
+   - Em telas menores a apresentação fica compacta e o formulário aparece mais cedo.
+2. Dashboard Shell responsivo.
+   - Menu lateral no desktop.
+   - Drawer lateral completo no celular/tablet/janelas estreitas.
+   - Header compacto e adaptável.
+   - Uso de 100dvh para respeitar barras móveis do navegador.
+3. Grids e formulários.
+   - Grids grandes reduzem colunas em tablet e viram uma coluna em celular.
+   - Inputs, selects, modais e drawers respeitam o viewport.
+4. CRM.
+   - Kanban com snap horizontal e colunas adaptadas ao celular.
+   - Modo lista usa cartões automaticamente no celular.
+5. Clientes.
+   - Modo lista usa cartões automaticamente no celular.
+   - Tabela continua disponível a partir de telas maiores.
+6. Ordens de Serviço.
+   - Lista vira cartões no celular.
+   - Kanban usa snap horizontal e largura compatível com o viewport.
+7. Precificação, Financeiro, Configurações e Perfil.
+   - Barras de navegação, filtros, abas e grupos de ações passam a quebrar/rolar de forma controlada.
+   - Configurações usa navegação lateral apenas em desktop largo; tablet mantém navegação superior.
+8. Componentes globais.
+   - PageHeader, Toolbar, MetricStrip, TableFrame e Skeleton revisados.
+   - Métricas deixam de depender de rolagem horizontal em telas pequenas.
+9. iPhone/iPad.
+   - viewportFit=cover e safe areas.
+   - áreas de toque maiores em dispositivos touch.
+10. Branding aprovado preservado.
+
+COMO APLICAR NA PASTA ProFlow-Novo
+1. Pare o servidor com Ctrl+C.
+2. Extraia o conteúdo do ZIP diretamente dentro da pasta ProFlow-Novo.
+3. Aceite substituir os arquivos existentes.
+4. O ZIP NÃO contém .env.local, então o arquivo que já está na pasta permanece intacto.
+5. Execute:
+
+   Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
+   npm install
+   npm run dev
+
+6. Teste redimensionando a janela livremente e usando o modo responsivo do navegador.
+
+VALIDAÇÃO DESTA ENTREGA
+- 562 arquivos TypeScript/TSX analisados: 0 erros de sintaxe.
+- 0 imports locais quebrados.
+- CSS analisado: 0 erros de parsing.
+- .env.local não está dentro do ZIP.
+
+LIMITAÇÃO DA VALIDAÇÃO NESTE AMBIENTE
+A instalação/build completo não pôde ser executado aqui porque o registro interno de pacotes não disponibilizou zod-validation-error@4.0.2. Isso não é um erro introduzido pela responsividade; a validação estrutural e sintática foi concluída normalmente.

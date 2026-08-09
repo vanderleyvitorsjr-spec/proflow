@@ -20,7 +20,7 @@ export function TableFrame({ className, scrollHint = false, maxHeight, children,
   return (
     <div
       className={cn(
-        "proflow-scrollbar relative w-full overflow-auto rounded-[var(--radius-card)] border border-border bg-card",
+        "proflow-scrollbar relative w-full min-w-0 max-w-full overflow-auto rounded-[var(--radius-card)] border border-border bg-card",
         className,
       )}
       style={{ ...style, maxHeight }}

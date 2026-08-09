@@ -90,7 +90,7 @@ export function LoginForm({ next }: { next?: string }) {
   }
 
   return (
-    <div>
+    <div className="proflow-auth-form">
       <Button
         type="button"
         variant="outline"

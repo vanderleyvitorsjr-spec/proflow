@@ -11,7 +11,7 @@ export function PageHeaderContent({ className, ...props }: HTMLAttributes<HTMLDi
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between",
+        "flex flex-col gap-3 px-3.5 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between",
         className,
       )}
       {...props}
@@ -20,7 +20,7 @@ export function PageHeaderContent({ className, ...props }: HTMLAttributes<HTMLDi
 }
 
 export function PageHeaderIdentity({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex min-w-0 items-center gap-3", className)} {...props} />;
+  return <div className={cn("flex min-w-0 items-start gap-3 sm:items-center", className)} {...props} />;
 }
 
 export function PageHeaderIcon({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -45,14 +45,14 @@ type PageHeaderHeadingProps = Omit<HTMLAttributes<HTMLDivElement>, "title"> & {
 export function PageHeaderHeading({ title, description, className, ...props }: PageHeaderHeadingProps) {
   return (
     <div className={cn("min-w-0", className)} {...props}>
-      <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{title}</h1>
+      <h1 className="break-words text-base font-semibold tracking-tight text-foreground sm:text-lg">{title}</h1>
       {description ? <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{description}</p> : null}
     </div>
   );
 }
 
 export function PageHeaderActions({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex shrink-0 flex-wrap items-center gap-2", className)} {...props} />;
+  return <div className={cn("flex w-full min-w-0 flex-wrap items-center gap-2 lg:w-auto lg:justify-end", className)} {...props} />;
 }
 
 export function PageHeaderToolbar({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

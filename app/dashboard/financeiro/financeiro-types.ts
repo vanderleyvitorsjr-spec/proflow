@@ -4,6 +4,7 @@ export type FinancialAccountType =
   "CASH" | "CHECKING" | "SAVINGS" | "DIGITAL_WALLET" | "INVESTMENT" | "OTHER";
 export type FinancialTransactionSource = "MANUAL" | "SERVICE_ORDER";
 export type FinancialTransactionKind = "REALIZED" | "RECEIVABLE" | "PAYABLE";
+export type FinancialBucket = "SALARY" | "COMPANY" | "RESERVE";
 export type FinancialStatus =
   "PENDING" | "OVERDUE" | "PARTIALLY_PAID" | "PAID" | "CANCELED";
 export type FinancialHistoryEntry = {
@@ -21,6 +22,19 @@ export type FinancialHistoryEntry = {
   description: string;
   createdAt: string;
 };
+export type FinancialDistribution = {
+  salaryBasisPoints: number;
+  companyBasisPoints: number;
+  reserveBasisPoints: number;
+};
+export type FinancialAllocation = {
+  salaryCents: number;
+  companyCents: number;
+  reserveCents: number;
+  salaryBasisPoints: number;
+  companyBasisPoints: number;
+  reserveBasisPoints: number;
+};
 export type FinancialPayment = {
   id: string;
   amountCents: number;
@@ -33,6 +47,8 @@ export type FinancialPayment = {
   reversedAt?: string;
   reversalReason?: string;
   history: FinancialHistoryEntry[];
+  allocation?: FinancialAllocation;
+  fundingBucket?: FinancialBucket;
 };
 export type FinancialInstallment = {
   id: string;
@@ -89,6 +105,8 @@ export type FinancialTransaction = {
   idempotencyKey?: string;
   manuallyModified?: boolean;
   reconciliationReviewedAt?: string;
+  allocation?: FinancialAllocation;
+  fundingBucket?: FinancialBucket;
   installments: FinancialInstallment[];
   canceledAt?: string;
   cancellationReason?: string;
@@ -101,6 +119,7 @@ export type FinancialStorageState = {
   version: 3;
   revision: number;
   nextSequence: number;
+  distribution: FinancialDistribution;
   accounts: FinancialAccount[];
   transactions: FinancialTransaction[];
 };

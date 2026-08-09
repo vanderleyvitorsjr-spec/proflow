@@ -366,3 +366,239 @@ html[data-accent="amber"] {
   --accent: #fbbf24;
   --ring: #fbbf24;
 }
+
+/* =========================================================
+   RESPONSIVIDADE UNIVERSAL — ProFlow
+   Celular, tablet, notebook, split-screen, desktop e touch.
+   ========================================================= */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+.proflow-page,
+.proflow-page > *,
+.proflow-page section,
+.proflow-page article,
+.proflow-page form {
+  min-width: 0;
+}
+
+.proflow-page input,
+.proflow-page select,
+.proflow-page textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.proflow-page .overflow-x-auto,
+.proflow-page .overflow-auto,
+.proflow-scrollbar {
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mantém modais e drawers dentro do viewport mesmo em split-screen. */
+.proflow-page [role="dialog"],
+.proflow-page [role="alertdialog"] {
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100dvh - 1rem);
+}
+
+/* Tablets e janelas de notebook divididas: grids grandes viram 2 colunas. */
+@media (max-width: 1023px) {
+  .proflow-page .grid-cols-3,
+  .proflow-page .grid-cols-4,
+  .proflow-page .grid-cols-5,
+  .proflow-page .grid-cols-6,
+  .proflow-page .grid-cols-7 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .proflow-page {
+    max-width: none;
+  }
+}
+
+/* Celulares e janelas estreitas: todos os grids de conteúdo viram 1 coluna. */
+@media (max-width: 639px) {
+  .proflow-page .grid-cols-2,
+  .proflow-page .grid-cols-3,
+  .proflow-page .grid-cols-4,
+  .proflow-page .grid-cols-5,
+  .proflow-page .grid-cols-6,
+  .proflow-page .grid-cols-7,
+  .proflow-page [class*="grid-cols-["] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .proflow-page [class*="col-span-"] {
+    grid-column: auto !important;
+  }
+
+  .proflow-page table {
+    font-size: 0.78rem;
+  }
+
+  .proflow-page th,
+  .proflow-page td {
+    white-space: normal;
+  }
+
+  .proflow-page [role="dialog"],
+  .proflow-page [role="alertdialog"] {
+    width: calc(100vw - 0.75rem) !important;
+    max-width: calc(100vw - 0.75rem) !important;
+    max-height: calc(100dvh - 0.75rem) !important;
+    border-radius: 0.9rem;
+  }
+}
+
+/* Área de toque confortável em iPhone/iPad/Android sem inflar desktop. */
+@media (pointer: coarse) {
+  button,
+  a[role="button"],
+  input,
+  select {
+    min-height: 2.75rem;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: initial;
+  }
+}
+
+/* Telas baixas de notebook: reduz respiros para evitar scroll desnecessário. */
+@media (min-width: 1024px) and (max-height: 780px) {
+  .proflow-page {
+    font-size: 0.96rem;
+  }
+}
+
+/* Entrada unificada: responde também à ALTURA do viewport. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .proflow-entry-panel {
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .proflow-entry-left {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .proflow-entry-left h1 {
+    font-size: clamp(2.3rem, 3.4vw, 3.35rem);
+  }
+
+  .proflow-entry-features {
+    display: none !important;
+  }
+
+  .proflow-entry-login {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .proflow-login-card {
+    padding-top: 1.2rem;
+    padding-bottom: 1.2rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 680px) {
+  .proflow-entry-left p:not(.sr-only) {
+    line-height: 1.35rem;
+  }
+
+  .proflow-entry-login {
+    align-items: stretch;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 1023px) {
+  .proflow-entry-page {
+    overflow-y: auto;
+  }
+
+  .proflow-entry-left {
+    padding-bottom: 1.1rem;
+  }
+
+  .proflow-entry-login {
+    padding-top: 1rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .proflow-entry-left h1 {
+    font-size: clamp(2rem, 10vw, 2.65rem);
+  }
+
+  .proflow-entry-left > div > p:last-child {
+    max-width: 100%;
+  }
+
+  .proflow-login-card {
+    border-radius: 1rem;
+  }
+}
+
+@media (max-width: 639px), (min-width: 1024px) and (max-height: 780px) {
+  .proflow-auth-form .my-6 {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .proflow-auth-form form.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.75rem !important;
+  }
+
+  .proflow-auth-form input,
+  .proflow-auth-form button {
+    min-height: 2.65rem;
+  }
+}
+
+/* Safe-area para iPhone/iPad em modo instalado. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@media (max-width: 639px) {
+  .proflow-page [role="dialog"] .justify-end,
+  .proflow-page [role="alertdialog"] .justify-end {
+    flex-wrap: wrap;
+  }
+
+  .proflow-page [role="dialog"] .justify-end > button:not([aria-label]),
+  .proflow-page [role="alertdialog"] .justify-end > button:not([aria-label]) {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .proflow-page h1,
+  .proflow-page h2,
+  .proflow-page h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .proflow-page .flex-row.justify-between,
+  .proflow-page .flex.justify-between {
+    flex-wrap: wrap;
+  }
+}

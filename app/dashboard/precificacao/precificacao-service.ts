@@ -306,13 +306,13 @@ export class PricingService {
     if (
       state.templates.some((item) => item.code.toLowerCase() === value.code.toLowerCase())
     )
-      throw new PricingDomainError("DUPLICATE", "Código de template já utilizado.");
+      throw new PricingDomainError("DUPLICATE", "Código de modelo já utilizado.");
     const now = new Date().toISOString(),
       costComponents = value.components.map((item) => this.component(item)),
       composition: PricingComposition = {
         id: crypto.randomUUID(),
         name: "Composição principal",
-        description: "Composição criada com o template.",
+        description: "Composição criada com o modelo.",
         componentIds: costComponents.map((item) => item.id),
         enabled: true,
         order: 1,
@@ -347,7 +347,7 @@ export class PricingService {
       active: value.active,
       createdAt: now,
       updatedAt: now,
-      history: [event("CREATED", "Template criado.")],
+      history: [event("CREATED", "Modelo criado.")],
     };
     await this.repo.save({
       ...state,
@@ -360,7 +360,7 @@ export class PricingService {
     const value = pricingTemplateFormSchema.parse(input),
       state = await this.repo.read(),
       current = state.templates.find((item) => item.id === id);
-    if (!current) throw new PricingDomainError("NOT_FOUND", "Template não encontrado.");
+    if (!current) throw new PricingDomainError("NOT_FOUND", "Modelo não encontrado.");
     const now = new Date().toISOString(),
       costComponents = value.components.map((item, index) =>
         this.component(item, current.costComponents[index]),
@@ -381,7 +381,7 @@ export class PricingService {
           ...current.history,
           event(
             "UPDATED",
-            `Template atualizado para a versão ${current.currentVersion + 1}.`,
+            `Modelo atualizado para a versão ${current.currentVersion + 1}.`,
           ),
         ],
       };
@@ -394,7 +394,7 @@ export class PricingService {
   async duplicateTemplate(id: string) {
     const state = await this.repo.read(),
       current = state.templates.find((item) => item.id === id);
-    if (!current) throw new PricingDomainError("NOT_FOUND", "Template não encontrado.");
+    if (!current) throw new PricingDomainError("NOT_FOUND", "Modelo não encontrado.");
     const now = new Date().toISOString(),
       copy: PricingTemplate = {
         ...structuredClone(current),
@@ -405,7 +405,7 @@ export class PricingService {
         currentVersion: 1,
         createdAt: now,
         updatedAt: now,
-        history: [event("DUPLICATED", "Template duplicado.")],
+        history: [event("DUPLICATED", "Modelo duplicado.")],
       };
     await this.repo.save({
       ...state,
@@ -417,7 +417,7 @@ export class PricingService {
   async archiveTemplate(id: string, reason: string) {
     const state = await this.repo.read(),
       current = state.templates.find((item) => item.id === id);
-    if (!current) throw new PricingDomainError("NOT_FOUND", "Template não encontrado.");
+    if (!current) throw new PricingDomainError("NOT_FOUND", "Modelo não encontrado.");
     const now = new Date().toISOString(),
       next = {
         ...current,
@@ -426,7 +426,7 @@ export class PricingService {
         updatedAt: now,
         history: [
           ...current.history,
-          event("ARCHIVED", `Template arquivado: ${reason}.`),
+          event("ARCHIVED", `Modelo arquivado: ${reason}.`),
         ],
       };
     await this.repo.save({
@@ -438,7 +438,7 @@ export class PricingService {
   async createComposition(templateId: string, name: string, description: string) {
     const state = await this.repo.read(),
       current = state.templates.find((item) => item.id === templateId);
-    if (!current) throw new PricingDomainError("NOT_FOUND", "Template não encontrado.");
+    if (!current) throw new PricingDomainError("NOT_FOUND", "Modelo não encontrado.");
     const composition: PricingComposition = {
       id: crypto.randomUUID(),
       name,

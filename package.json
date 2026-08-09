@@ -1,13 +1,12 @@
 {
-  "name": "proflow",
-  "version": "0.1.0",
+  "name": "proflow-essencial-dashboard-financeiro",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:unit": "tsc -p automation/tsconfig.test.json && node --test .next/automation-tests/automation/tests/automation-infrastructure.test.js .next/automation-tests/automation/tests/workspace-bi.test.js .next/automation-tests/automation/tests/auth-foundation.test.js .next/automation-tests/automation/tests/experience-evolution.test.js .next/automation-tests/automation/tests/operational-evolution.test.js .next/automation-tests/automation/tests/commercial-evolution.test.js .next/automation-tests/automation/tests/operational-ui-completion.test.js .next/automation-tests/automation/tests/operational-360.test.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "postinstall": "prisma generate",
@@ -18,8 +17,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
-    "test:integration": "node --test tests/integration/*.test.mjs",
-    "audit:functional": "node scripts/auditoria-funcional.mjs"
+    "prevercel:check": "node scripts/prevercel-integrity-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

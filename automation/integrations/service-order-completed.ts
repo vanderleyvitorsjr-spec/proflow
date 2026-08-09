@@ -1,4 +1,4 @@
-import type { OrdemRecord } from "../../app/dashboard/ordens/ordens-types";
+import type { OrdemRecord } from "../../app/dashboard/_ordens/ordens-types";
 import { automationEventBus } from "../runtime/automation-runtime";
 import {
   AUTOMATION_TRIGGER,

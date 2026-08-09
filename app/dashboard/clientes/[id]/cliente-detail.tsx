@@ -15,6 +15,7 @@ import { QuickActions } from "@/components/ui/quick-actions";
 import { getClientAction } from "../actions";
 import type { ClientRecord } from "../clientes-data";
 import { Client360Panel } from "../cliente-360-panel";
+import { enrichClientWithOperationalData } from "../clientes-operational-summary";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" });
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -35,6 +36,7 @@ export function ClientDetail({ id }: { id: string }) {
   useEffect(() => {
     let active = true;
     getClientAction(id)
+      .then((record) => record ? enrichClientWithOperationalData(record) : null)
       .then((record) => { if (active) setClient(record); })
       .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Não foi possível carregar o cliente."); })
       .finally(() => { if (active) setLoading(false); });
@@ -58,9 +60,7 @@ export function ClientDetail({ id }: { id: string }) {
       <QuickActions
         actions={[
           { label: "Cadastrar oportunidade", description: "Continuar a negociação no CRM.", href: "/dashboard/crm/novo-lead", icon: <BarChart3 className="h-4 w-4" /> },
-          { label: "Criar Ordem de Serviço", description: "Abrir uma nova Ordem para o cliente.", href: "/dashboard/ordens", icon: <Wrench className="h-4 w-4" /> },
-          { label: "Agendar visita", description: "Organizar uma visita técnica.", href: "/dashboard/agenda", icon: <CalendarDays className="h-4 w-4" /> },
-          { label: "Enviar orçamento", description: "Preparar valores na Precificação.", href: "/dashboard/precificacao", icon: <CircleDollarSign className="h-4 w-4" /> },
+          { label: "Enviar orçamento", description: "Abrir a Precificação já vinculada a este cliente.", href: `/dashboard/precificacao?clientId=${client.id}`, icon: <CircleDollarSign className="h-4 w-4" /> },
           { label: "Abrir histórico", description: "Ir para a linha do tempo deste cliente.", onClick: () => document.getElementById("historico-operacional")?.scrollIntoView({ behavior: "smooth" }), icon: <ClipboardList className="h-4 w-4" /> },
         ]}
       />
@@ -80,8 +80,8 @@ export function ClientDetail({ id }: { id: string }) {
         </Card>
 
         <div className="space-y-3">
-          <Card><CardContent className="space-y-3 p-4"><div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-primary" /><strong>{client.activeServiceOrders} OS ativas</strong></div><div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /><strong>{client.installedEquipment} equipamentos</strong></div><p className="border-t pt-3 text-lg font-semibold">{currencyFormatter.format(client.lifetimeValue)}</p><p className="text-xs text-muted-foreground">Valor acumulado</p></CardContent></Card>
-          <EmptyState size="compact" title="Sem atividade vinculada" description="Novas Ordens de Serviço, contratos e equipamentos aparecerão aqui quando os módulos forem integrados." />
+          <Card><CardContent className="space-y-3 p-4"><div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-primary" /><strong>{client.activeServiceOrders} OS ativas</strong></div><div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /><strong>{client.installedEquipment} equipamentos</strong></div><div className="border-t pt-3"><p className="text-lg font-semibold">{currencyFormatter.format(client.lifetimeValue)}</p><p className="text-xs text-muted-foreground">Recebido do cliente</p></div><div><p className="text-base font-semibold text-amber-600 dark:text-amber-400">{currencyFormatter.format(client.pendingAmount)}</p><p className="text-xs text-muted-foreground">A receber</p></div></CardContent></Card>
+          <EmptyState size="compact" title="Sem atividade vinculada" description="Ordens, equipamentos e movimentações financeiras vinculadas alimentam automaticamente os indicadores desta ficha." />
         </div>
       </div>
       <div id="historico-operacional">

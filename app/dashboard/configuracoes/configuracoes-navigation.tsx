@@ -122,7 +122,7 @@ const parseLocalizedCsv = (value: string) =>
       item.toLocaleUpperCase("pt-BR").replace(/\s+/g, "_"),
   );
 const field = "space-y-1 text-xs font-medium text-foreground";
-export function ConfigurationCenter() {
+export function ConfigurationCenter({ authenticatedCompanyName }: { authenticatedCompanyName: string }) {
   const [state, setState] = useState<ConfigState>(),
     [view, setView] = useState<View>("company"),
     [dirty, setDirty] = useState<Set<ConfigSection>>(new Set()),
@@ -144,13 +144,36 @@ export function ConfigurationCenter() {
     let active = true;
     void getConfigurationsAction().then((result) => {
       if (!active) return;
-      if (result.ok) setState(result.data);
-      else setError(result.error.message);
+      if (result.ok) {
+        const company = result.data.company;
+        const shouldHydrateCompany =
+          (!company.tradeName && (!company.displayName || company.displayName === "ProFlow")) ||
+          company.shortName === "ProFlow";
+        setState(
+          shouldHydrateCompany
+            ? {
+                ...result.data,
+                company: {
+                  ...company,
+                  tradeName: company.tradeName || authenticatedCompanyName,
+                  displayName:
+                    !company.displayName || company.displayName === "ProFlow"
+                      ? authenticatedCompanyName
+                      : company.displayName,
+                  shortName:
+                    !company.shortName || company.shortName === "ProFlow"
+                      ? authenticatedCompanyName
+                      : company.shortName,
+                },
+              }
+            : result.data,
+        );
+      } else setError(result.error.message);
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [authenticatedCompanyName]);
   const update = <K extends keyof ConfigState>(
     key: K,
     value: ConfigState[K],
@@ -285,10 +308,10 @@ export function ConfigurationCenter() {
           {error}
         </div>
       ) : null}
-      <div className="grid min-w-0 gap-3 lg:grid-cols-[13rem_minmax(0,1fr)]">
+      <div className="grid min-w-0 gap-3 xl:grid-cols-[13rem_minmax(0,1fr)]">
         <nav
           aria-label="Seções de configurações"
-          className="proflow-scrollbar flex gap-1 overflow-x-auto rounded-xl border bg-card p-2 lg:block lg:space-y-1"
+          className="proflow-scrollbar flex gap-1 overflow-x-auto rounded-xl border bg-card p-2 xl:block xl:space-y-1 xl:overflow-visible"
         >
           {items.map((item) => (
             <button
@@ -296,7 +319,7 @@ export function ConfigurationCenter() {
               type="button"
               aria-current={view === item.id ? "page" : undefined}
               onClick={() => setView(item.id)}
-              className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors lg:w-full ${view === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors xl:w-full ${view === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
@@ -991,11 +1014,14 @@ export function ConfigurationCenter() {
           </label>
           <label className={field}>
             Fuso horário
-            <Input
+            <Select
               className="mt-1"
               value={p.timezone}
               onChange={(e) => set("timezone", e.target.value)}
-            />
+            >
+              <option value="America/Bahia">Bahia (UTC−03:00)</option>
+              <option value="America/Sao_Paulo">Brasília / São Paulo (UTC−03:00)</option>
+            </Select>
           </label>
           <label className={field}>
             Linhas por tabela

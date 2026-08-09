@@ -1,7 +1,7 @@
 import {
   getEquipmentPricingReferenceAction,
   listEquipmentPricingReferencesAction,
-} from "../equipamentos/equipamentos-actions";
+} from "../_equipamentos/equipamentos-actions";
 import type { EquipmentPricingReference } from "@/lib/contracts/equipamentos.contract";
 
 const unwrap = <T>(

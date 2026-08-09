@@ -1,4 +1,5 @@
-import { scopedBrowserBackupKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/storage/remote-module-state";
+import { copyLegacyBrowserDataToCompany, scopedBrowserBackupKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
 import { z } from "zod";
 import { calculatePricing } from "./precificacao-selectors";
 import { PricingDomainError } from "./precificacao-errors";
@@ -337,143 +338,18 @@ const makeComponent = (
   updatedAt: now,
 });
 function initialState(): PricingStorageState {
-  const now = "2026-07-01T12:00:00.000Z",
-    definitions: [string, string, string, number, number, number][] = [
-      ["SRV-INS-001", "Instalação técnica padrão", "INSTALLATION", 68000, 52000, 12000],
-      ["SRV-MAN-001", "Manutenção preventiva", "MAINTENANCE", 9500, 23000, 4000],
-      ["SRV-ELT-001", "Inspeção elétrica", "INSPECTION", 4500, 31000, 8000],
-    ];
-  const templates: PricingTemplate[] = definitions.map(
-    ([code, name, category, material, labor, equipment], index) => {
-      const costs = [
-        makeComponent("MATERIAL", "Materiais manuais", material, now),
-        makeComponent("LABOR", "Mão de obra padrão", labor, now),
-        makeComponent("EQUIPMENT", "Equipamentos manuais", equipment, now),
-      ];
-      return {
-        id: crypto.randomUUID(),
-        sequence: index + 1,
-        code,
-        name,
-        description: "Modelo demonstrativo neutro migrado da biblioteca visual.",
-        serviceType: name,
-        category: category as PricingTemplate["category"],
-        compositions: [
-          {
-            id: crypto.randomUUID(),
-            name: "Composição principal",
-            description: "Custos principais do serviço.",
-            componentIds: costs.map((c) => c.id),
-            enabled: true,
-            order: 1,
-          },
-        ],
-        costComponents: costs,
-        laborProfiles: [],
-        equipmentProfiles: [],
-        travelDefaults: {
-          origin: "",
-          destination: "",
-          distanceMilliKm: 0,
-          estimatedTimeMinutes: 0,
-          costPerKmCents: 0,
-          tollCents: 0,
-          parkingCents: 0,
-          lodgingCents: 0,
-          mealsCents: 0,
-          otherCents: 0,
-        },
-        overheadDefaults: [],
-        commercialRules: { ...defaultRules },
-        currentVersion: 1,
-        active: true,
-        createdAt: now,
-        updatedAt: now,
-        history: [
-          {
-            id: crypto.randomUUID(),
-            type: "CREATED",
-            description: "Template criado pela carga inicial neutra.",
-            createdAt: now,
-          },
-        ],
-      };
-    },
-  );
-  const simulations: PricingSimulation[] = templates.map((item, index) => {
-    const result = calculatePricing(item.costComponents, item.commercialRules);
-    return {
-      id: crypto.randomUUID(),
-      sequence: index + 1,
-      title: item.name,
-      templateId: item.id,
-      scenarioLabel: "Cenário A",
-      parameters: { description: item.description, category: item.category },
-      costComponents: structuredClone(item.costComponents),
-      commercialRules: { ...item.commercialRules },
-      currentVersion: 1,
-      status: "READY",
-      createdAt: now,
-      updatedAt: now,
-      revisions: [
-        {
-          id: crypto.randomUUID(),
-          version: 1,
-          parameters: { description: item.description, category: item.category },
-          costComponents: structuredClone(item.costComponents),
-          commercialRules: { ...item.commercialRules },
-          resultSnapshot: result,
-          origin: "INITIAL_SEED",
-          createdAt: now,
-        },
-      ],
-      applications: [],
-      history: [
-        {
-          id: crypto.randomUUID(),
-          type: "CREATED",
-          description: "Simulação criada pela carga inicial neutra.",
-          createdAt: now,
-        },
-      ],
-    };
-  });
   return {
     version: 3,
     revision: 0,
-    nextTemplateSequence: templates.length + 1,
-    nextSimulationSequence: simulations.length + 1,
-    templates,
-    simulations,
-    laborProfiles: [
-      {
-        id: crypto.randomUUID(),
-        name: "Auxiliar",
-        hourlyCostCents: 3500,
-        burdenRateBasisPoints: 3000,
-        fixedAdditionalCents: 0,
-        active: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Técnico",
-        hourlyCostCents: 6500,
-        burdenRateBasisPoints: 3500,
-        fixedAdditionalCents: 0,
-        active: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Especialista",
-        hourlyCostCents: 9500,
-        burdenRateBasisPoints: 4000,
-        fixedAdditionalCents: 0,
-        active: true,
-      },
-    ],
+    nextTemplateSequence: 1,
+    nextSimulationSequence: 1,
+    templates: [],
+    simulations: [],
+    laborProfiles: [],
     preferences: { ...defaultPricingPreferences },
   };
 }
+
 export interface PricingStorageAdapter {
   read(): Promise<PricingStorageState>;
   write(state: PricingStorageState): Promise<PricingStorageState>;
@@ -482,6 +358,7 @@ export interface PricingStorageAdapter {
 export class LocalPricingStorageAdapter implements PricingStorageAdapter {
   async read() {
     if (typeof window === "undefined") return initialState();
+    copyLegacyBrowserDataToCompany("precificacao");
     const raw = localStorage.getItem(KEY());
     if (!raw) {
       const state = initialState();
@@ -552,4 +429,35 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
     }
   }
 }
-export const pricingStorageAdapter = new LocalPricingStorageAdapter();
+class SyncedPricingStorageAdapter implements PricingStorageAdapter {
+  private readonly local = new LocalPricingStorageAdapter();
+  async read(): Promise<PricingStorageState> {
+    try {
+      const remote = await readRemoteModuleState<PricingStorageState>("precificacao");
+      if (remote.data && stateSchema.safeParse(remote.data).success) {
+        if (typeof window !== "undefined") localStorage.setItem(KEY(), JSON.stringify(remote.data));
+        return remote.data;
+      }
+    } catch { /* usa espelho local */ }
+    const local = await this.local.read();
+    try { await writeRemoteModuleState("precificacao", local); } catch { /* mantém espelho */ }
+    return local;
+  }
+  async recoverBackup(): Promise<PricingStorageState> {
+    const recovered = await this.local.recoverBackup();
+    await writeRemoteModuleState("precificacao", recovered);
+    return recovered;
+  }
+  async write(state: PricingStorageState): Promise<PricingStorageState> {
+    if (!stateSchema.safeParse(state).success) throw new PricingDomainError("STORAGE", "O estado de Precificação é inválido e não foi salvo.");
+    const next = { ...state, revision: state.revision + 1 };
+    await writeRemoteModuleState("precificacao", next);
+    if (typeof window !== "undefined") {
+      const current = localStorage.getItem(KEY());
+      if (current) localStorage.setItem(BACKUP(), current);
+      localStorage.setItem(KEY(), JSON.stringify(next));
+    }
+    return next;
+  }
+}
+export const pricingStorageAdapter: PricingStorageAdapter = new SyncedPricingStorageAdapter();

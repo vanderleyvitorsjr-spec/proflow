@@ -52,7 +52,6 @@ import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
 import type { CrmPricingReference } from "@/lib/contracts/crm.contract";
 import type { ServiceOrderPricingReference } from "@/lib/contracts/ordens.contract";
 import { ptBrLabel } from "@/lib/pt-br-labels";
-import { QuickActions } from "@/components/ui/quick-actions";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function PricingDetail({ simulationId }: { simulationId: string }) {
   const [simulation, setSimulation] = useState<PricingSimulation | null>(null),
@@ -165,20 +164,6 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
           </PageHeaderActions>
         </PageHeaderContent>
       </PageHeader>
-      {simulation.status === "READY" ? (
-        <QuickActions
-          title="Orçamento pronto"
-          description="A composição está pronta para seguir para a operação."
-          actions={[
-            {
-              label: "Criar Ordem de Serviço",
-              description: "Abra a área de Ordens para continuar o atendimento.",
-              href: "/dashboard/ordens",
-              icon: <ClipboardList className="h-4 w-4" />,
-            },
-          ]}
-        />
-      ) : null}
       {error ? (
         <p
           role="alert"
@@ -224,7 +209,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
       <section className="grid gap-3 rounded-xl border bg-card p-4 text-sm md:grid-cols-3">
         <div><p className="text-xs text-muted-foreground">Cliente</p>{simulation.clientSnapshot ? <Link className="font-medium text-primary hover:underline" href={`/dashboard/clientes/${simulation.clientSnapshot.id}`}>{simulation.clientSnapshot.name}</Link> : <p>Não vinculado</p>}</div>
         <div><p className="text-xs text-muted-foreground">Lead</p>{simulation.crmSnapshot ? <Link className="font-medium text-primary hover:underline" href={`/dashboard/crm/${simulation.crmSnapshot.id}`}>{simulation.crmSnapshot.title}</Link> : <p>Não vinculado</p>}</div>
-        <div><p className="text-xs text-muted-foreground">Ordem de Serviço</p>{simulation.serviceOrderSnapshot ? <Link className="font-medium text-primary hover:underline" href={`/dashboard/ordens/${simulation.serviceOrderSnapshot.id}`}>{simulation.serviceOrderSnapshot.number} · {simulation.serviceOrderSnapshot.title}</Link> : <p>Não vinculada</p>}</div>
+        <div><p className="text-xs text-muted-foreground">Ordem de Serviço</p>{simulation.serviceOrderSnapshot ? <p className="font-medium">{simulation.serviceOrderSnapshot.number} · {simulation.serviceOrderSnapshot.title}</p> : <p>Não vinculada</p>}</div>
       </section>
       <PricingCommercialDivergences simulation={simulation} />
       <PricingVersionComparison simulation={simulation} />
@@ -256,12 +241,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
                       </p>
                       {component.stockItemId ? (
                         <span className="flex gap-2">
-                          <Link
-                            className="text-xs text-primary hover:underline"
-                            href={`/dashboard/estoque/${component.stockItemId}`}
-                          >
-                            Abrir item do Estoque
-                          </Link>
+                          <span className="text-xs text-muted-foreground">Material vinculado</span>
                           <button
                             type="button"
                             className="text-xs text-primary hover:underline"
@@ -276,12 +256,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
                       ) : null}
                       {component.equipmentId ? (
                         <span className="flex gap-2">
-                          <Link
-                            className="text-xs text-primary hover:underline"
-                            href={`/dashboard/equipamentos/${component.equipmentId}`}
-                          >
-                            Abrir equipamento
-                          </Link>
+                          <span className="text-xs text-muted-foreground">Equipamento vinculado</span>
                           <button
                             type="button"
                             className="text-xs text-primary hover:underline"

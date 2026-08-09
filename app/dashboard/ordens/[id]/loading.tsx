@@ -1,1 +1,8 @@
-export default function OrdemLoading() { return <div className="space-y-3"><div className="h-20 animate-pulse rounded-xl bg-muted" /><div className="h-80 animate-pulse rounded-xl bg-muted" /></div>; }
+export default function OrdemLoading() {
+  return (
+    <div className="space-y-3">
+      <div className="h-20 animate-pulse rounded-xl bg-muted" />
+      <div className="h-80 animate-pulse rounded-xl bg-muted" />
+    </div>
+  );
+}

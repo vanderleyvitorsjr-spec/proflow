@@ -11,6 +11,8 @@ import type {
 import type { PricingPreferences } from "./precificacao-types";
 import type { PricingPriceType } from "./precificacao-types";
 import type { ReportPricingSource } from "@/lib/contracts/relatorios-precificacao.contract";
+import { createServiceOrderReceivableAction, listFinancialStateAction } from "@/app/dashboard/financeiro/financeiro-actions";
+import type { PricingApplicationInput } from "./precificacao-application-dialog";
 const service = new PricingService(new PricingRepository(pricingStorageAdapter));
 async function action<T>(work: () => Promise<T>): Promise<PricingActionResult<T>> {
   try {
@@ -91,7 +93,25 @@ export const reviewPricingSourceAction = (
 ) => action(() => service.reviewSource(simulationId, componentId, update, notes));
 export const listPricingCommercialReferencesAction = () => action(() => service.commercialReferences());
 export const linkPricingCommercialAction = (simulationId: string, input: { clientId?: string; crmLeadId?: string; serviceOrderId?: string }) => action(() => service.linkCommercial(simulationId, input));
-export const applyPricingToOrderAction = (simulationId: string, input: { priceType: PricingPriceType; manualPriceCents?: number; reason?: string; belowMinimumConfirmed: boolean }) => action(() => service.applyToOrder(simulationId, input));
+export const applyPricingToOrderAction = (simulationId: string, input: PricingApplicationInput) => action(async () => {
+  const financial = await listFinancialStateAction();
+  if (!financial.ok) throw new Error("O Financeiro precisa estar disponível antes de aprovar o orçamento.");
+  const account = financial.data.accounts.find((item) => item.isDefault && !item.archivedAt) ?? financial.data.accounts.find((item) => !item.archivedAt);
+  if (!account) throw new Error("Cadastre uma conta financeira antes de aprovar o orçamento.");
+  const simulation = await service.applyToOrder(simulationId, { priceType: input.priceType, manualPriceCents: input.manualPriceCents, reason: input.reason, belowMinimumConfirmed: input.belowMinimumConfirmed });
+  if (!simulation.serviceOrderId) throw new Error("A simulação aplicada não possui Ordem vinculada.");
+  const issued = new Date().toISOString().slice(0, 10);
+  const receivable = await createServiceOrderReceivableAction(simulation.serviceOrderId, {
+    title: `OS ${simulation.serviceOrderSnapshot?.number ?? ""} · ${simulation.title}`,
+    description: simulation.parameters.description || simulation.title,
+    category: "Serviços técnicos", accountId: account.id, total: "0,00",
+    issueDate: issued, competenceDate: issued, firstDueDate: input.firstDueDate, installmentCount: input.installmentCount,
+    supplier: "", customerName: simulation.clientSnapshot?.name ?? "", clientId: simulation.clientId ?? "",
+    notes: `Recebível criado automaticamente pela aprovação da Precificação ${simulation.title}.`,
+  });
+  if (!receivable.ok) throw new Error(`O preço foi aplicado à OS, mas o recebível não pôde ser criado: ${receivable.error.message}`);
+  return simulation;
+});
 export const listPricingReportAction = () =>
   action(async (): Promise<ReportPricingSource> => {
     const state = await service.list();

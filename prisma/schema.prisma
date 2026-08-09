@@ -240,12 +240,28 @@ model Empresa {
   serviceOrderAcceptances    ServiceOrderAcceptance[]    @relation("ServiceOrderAcceptancesCompany")
   warranties                 Warranty[]                  @relation("CompanyWarranties")
   invitations                CompanyInvitation[]
-  moduleStates               CompanyModuleState[]
-  storedFiles                CompanyStoredFile[]
+  moduleStates                ModuleState[]
 
   @@index([name])
   @@index([deletedAt])
   @@map("empresas")
+}
+
+
+model ModuleState {
+  id        String   @id @default(cuid())
+  companyId String
+  module    String
+  revision  Int      @default(0)
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Empresa @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, module])
+  @@index([companyId])
+  @@map("module_states")
 }
 
 enum ChecklistCategory {
@@ -674,7 +690,6 @@ model Usuario {
   answeredServiceOrderChecklistItems ServiceOrderChecklistItem[] @relation("AnsweredServiceOrderChecklistItems")
   uploadedServiceOrderAttachments    ServiceOrderAttachment[]    @relation("UploadedServiceOrderAttachments")
   createdInvitations                 CompanyInvitation[]         @relation("CreatedInvitations")
-  storedFiles                        CompanyStoredFile[]
 
   @@unique([companyId, email])
   @@index([companyId, status])
@@ -1879,53 +1894,4 @@ model ConfiguracaoEmpresa {
 
   @@index([deletedAt])
   @@map("configuracoes_empresa")
-}
-
-
-model CompanyModuleState {
-  id        String   @id @default(cuid())
-  companyId String
-  module    String
-  version   Int      @default(1)
-  revision  Int      @default(0)
-  payload   Json
-  backup    Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  company Empresa @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, module])
-  @@index([companyId, updatedAt])
-  @@map("company_module_states")
-}
-
-
-model CompanyStoredFile {
-  id           String         @id @default(cuid())
-  companyId    String
-  uploadedById String?
-  entityType   String
-  entityId     String?
-  category     String?
-  name         String
-  originalName String?
-  mimeType     String
-  sizeBytes    BigInt?        @db.BigInt
-  bucket       String
-  storagePath  String
-  visibility   FileVisibility @default(COMPANY)
-  metadata     Json?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
-
-  company    Empresa  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  uploadedBy Usuario? @relation(fields: [uploadedById], references: [id])
-
-  @@index([companyId, entityType, entityId])
-  @@index([companyId, category])
-  @@index([companyId, createdAt])
-  @@index([companyId, deletedAt])
-  @@map("company_stored_files")
 }

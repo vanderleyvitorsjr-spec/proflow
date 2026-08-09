@@ -5,7 +5,7 @@ import {
 import {
   getServiceOrderFinancialSnapshotAction,
   listServiceOrderFinancialSnapshotsAction,
-} from "@/app/dashboard/ordens/ordens-actions";
+} from "@/app/dashboard/_ordens/ordens-actions";
 import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
 import type { ServiceOrderFinancialSnapshot } from "@/lib/contracts/ordens.contract";
 

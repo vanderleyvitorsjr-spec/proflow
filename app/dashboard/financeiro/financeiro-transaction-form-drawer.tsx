@@ -45,6 +45,7 @@ const initial = (
     : "",
   supplier: transaction?.supplier ?? "",
   notes: transaction?.notes ?? "",
+  fundingBucket: transaction?.fundingBucket ?? "COMPANY",
 });
 export function FinanceiroTransactionFormDrawer({
   open,
@@ -225,6 +226,19 @@ export function FinanceiroTransactionFormDrawer({
               ))}
             </Select>
           </Field>
+          {values.direction === "EXPENSE" ? (
+            <Field label="Origem do recurso" htmlFor="transaction-bucket" required help="Escolha qual parte da Regra dos Três financia esta saída. Se usar o fundo de reserva, o ProFlow acompanhará o valor que precisa ser recomposto.">
+              <Select
+                id="transaction-bucket"
+                value={values.fundingBucket ?? "COMPANY"}
+                onChange={(e) => setValues({ ...values, fundingBucket: e.target.value as FinancialTransactionFormValues["fundingBucket"] })}
+              >
+                <option value="COMPANY">Caixa da empresa</option>
+                <option value="SALARY">Salário</option>
+                <option value="RESERVE">Fundo de reserva</option>
+              </Select>
+            </Field>
+          ) : null}
           <FormSectionIntro className="sm:col-span-2 mt-2" title="Datas e valor" description="As datas ajudam a separar quando o fato ocorreu, quando foi emitido e quando afetou a conta." />
           <Field label="Mês de referência" htmlFor="transaction-competence" required help="Data usada para indicar a qual período financeiro a movimentação pertence, mesmo que o pagamento ocorra em outro dia.">
             <Input

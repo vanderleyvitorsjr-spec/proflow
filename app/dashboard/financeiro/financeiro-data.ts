@@ -1,5 +1,7 @@
 import type { FinancialStorageState } from "./financeiro-types";
+
 export type FinancialView = "overview" | "transactions" | "receivables" | "payables";
+
 export const financialCategories = [
   "Serviços",
   "Vendas",
@@ -10,6 +12,7 @@ export const financialCategories = [
   "Impostos",
   "Outros",
 ];
+
 export const accountTypeLabels = {
   CASH: "Caixa",
   CHECKING: "Conta corrente",
@@ -18,134 +21,35 @@ export const accountTypeLabels = {
   INVESTMENT: "Investimento",
   OTHER: "Outro",
 } as const;
+
 export const natureLabels = {
   REVENUE: "Receita",
   EXPENSE: "Despesa",
   INVESTMENT: "Investimento",
 } as const;
+
+const now = new Date().toISOString();
+
 export const initialFinancialState: FinancialStorageState = {
   version: 3,
   revision: 0,
-  nextSequence: 9,
+  nextSequence: 1,
+  distribution: {
+    salaryBasisPoints: 4000,
+    companyBasisPoints: 4000,
+    reserveBasisPoints: 2000,
+  },
   accounts: [
     {
-      id: "account-1",
+      id: "account-main",
       name: "Conta principal",
       type: "CHECKING",
-      openingBalanceCents: 3500000,
+      openingBalanceCents: 0,
       isDefault: true,
-      createdAt: "2026-07-01T12:00:00.000Z",
-      updatedAt: "2026-07-01T12:00:00.000Z",
-      history: [],
-    },
-    {
-      id: "account-2",
-      name: "Conta digital",
-      type: "DIGITAL_WALLET",
-      openingBalanceCents: 1000000,
-      isDefault: false,
-      createdAt: "2026-07-01T12:00:00.000Z",
-      updatedAt: "2026-07-01T12:00:00.000Z",
-      history: [],
-    },
-    {
-      id: "account-3",
-      name: "Caixa operacional",
-      type: "CASH",
-      openingBalanceCents: 150000,
-      isDefault: false,
-      createdAt: "2026-07-01T12:00:00.000Z",
-      updatedAt: "2026-07-01T12:00:00.000Z",
+      createdAt: now,
+      updatedAt: now,
       history: [],
     },
   ],
-  transactions: [
-    {
-      id: "transaction-1",
-      sequence: 1,
-      title: "Serviço técnico realizado",
-      description: "Receita manual de serviço concluído.",
-      nature: "REVENUE",
-      direction: "INCOME",
-      category: "Serviços",
-      accountId: "account-1",
-      competenceDate: "2026-07-05",
-      issueDate: "2026-07-05",
-      realizedAt: "2026-07-05",
-      totalCents: 485000,
-      supplier: "",
-      notes: "",
-      source: "MANUAL",
-      kind: "REALIZED",
-      installments: [],
-      createdAt: "2026-07-05T12:00:00.000Z",
-      updatedAt: "2026-07-05T12:00:00.000Z",
-      history: [
-        {
-          id: "history-1",
-          type: "CREATED",
-          description: "Lançamento inicial criado.",
-          createdAt: "2026-07-05T12:00:00.000Z",
-        },
-      ],
-    },
-    {
-      id: "transaction-2",
-      sequence: 2,
-      title: "Compra de peças",
-      description: "Aquisição de materiais técnicos.",
-      nature: "EXPENSE",
-      direction: "EXPENSE",
-      category: "Materiais e peças",
-      accountId: "account-1",
-      competenceDate: "2026-07-08",
-      issueDate: "2026-07-08",
-      realizedAt: "2026-07-08",
-      totalCents: 238000,
-      supplier: "Fornecedor demonstrativo",
-      notes: "",
-      source: "MANUAL",
-      kind: "REALIZED",
-      installments: [],
-      createdAt: "2026-07-08T12:00:00.000Z",
-      updatedAt: "2026-07-08T12:00:00.000Z",
-      history: [
-        {
-          id: "history-2",
-          type: "CREATED",
-          description: "Lançamento inicial criado.",
-          createdAt: "2026-07-08T12:00:00.000Z",
-        },
-      ],
-    },
-    {
-      id: "transaction-3",
-      sequence: 3,
-      title: "Aquisição de equipamento técnico",
-      description: "Investimento operacional demonstrativo.",
-      nature: "INVESTMENT",
-      direction: "EXPENSE",
-      category: "Equipamentos",
-      accountId: "account-2",
-      competenceDate: "2026-07-10",
-      issueDate: "2026-07-10",
-      realizedAt: "2026-07-10",
-      totalCents: 395000,
-      supplier: "Fornecedor demonstrativo",
-      notes: "",
-      source: "MANUAL",
-      kind: "REALIZED",
-      installments: [],
-      createdAt: "2026-07-10T12:00:00.000Z",
-      updatedAt: "2026-07-10T12:00:00.000Z",
-      history: [
-        {
-          id: "history-3",
-          type: "CREATED",
-          description: "Lançamento inicial criado.",
-          createdAt: "2026-07-10T12:00:00.000Z",
-        },
-      ],
-    },
-  ],
+  transactions: [],
 };

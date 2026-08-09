@@ -1,233 +1,99 @@
-import { Prisma } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { getCurrentUserContext } from "@/lib/auth/context";
 import { hasPermission, type Permission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
-const modulePermissions: Record<
-  string,
-  { read: Permission; write: Permission }
-> = {
-  clientes: { read: "CLIENTS_VIEW", write: "CLIENTS_UPDATE" },
+const ALLOWED_MODULES = new Set([
+  "crm",
+  "clientes",
+  "cliente-relacionamentos",
+  "ordens",
+  "financeiro",
+  "precificacao",
+  "equipamentos",
+  "configuracoes",
+  "pricing-systemic",
+]);
+
+
+const MODULE_PERMISSIONS: Partial<Record<string, { read: Permission; write: Permission }>> = {
   crm: { read: "CRM_VIEW", write: "CRM_MANAGE" },
-  agenda: { read: "AGENDA_VIEW", write: "AGENDA_MANAGE" },
+  clientes: { read: "CLIENTS_VIEW", write: "CLIENTS_UPDATE" },
+  "cliente-relacionamentos": { read: "CLIENTS_VIEW", write: "CLIENTS_UPDATE" },
   ordens: { read: "ORDERS_VIEW", write: "ORDERS_UPDATE" },
   financeiro: { read: "FINANCE_VIEW", write: "FINANCE_UPDATE" },
-  estoque: { read: "INVENTORY_VIEW", write: "INVENTORY_MANAGE" },
   equipamentos: { read: "EQUIPMENT_VIEW", write: "EQUIPMENT_MANAGE" },
   configuracoes: { read: "SETTINGS_VIEW", write: "SETTINGS_MANAGE" },
-  perfil: { read: "SETTINGS_VIEW", write: "SETTINGS_MANAGE" },
-  "workspace-operacional": {
-    read: "ORDERS_VIEW",
-    write: "ORDERS_UPDATE",
-  },
-  "central-operacional": {
-    read: "ORDERS_VIEW",
-    write: "ORDERS_UPDATE",
-  },
-  automacoes: {
-    read: "AUTOMATIONS_VIEW",
-    write: "AUTOMATIONS_MANAGE",
-  },
-  documentos: {
-    read: "ORDERS_VIEW",
-    write: "ORDERS_UPDATE",
-  },
 };
-
-function canAccess(
-  context: NonNullable<
-    Awaited<ReturnType<typeof getCurrentUserContext>>
-  >,
-  module: string,
-  mode: "read" | "write",
-) {
-  const permission = modulePermissions[module]?.[mode];
-
-  if (!permission) {
-    return false;
-  }
-
-  return hasPermission(context.role, permission, {
-    allow: context.permissions,
-    deny: context.deniedPermissions,
-  });
+function allowed(context: NonNullable<Awaited<ReturnType<typeof getCurrentUserContext>>>, module: string, mode: "read" | "write") {
+  const permission = MODULE_PERMISSIONS[module]?.[mode];
+  if (!permission) return ["OWNER", "ADMIN", "MANAGER"].includes(context.role);
+  return hasPermission(context.role, permission, { allow: context.permissions, deny: context.deniedPermissions });
 }
-
-function toJsonInput(
-  value: Prisma.JsonValue | null,
-): Prisma.InputJsonValue | typeof Prisma.JsonNull {
-  if (value === null) {
-    return Prisma.JsonNull;
-  }
-
-  return value as Prisma.InputJsonValue;
+function validateModule(value: string) {
+  const module = value.trim().toLocaleLowerCase("pt-BR");
+  return ALLOWED_MODULES.has(module) ? module : null;
 }
 
 export async function GET(
-  _request: NextRequest,
+  _request: Request,
   { params }: { params: Promise<{ module: string }> },
 ) {
   const context = await getCurrentUserContext();
+  if (!context) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  const { module: raw } = await params;
+  const module = validateModule(raw);
+  if (!module) return NextResponse.json({ error: "Módulo inválido." }, { status: 400 });
+  if (!allowed(context, module, "read")) return NextResponse.json({ error: "Sem permissão para este módulo." }, { status: 403 });
 
-  if (!context) {
-    return NextResponse.json(
-      { error: "Não autenticado." },
-      { status: 401 },
-    );
-  }
-
-  const { module } = await params;
-
-  if (!canAccess(context, module, "read")) {
-    return NextResponse.json(
-      { error: "Acesso negado." },
-      { status: 403 },
-    );
-  }
-
-  const state = await prisma.companyModuleState.findUnique({
-    where: {
-      companyId_module: {
-        companyId: context.companyId,
-        module,
-      },
-    },
+  const record = await prisma.moduleState.findUnique({
+    where: { companyId_module: { companyId: context.companyId, module } },
   });
-
-  return NextResponse.json({
-    found: Boolean(state),
-    revision: state?.revision ?? 0,
-    payload: state?.payload ?? null,
-  });
+  return NextResponse.json(
+    record
+      ? { data: record.data, revision: record.revision, updatedAt: record.updatedAt.toISOString() }
+      : { data: null, revision: 0, updatedAt: null },
+  );
 }
 
 export async function PUT(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ module: string }> },
 ) {
   const context = await getCurrentUserContext();
+  if (!context) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  const { module: raw } = await params;
+  const module = validateModule(raw);
+  if (!module) return NextResponse.json({ error: "Módulo inválido." }, { status: 400 });
+  if (!allowed(context, module, "write")) return NextResponse.json({ error: "Sem permissão para alterar este módulo." }, { status: 403 });
 
-  if (!context) {
-    return NextResponse.json(
-      { error: "Não autenticado." },
-      { status: 401 },
-    );
-  }
+  const body = (await request.json()) as { data?: unknown };
+  if (body.data === undefined)
+    return NextResponse.json({ error: "Dados obrigatórios." }, { status: 400 });
 
-  const { module } = await params;
-
-  if (!canAccess(context, module, "write")) {
-    return NextResponse.json(
-      { error: "Acesso negado." },
-      { status: 403 },
-    );
-  }
-
-  const contentLength = Number(
-    request.headers.get("content-length") ?? 0,
-  );
-
-  if (contentLength > 8 * 1024 * 1024) {
-    return NextResponse.json(
-      { error: "O conjunto de dados excede 8 MB." },
-      { status: 413 },
-    );
-  }
-
-  const body = (await request.json()) as {
-    payload?: unknown;
-    recover?: boolean;
-    expectedRevision?: number;
-  };
-
-  const existing = await prisma.companyModuleState.findUnique({
-    where: {
-      companyId_module: {
+  const record = await prisma.$transaction(async (tx) => {
+    const current = await tx.moduleState.findUnique({
+      where: { companyId_module: { companyId: context.companyId, module } },
+    });
+    return tx.moduleState.upsert({
+      where: { companyId_module: { companyId: context.companyId, module } },
+      create: {
         companyId: context.companyId,
         module,
+        revision: 1,
+        data: body.data as never,
       },
-    },
+      update: {
+        revision: (current?.revision ?? 0) + 1,
+        data: body.data as never,
+      },
+    });
   });
 
-  if (body.recover) {
-    if (!existing?.backup) {
-      return NextResponse.json(
-        { error: "Backup não encontrado." },
-        { status: 404 },
-      );
-    }
-
-    const updated = await prisma.companyModuleState.update({
-      where: {
-        id: existing.id,
-      },
-      data: {
-        payload: toJsonInput(existing.backup),
-        backup: toJsonInput(existing.payload),
-        revision: {
-          increment: 1,
-        },
-      },
-    });
-
-    return NextResponse.json({
-      revision: updated.revision,
-      payload: updated.payload,
-    });
-  }
-
-  if (body.payload === undefined) {
-    return NextResponse.json(
-      { error: "Conteúdo obrigatório." },
-      { status: 400 },
-    );
-  }
-
-  if (
-    existing &&
-    body.expectedRevision !== undefined &&
-    existing.revision !== body.expectedRevision
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Os dados foram alterados em outra janela. Recarregue antes de salvar.",
-        revision: existing.revision,
-      },
-      { status: 409 },
-    );
-  }
-
-  const payload =
-    body.payload === null
-      ? Prisma.JsonNull
-      : (body.payload as Prisma.InputJsonValue);
-
-  const updated = existing
-    ? await prisma.companyModuleState.update({
-        where: {
-          id: existing.id,
-        },
-        data: {
-          backup: toJsonInput(existing.payload),
-          payload,
-          revision: {
-            increment: 1,
-          },
-        },
-      })
-    : await prisma.companyModuleState.create({
-        data: {
-          companyId: context.companyId,
-          module,
-          payload,
-        },
-      });
-
   return NextResponse.json({
-    revision: updated.revision,
-    payload: updated.payload,
+    data: record.data,
+    revision: record.revision,
+    updatedAt: record.updatedAt.toISOString(),
   });
 }

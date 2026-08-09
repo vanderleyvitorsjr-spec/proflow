@@ -1,9 +1,9 @@
-import type { AgendaDisplayEvent } from "@/app/dashboard/agenda/agenda-types";
+import type { AgendaDisplayEvent } from "@/app/dashboard/_agenda/agenda-types";
 import type { ClientRecord } from "@/app/dashboard/clientes/clientes-data";
-import type { EquipmentStorageState } from "@/app/dashboard/equipamentos/equipamentos-types";
+import type { EquipmentStorageState } from "@/app/dashboard/_equipamentos/equipamentos-types";
 import type { FinancialStorageState } from "@/app/dashboard/financeiro/financeiro-types";
-import type { OrdemRecord } from "@/app/dashboard/ordens/ordens-types";
-import type { StockSnapshot } from "@/app/dashboard/estoque/estoque-types";
+import type { OrdemRecord } from "@/app/dashboard/_ordens/ordens-types";
+import type { StockSnapshot } from "@/app/dashboard/_estoque/estoque-types";
 import type { CrmLeadRecord } from "@/features/crm/crm-types";
 
 export type OperationalInsightPriority = "CRITICAL" | "WARNING" | "INFO";

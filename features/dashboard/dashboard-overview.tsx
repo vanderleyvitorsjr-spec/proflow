@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -28,8 +29,8 @@ import type {
   ReportDataset,
   ReportMetric,
   ReportSection,
-} from "@/app/dashboard/relatorios/relatorios-types";
-import { RelatoriosCharts } from "@/app/dashboard/relatorios/relatorios-charts";
+} from "@/app/dashboard/_relatorios/relatorios-types";
+import { RelatoriosCharts } from "@/app/dashboard/_relatorios/relatorios-charts";
 import { ExecutiveGoalsPanel } from "./goals/executive-goals-panel";
 import { deriveGoalRealizedValues } from "./goals/executive-goals-domain";
 import { OperationalTimeline } from "@/components/ui/operational-timeline";
@@ -47,6 +48,26 @@ const areaLabels: Record<ReportSection["area"], string> = {
   ASSETS: "Equipamentos",
   PRICING: "Precificação",
 };
+
+const availableOriginPrefixes = [
+  "/dashboard/crm",
+  "/dashboard/clientes",
+  "/dashboard/ordens",
+  "/dashboard/precificacao",
+  "/dashboard/financeiro",
+  "/dashboard/equipamentos",
+  "/dashboard/configuracoes",
+  "/dashboard/perfil",
+];
+
+function hasAvailableOrigin(link?: string) {
+  return Boolean(
+    link &&
+      availableOriginPrefixes.some(
+        (prefix) => link === prefix || link.startsWith(`${prefix}/`) || link.startsWith(`${prefix}?`),
+      ),
+  );
+}
 export function DashboardOverview() {
   const [preferences, setPreferences] = useState<DashboardPreferences | null>(null),
     [dataset, setDataset] = useState<ReportDataset | null>(null),
@@ -250,11 +271,9 @@ export function DashboardOverview() {
                           {section.description}
                         </p>
                       </div>
-                      <Button asChild size="sm" variant="ghost">
-                        <Link href={`/dashboard/relatorios?area=${section.area}`}>
-                          Ver relatório
-                        </Link>
-                      </Button>
+                      <span className="rounded-md border px-2 py-1 text-xs font-medium text-muted-foreground">
+                        Resumo do painel
+                      </span>
                     </div>
                   </CardHeader>
                   <CardContent className="grid gap-2 sm:grid-cols-2">
@@ -340,7 +359,7 @@ function MetricCard({
       <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
         {metric.description}
       </p>
-      {metric.link ? (
+      {metric.link && hasAvailableOrigin(metric.link) ? (
         <Link
           className="mt-2 inline-block text-xs font-semibold text-primary hover:underline"
           href={metric.link}

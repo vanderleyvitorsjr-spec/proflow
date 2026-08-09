@@ -13,6 +13,7 @@ import { FinancialDomainError } from "./financeiro-errors";
 import { distributeMoney, parseBrazilianMoney } from "./financeiro-money";
 import { FinancialRepository } from "./financeiro-repository";
 import type {
+  FinancialDistribution,
   FinancialHistoryEntry,
   FinancialInstallment,
   FinancialTransaction,
@@ -31,10 +32,35 @@ const history = (
   description,
   createdAt: new Date().toISOString(),
 });
+
+function validateDistribution(value: FinancialDistribution) {
+  const total = value.salaryBasisPoints + value.companyBasisPoints + value.reserveBasisPoints;
+  if (total !== 10000)
+    throw new FinancialDomainError("VALIDATION", "A distribuição deve totalizar exatamente 100%.");
+  if (Object.values(value).some((part) => !Number.isInteger(part) || part < 0))
+    throw new FinancialDomainError("VALIDATION", "Os percentuais de distribuição são inválidos.");
+}
+function allocateReceipt(amountCents: number, distribution: FinancialDistribution) {
+  validateDistribution(distribution);
+  const salaryCents = Math.floor((amountCents * distribution.salaryBasisPoints) / 10000);
+  const companyCents = Math.floor((amountCents * distribution.companyBasisPoints) / 10000);
+  const reserveCents = amountCents - salaryCents - companyCents;
+  return {
+    salaryCents, companyCents, reserveCents,
+    salaryBasisPoints: distribution.salaryBasisPoints,
+    companyBasisPoints: distribution.companyBasisPoints,
+    reserveBasisPoints: distribution.reserveBasisPoints,
+  };
+}
 export class FinancialService {
   constructor(private readonly repository: FinancialRepository) {}
   listState() {
     return this.repository.readState();
+  }
+  async updateDistribution(distribution: FinancialDistribution) {
+    validateDistribution(distribution);
+    const state = await this.repository.readState();
+    return this.repository.saveState({ ...state, distribution });
   }
   getTransaction(id: string) {
     return this.repository.findTransaction(id);
@@ -215,6 +241,8 @@ export class FinancialService {
       issueDate: value.issueDate,
       realizedAt: value.realizedAt,
       totalCents: parseBrazilianMoney(value.total),
+      allocation: value.direction === "INCOME" ? allocateReceipt(parseBrazilianMoney(value.total), state.distribution) : undefined,
+      fundingBucket: value.direction === "EXPENSE" ? value.fundingBucket ?? "COMPANY" : undefined,
       supplier: value.supplier,
       notes: value.notes,
       source: "MANUAL",
@@ -242,6 +270,8 @@ export class FinancialService {
       ...current,
       ...value,
       totalCents: parseBrazilianMoney(value.total),
+      allocation: value.direction === "INCOME" ? allocateReceipt(parseBrazilianMoney(value.total), state.distribution) : undefined,
+      fundingBucket: value.direction === "EXPENSE" ? value.fundingBucket ?? current.fundingBucket ?? "COMPANY" : undefined,
       manuallyModified: current.sourceId ? true : current.manuallyModified,
       updatedAt: new Date().toISOString(),
       history: [...current.history, history("UPDATED", "Lançamento atualizado.")],
@@ -467,6 +497,8 @@ export class FinancialService {
         notes: value.notes,
         reference: value.reference,
         createdAt: now,
+        allocation: transaction.kind === "RECEIVABLE" ? allocateReceipt(amountCents, state.distribution) : undefined,
+        fundingBucket: transaction.kind === "PAYABLE" ? value.fundingBucket ?? "COMPANY" : undefined,
         history: [
           history(
             "PAYMENT",

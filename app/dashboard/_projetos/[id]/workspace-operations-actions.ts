@@ -1,0 +1,11 @@
+"use client";
+import { workspaceOperationsService } from "./workspace-operations-service";
+import type { OrderCost, OrderCostStatus, OrderMaterial, OrderMaterialStatus, OrderTeamMember } from "./workspace-operations-domain";
+export const getWorkspaceOperationsAction = () => Promise.resolve(workspaceOperationsService.get());
+export const addOrderTeamMemberAction = (value: OrderTeamMember) => Promise.resolve(workspaceOperationsService.addTeam(value));
+export const removeOrderTeamMemberAction = (id: string) => Promise.resolve(workspaceOperationsService.removeTeam(id));
+export const updateOrderTeamHoursAction = (id: string, hours: number) => Promise.resolve(workspaceOperationsService.hours(id, hours));
+export const addOrderMaterialAction = (value: OrderMaterial) => Promise.resolve(workspaceOperationsService.addMaterial(value));
+export const updateOrderMaterialStatusAction = (id: string, status: OrderMaterialStatus, confirmed: boolean) => Promise.resolve(workspaceOperationsService.materialStatus(id, status, confirmed));
+export const addOrderCostAction = (value: OrderCost) => Promise.resolve(workspaceOperationsService.addCost(value));
+export const updateOrderCostStatusAction = (id: string, status: OrderCostStatus) => Promise.resolve(workspaceOperationsService.costStatus(id, status));

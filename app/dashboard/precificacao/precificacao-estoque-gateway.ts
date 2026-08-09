@@ -1,7 +1,7 @@
 import {
   getStockPricingReferenceAction,
   listStockPricingReferencesAction,
-} from "../estoque/estoque-actions";
+} from "../_estoque/estoque-actions";
 import type { StockPricingReference } from "@/lib/contracts/estoque.contract";
 
 const unwrap = <T>(

@@ -4,12 +4,15 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   CircleDollarSign,
+  Download,
   Plus,
+  Printer,
   ReceiptText,
   TrendingUp,
   WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   PageHeader,
@@ -47,6 +50,10 @@ import { FinanceiroTransactionFormDrawer } from "./financeiro-transaction-form-d
 import { FinanceiroTransactions } from "./financeiro-transactions";
 import { FinanceiroOrderReceivableDrawer } from "./financeiro-order-receivable-drawer";
 import { FinanceiroDivergences } from "./financeiro-divergences";
+import { FinanceiroRuleThree } from "./financeiro-rule-three";
+import { buildAnnualFinancialCsv, downloadAnnualCsv, printAnnualFinancialReport } from "./financeiro-annual-report";
+import { listEquipmentStateAction } from "@/app/dashboard/_equipamentos/equipamentos-actions";
+import { depreciation } from "@/app/dashboard/_equipamentos/equipamentos-selectors";
 import type { FinancialRelationOrder } from "./financeiro-relations-gateway";
 import type { FinancialDivergence } from "./financeiro-reconciliation";
 import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
@@ -91,6 +98,7 @@ export function FinanceiroPageContent() {
       action: "complement" | "review" | "snapshot";
     } | null>(null);
   const [view, setView] = useState<(typeof views)[number]["value"]>("overview");
+  const [reportYear, setReportYear] = useState(new Date().getFullYear());
   const [search, setSearch] = useState(""),
     [natureFilter, setNatureFilter] = useState("ALL"),
     [accountFilter, setAccountFilter] = useState("ALL"),
@@ -205,6 +213,14 @@ export function FinanceiroPageContent() {
       () => (state ? transactionsWithAccount(state) : []),
       [state],
     );
+  const reportYears = useMemo(() => {
+    const years = new Set<number>([new Date().getFullYear()]);
+    for (const item of allTransactions) {
+      [item.competenceDate, item.issueDate, item.realizedAt].forEach((date) => { const year = Number(date?.slice(0, 4)); if (year) years.add(year); });
+      for (const installment of item.installments) for (const payment of installment.payments) { const year = Number(payment.paidAt?.slice(0, 4)); if (year) years.add(year); }
+    }
+    return [...years].sort((a, b) => b - a);
+  }, [allTransactions]);
   const categories = useMemo(
     () =>
       Array.from(new Set(allTransactions.map((item) => item.category))).sort((a, b) =>
@@ -326,6 +342,34 @@ export function FinanceiroPageContent() {
     setConfirmState(null);
     setBusy(false);
   };
+  const annualEquipmentDepreciation = async (year: number) => {
+    const equipment = await listEquipmentStateAction();
+    return equipment.ok
+      ? equipment.data.assets
+          .filter((item) => item.ownership === "COMPANY")
+          .reduce((total, item) => {
+            const before = depreciation(item, new Date(`${year - 1}-12-31T23:59:59`)).accumulatedCents;
+            const after = depreciation(item, new Date(`${year}-12-31T12:00:00`)).accumulatedCents;
+            return total + Math.max(0, after - before);
+          }, 0)
+      : 0;
+  };
+  const exportAnnual = async () => {
+    const year = reportYear;
+    const equipmentDepreciationCents = await annualEquipmentDepreciation(year);
+    downloadAnnualCsv(buildAnnualFinancialCsv(state!, year, equipmentDepreciationCents), year);
+    setNotice(`Relatório financeiro anual ${year} exportado em CSV.`);
+  };
+  const printAnnual = async () => {
+    try {
+      const year = reportYear;
+      const equipmentDepreciationCents = await annualEquipmentDepreciation(year);
+      printAnnualFinancialReport(state!, year, equipmentDepreciationCents);
+      setNotice(`Relatório anual ${year} aberto para impressão ou salvamento em PDF.`);
+    } catch (reportError) {
+      setError(reportError instanceof Error ? reportError.message : "Não foi possível abrir o relatório anual.");
+    }
+  };
   if (loading)
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -353,6 +397,17 @@ export function FinanceiroPageContent() {
             />
           </PageHeaderIdentity>
           <PageHeaderActions>
+            <Select aria-label="Ano do relatório anual" value={String(reportYear)} onChange={(e) => setReportYear(Number(e.target.value))} className="h-9 w-[92px]">
+              {reportYears.map((year) => <option key={year} value={year}>{year}</option>)}
+            </Select>
+            <Button variant="secondary" size="sm" onClick={() => void exportAnnual()}>
+              <Download className="h-4 w-4" />
+              CSV anual
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => void printAnnual()}>
+              <Printer className="h-4 w-4" />
+              Imprimir / PDF
+            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -418,7 +473,7 @@ export function FinanceiroPageContent() {
             </Button>
           </PageHeaderActions>
         </PageHeaderContent>
-        <div className="proflow-scrollbar flex overflow-x-auto border-t border-border px-4 py-2">
+        <div className="proflow-scrollbar flex snap-x overflow-x-auto border-t border-border px-3 py-2 sm:px-4">
           <div className="flex min-w-max gap-1">
             {views.map((item) => {
               const Icon = item.icon;
@@ -459,6 +514,7 @@ export function FinanceiroPageContent() {
         </div>
       )}
       <FinanceiroSummary {...metrics} />
+      {view === "overview" && <FinanceiroRuleThree state={state} onUpdated={load} />}
       {view === "overview" && (
         <FinanceiroChart
           cashFlow={monthlyCashFlow(state)}

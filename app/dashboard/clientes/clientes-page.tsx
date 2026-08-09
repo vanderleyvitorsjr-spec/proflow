@@ -54,6 +54,7 @@ import {
 import type { ClientFormValues } from "./cliente-schema";
 import { ClientFormDrawer } from "./cliente-form-drawer";
 import { DuplicateClientError } from "./clientes-repository";
+import { enrichClientsWithOperationalData } from "./clientes-operational-summary";
 
 import {
   type ClientRecord,
@@ -292,7 +293,7 @@ function ClientCard({ client, onEdit, onDelete }: { client: ClientRecord; onEdit
           <div className="flex items-end justify-between gap-3 rounded-lg bg-muted/55 p-2.5">
             <div>
               <p className="text-[0.65rem] font-medium text-muted-foreground">
-                Valor acumulado
+                Recebido
               </p>
               <p className="mt-1 text-sm font-bold text-foreground">
                 {formatCurrency(client.lifetimeValue)}
@@ -340,7 +341,7 @@ export function ClientesPageContent() {
   const loadClients = useCallback(async () => {
     setIsLoading(true);
     try {
-      setClientRecords(await listClientsAction());
+      setClientRecords(await enrichClientsWithOperationalData(await listClientsAction()));
     } catch (error) {
       setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Não foi possível carregar os clientes." });
     } finally {
@@ -351,6 +352,7 @@ export function ClientesPageContent() {
   useEffect(() => {
     let active = true;
     void listClientsAction()
+      .then((records) => enrichClientsWithOperationalData(records))
       .then((records) => {
         if (active) setClientRecords(records);
       })
@@ -469,9 +471,9 @@ export function ClientesPageContent() {
       tone: "warning" as const,
     },
     {
-      label: "Valor da carteira",
+      label: "Receita recebida",
       value: formatCurrency(totalLifetimeValue),
-      description: "Receita acumulada dos clientes",
+      description: "Pagamentos efetivamente recebidos",
       icon: CircleDollarSign,
       tone: "success" as const,
     },
@@ -619,7 +621,27 @@ export function ClientesPageContent() {
           )}
         </section>
       ) : (
-        <Table density="compact" scrollHint className="min-w-[75rem]">
+        <>
+          <section className="grid gap-3 sm:hidden">
+            {filteredClients.map((client) => (
+              <ClientCard
+                key={client.id}
+                client={client}
+                onEdit={() => { setEditingClient(client); setIsFormOpen(true); }}
+                onDelete={() => setDeletingClient(client)}
+              />
+            ))}
+            {filteredClients.length === 0 && (
+              <EmptyState
+                size="compact"
+                icon={<UsersRound className="h-5 w-5" aria-hidden="true" />}
+                title="Nenhum cliente encontrado"
+                description={clientRecords.length === 0 ? "Cadastre o primeiro cliente para iniciar a carteira." : "Ajuste os termos da pesquisa ou os filtros aplicados."}
+              />
+            )}
+          </section>
+          <div className="hidden sm:block">
+            <Table density="compact" scrollHint className="min-w-[75rem]">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left">
                   <th className="px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -643,7 +665,7 @@ export function ClientesPageContent() {
                   </th>
 
                   <th className="px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    Valor acumulado
+                    Recebido
                   </th>
 
                   <th className="px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -798,7 +820,9 @@ export function ClientesPageContent() {
                   </tr>
                 )}
               </tbody>
-        </Table>
+            </Table>
+          </div>
+        </>
       )}
 
       <ClientFormDrawer
@@ -815,8 +839,6 @@ export function ClientesPageContent() {
           description="Escolha o próximo passo para continuar o atendimento."
           actions={[
             { label: "Cadastrar oportunidade", description: "Iniciar uma negociação no CRM.", href: "/dashboard/crm/novo-lead", icon: <BriefcaseBusiness className="h-4 w-4" /> },
-            { label: "Criar Ordem de Serviço", description: "Abrir o cadastro de uma nova Ordem.", href: "/dashboard/ordens", icon: <Wrench className="h-4 w-4" /> },
-            { label: "Agendar visita", description: "Escolher data, horário e responsável.", href: "/dashboard/agenda", icon: <CalendarDays className="h-4 w-4" /> },
             { label: "Abrir histórico", description: "Ver a ficha e a linha do tempo do cliente.", href: `/dashboard/clientes/${createdClient.id}`, icon: <ClipboardList className="h-4 w-4" /> },
             { label: "Enviar orçamento", description: "Preparar uma precificação para este atendimento.", href: "/dashboard/precificacao", icon: <CircleDollarSign className="h-4 w-4" /> },
           ]}

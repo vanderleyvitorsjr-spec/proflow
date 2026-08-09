@@ -185,14 +185,6 @@ export function FinanceiroDetail({ id }: { id: string }) {
                 Financeiro
               </Link>
             </Button>
-            {((transaction.kind === "REALIZED" && !transaction.canceledAt) || transactionPaidCents(transaction) > 0) && (
-              <Button asChild variant="secondary">
-                <Link href={`/dashboard/financeiro/${id}/comprovante`}>
-                  <FileText className="h-4 w-4" />
-                  Emitir Comprovante
-                </Link>
-              </Button>
-            )}
             {transaction.kind !== "REALIZED" && !transaction.canceledAt && (
               <Button
                 variant="destructive"
@@ -219,7 +211,7 @@ export function FinanceiroDetail({ id }: { id: string }) {
           actions={[
             { label: "Ver fluxo de caixa", description: "Voltar à visão consolidada do Financeiro.", href: "/dashboard/financeiro", icon: <LineChart className="h-4 w-4" /> },
             { label: "Abrir cliente", description: transaction.clientId ? "Consultar a ficha do cliente vinculado." : "Este lançamento não possui cliente vinculado.", href: transaction.clientId ? `/dashboard/clientes/${transaction.clientId}` : undefined, disabled: !transaction.clientId, icon: <Building2 className="h-4 w-4" /> },
-            { label: "Emitir comprovante", description: "Abrir o comprovante do valor registrado.", href: `/dashboard/financeiro/${id}/comprovante`, icon: <FileText className="h-4 w-4" /> },
+            { label: "Emitir comprovante", description: "A emissão ainda não está disponível neste ciclo.", disabled: true, icon: <FileText className="h-4 w-4" /> },
           ]}
         />
       ) : null}
@@ -282,11 +274,9 @@ export function FinanceiroDetail({ id }: { id: string }) {
               </Button>
             )}
             {transaction.serviceOrderId && (
-              <Button asChild variant="secondary" size="sm">
-                <Link href={`/dashboard/ordens/${transaction.serviceOrderId}`}>
-                  OS {transaction.serviceOrderNumberSnapshot}
-                </Link>
-              </Button>
+              <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground">
+                OS {transaction.serviceOrderNumberSnapshot}
+              </span>
             )}
             {transaction.purpose && (
               <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground">

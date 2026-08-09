@@ -27,7 +27,7 @@ export function MetricStripSkeleton({ items = 4, className }: { items?: number; 
 
 export function TableSkeleton({ rows = 6, columns = 5, className }: { rows?: number; columns?: number; className?: string }) {
   return (
-    <div role="status" aria-label="Carregando tabela" className={cn("overflow-hidden rounded-[var(--radius-card)] border bg-card", className)}>
+    <div role="status" aria-label="Carregando tabela" className={cn("proflow-scrollbar overflow-x-auto rounded-[var(--radius-card)] border bg-card", className)}>
       <div className="grid min-w-[42rem] gap-4 border-b bg-muted/40 px-4 py-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
         {Array.from({ length: columns }).map((_, index) => <Skeleton key={index} className="h-3 w-3/4" />)}
       </div>

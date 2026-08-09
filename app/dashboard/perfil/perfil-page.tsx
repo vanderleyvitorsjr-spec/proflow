@@ -62,14 +62,14 @@ import {
 } from "./perfil-actions";
 import { getProfileCompany, listProfileTeam } from "./perfil-configuracoes-gateway";
 import { loadGlobalActivities } from "@/lib/integrations/global-activity-gateway";
-import { listNotificationsAction } from "@/app/dashboard/notificacoes/notificacoes-actions";
+import { listNotificationsAction } from "@/app/dashboard/_notificacoes/notificacoes-actions";
 import type { ProfileState } from "./perfil-types";
 import type {
   CompanyPublicSettings,
   TeamMemberPublicReference,
 } from "@/lib/contracts/configuracoes.contract";
 import type { GlobalActivity } from "@/lib/contracts/global-activity.contract";
-import type { NotificationItem } from "@/app/dashboard/notificacoes/notificacoes-types";
+import type { NotificationItem } from "@/app/dashboard/_notificacoes/notificacoes-types";
 import { ptBrLabel } from "@/lib/pt-br-labels";
 
 const tabs = [
@@ -96,7 +96,9 @@ const availabilityLabels: Record<ProfileState["availability"]["status"], string>
   ON_LEAVE: "Em férias",
 };
 
-export function PerfilPageContent() {
+type AuthProfileContext = { userName: string; email: string; roleLabel: string; companyName: string };
+
+export function PerfilPageContent({ authContext }: { authContext: AuthProfileContext }) {
   const [state, setState] = useState<ProfileState | null>(null);
   const [tab, setTab] = useState<TabName>("Visão geral");
   const [team, setTeam] = useState<TeamMemberPublicReference[]>([]);
@@ -111,13 +113,41 @@ export function PerfilPageContent() {
   useEffect(() => {
     queueMicrotask(() => {
       const profileState = getProfileAction();
-      setState(profileState);
+      const shouldHydrateIdentity =
+        profileState.profile.displayName === "Usuário local" ||
+        (!profileState.profile.email && !profileState.profile.fullName);
+      const hydratedProfileState = shouldHydrateIdentity
+        ? {
+            ...profileState,
+            profile: {
+              ...profileState.profile,
+              displayName: authContext.userName || profileState.profile.displayName,
+              fullName: profileState.profile.fullName || authContext.userName,
+              email: profileState.profile.email || authContext.email,
+              role: profileState.profile.role || authContext.roleLabel,
+            },
+          }
+        : profileState;
+      setState(hydratedProfileState);
       setNotifications(listNotificationsAction().items);
       void listProfileTeam().then(setTeam);
-      void getProfileCompany().then(setCompany);
+      void getProfileCompany().then((value) =>
+        setCompany(
+          value
+            ? {
+                ...value,
+                displayName:
+                  !value.displayName || value.displayName === "ProFlow"
+                    ? authContext.companyName
+                    : value.displayName,
+                tradeName: value.tradeName || authContext.companyName,
+              }
+            : value,
+        ),
+      );
       void loadGlobalActivities().then((result) => setActivities(result.items));
     });
-  }, []);
+  }, [authContext]);
 
   useEffect(() => {
     let active = true;
@@ -200,13 +230,13 @@ export function PerfilPageContent() {
       )}
 
       <nav aria-label="Seções do perfil" className="rounded-xl border bg-card p-1.5 shadow-xs">
-        <div className="flex gap-1 overflow-x-auto lg:flex-wrap lg:overflow-visible">
+        <div className="proflow-scrollbar flex snap-x gap-1 overflow-x-auto lg:flex-wrap lg:overflow-visible">
           {tabs.map(([name, Icon]) => (
             <Button
               key={name}
               size="sm"
               variant={tab === name ? "default" : "ghost"}
-              className="shrink-0"
+              className="shrink-0 snap-start"
               aria-current={tab === name ? "page" : undefined}
               onClick={() => setTab(name)}
             >
@@ -338,7 +368,7 @@ function Overview({
               label="Empresa"
               value={company?.displayName || company?.tradeName || "Empresa não informada"}
             />
-            <InfoBlock label="Segmento" value={company?.segment || "Segmento não informado"} />
+            <InfoBlock label="Segmento" value={ptBrLabel(company?.segment, "Segmento não informado")} />
             <InfoBlock label="Cargo / função" value={profile.role || "Não informado"} />
             <div className="rounded-lg border p-3 md:col-span-2">
               <p className="text-xs text-muted-foreground">Especialidades</p>
@@ -380,11 +410,11 @@ function Overview({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
               <CardTitle>Agenda relacionada</CardTitle>
-              <Link href="/dashboard/agenda" className="text-xs font-medium text-primary">Abrir agenda</Link>
+              <span className="text-xs text-muted-foreground">Resumo interno</span>
             </CardHeader>
             <CardContent className="space-y-2 p-4 pt-2">
               {agendaItems.map((item) => <ActivityRow key={item.id} item={item} />)}
-              {!agendaItems.length && <CompactEmpty title="Nenhum evento atribuível ao perfil" action="Abrir agenda" href="/dashboard/agenda" />}
+              {!agendaItems.length && <CompactEmpty title="Nenhum evento atribuível ao perfil" />}
             </CardContent>
           </Card>
           <Card>
@@ -424,7 +454,7 @@ function Overview({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
               <CardTitle>Notificações não lidas</CardTitle>
-              <Link href="/dashboard/notificacoes" className="text-xs font-medium text-primary">Ver todas</Link>
+              <span className="text-xs text-muted-foreground">Resumo interno</span>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 p-4 pt-2">
               {(["CRITICAL", "HIGH", "NORMAL", "LOW"] as const).map((priority) => (

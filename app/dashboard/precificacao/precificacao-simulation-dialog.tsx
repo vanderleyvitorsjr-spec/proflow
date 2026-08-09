@@ -15,6 +15,7 @@ import type {
 } from "./precificacao-types";
 import type { PricingPublicSettings } from "@/lib/contracts/configuracoes.contract";
 import { getPricingConfiguration } from "./precificacao-configuracoes-gateway";
+import { ptBrLabel } from "@/lib/pt-br-labels";
 const categories = [
   "INSTALLATION",
   "MAINTENANCE",
@@ -213,13 +214,13 @@ export function PricingSimulationDialog({
               />
             </div>
             <div>
-              <Label htmlFor="pricing-template">Template</Label>
+              <Label htmlFor="pricing-template">Modelo</Label>
               <Select
                 id="pricing-template"
                 name="templateId"
                 defaultValue={simulation?.templateId}
               >
-                <option value="">Sem template</option>
+                <option value="">Sem modelo</option>
                 {templates
                   .filter((t) => !t.archivedAt)
                   .map((t) => (
@@ -245,7 +246,7 @@ export function PricingSimulationDialog({
                 defaultValue={simulation?.parameters.category ?? "OTHER"}
               >
                 {categories.map((c) => (
-                  <option key={c}>{c}</option>
+                  <option key={c} value={c}>{ptBrLabel(c)}</option>
                 ))}
               </Select>
             </div>
@@ -286,7 +287,7 @@ export function PricingSimulationDialog({
                     variant="secondary"
                     onClick={() => setLines((current) => [...current, defaultLine(type)])}
                   >
-                    + {type}
+                    + {ptBrLabel(type)}
                   </Button>
                 ))}
               </div>
@@ -313,7 +314,7 @@ export function PricingSimulationDialog({
                     }}
                   >
                     {types.map((type) => (
-                      <option key={type}>{type}</option>
+                      <option key={type} value={type}>{ptBrLabel(type)}</option>
                     ))}
                   </Select>
                   <div>
@@ -446,7 +447,7 @@ export function PricingSimulationDialog({
                     ) : null}
                     {line.type === "OVERHEAD" ? (
                       <Select
-                        aria-label="Método do overhead"
+                        aria-label="Método dos custos indiretos"
                         className="mt-1"
                         value={line.calculationMode}
                         onChange={(e) =>
@@ -582,7 +583,7 @@ export function PricingSimulationDialog({
                   ) : null}
                   {line.type === "OVERHEAD" ? (
                     <Select
-                      aria-label="Categoria do overhead"
+                      aria-label="Categoria dos custos indiretos"
                       className="md:col-span-full"
                       value={line.overheadCategory ?? "OTHER"}
                       onChange={(e) =>

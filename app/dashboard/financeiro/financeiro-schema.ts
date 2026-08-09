@@ -20,6 +20,7 @@ export const financialTransactionSchema = z
     total: z.string().trim().min(1, "Informe o valor."),
     supplier: z.string().trim(),
     notes: z.string().trim(),
+    fundingBucket: z.enum(["SALARY", "COMPANY", "RESERVE"]).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.nature === "REVENUE" && value.direction !== "INCOME")
@@ -59,6 +60,7 @@ export const financialPaymentSchema = z.object({
   method: z.string().trim().min(2, "Informe o método de pagamento."),
   notes: z.string().trim(),
   reference: z.string().trim(),
+  fundingBucket: z.enum(["SALARY", "COMPANY", "RESERVE"]).optional(),
 });
 export const financialReasonSchema = z.object({
   reason: z.string().trim().min(3, "Informe um motivo com pelo menos 3 caracteres."),

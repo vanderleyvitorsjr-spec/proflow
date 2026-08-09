@@ -17,6 +17,7 @@ import { getPricingDivergencesAction } from "./precificacao-actions";
 import { Select } from "@/components/ui/select";
 import type { PricingSimulation, PricingTemplate } from "./precificacao-types";
 import { ptBrLabel } from "@/lib/pt-br-labels";
+import { pricingSimulationStatusLabels } from "./precificacao-labels";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export function PricingSimulationsList({
   simulations,
@@ -94,7 +95,7 @@ export function PricingSimulationsList({
             <TableHeader>
               <TableRow>
                 <TableHead>Simulação</TableHead>
-                <TableHead>Template</TableHead>
+                <TableHead>Modelo</TableHead>
                 <TableHead>Cenário</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Custo</TableHead>
@@ -120,14 +121,14 @@ export function PricingSimulationsList({
                         #{String(item.sequence).padStart(4, "0")} · {item.title}
                       </Link>
                       <p className="text-[11px] text-muted-foreground">
-                        v{item.currentVersion} · {item.parameters.category}
+                        v{item.currentVersion} · {ptBrLabel(item.parameters.category)}
                       </p>
                     </TableCell>
                     <TableCell>{template?.name ?? "Manual"}</TableCell>
                     <TableCell>{item.scenarioLabel}</TableCell>
                     <TableCell>
                       <span className="rounded-full bg-muted px-2 py-1 text-[11px]">
-                        {ptBrLabel(item.status)}
+                        {pricingSimulationStatusLabels[item.status]}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

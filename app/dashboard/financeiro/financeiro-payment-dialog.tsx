@@ -44,6 +44,7 @@ export function FinanceiroPaymentDialog({
       method: "Pix",
       notes: "",
       reference: "",
+      fundingBucket: "COMPANY",
     }),
     [validation, setValidation] = useState("");
   const [methods, setMethods] = useState(["Pix"]);
@@ -54,10 +55,10 @@ export function FinanceiroPaymentDialog({
         setMethods(settings.paymentMethods);
         setConfigurationWarning(warning ?? "");
         setValues((current) => ({
-          ...current,
           amount: formatMoneyCents(installmentOpenCents(installment))
             .replace("R$", "")
             .trim(),
+          paidAt: new Date().toISOString().slice(0, 10),
           accountId:
             accounts.find((item) => item.id === transaction?.accountId)?.id ??
             accounts[0]?.id ??
@@ -65,6 +66,9 @@ export function FinanceiroPaymentDialog({
           method: settings.paymentMethods.includes(current.method)
             ? current.method
             : settings.paymentMethods[0] ?? current.method,
+          notes: "",
+          reference: "",
+          fundingBucket: transaction?.kind === "PAYABLE" ? "COMPANY" : undefined,
         }));
       });
     }
@@ -144,6 +148,19 @@ export function FinanceiroPaymentDialog({
               {methods.map((method) => <option key={method} value={method}>{ptBrLabel(method)}</option>)}
             </Select>
           </Field>
+          {transaction.kind === "PAYABLE" ? (
+            <Field label="Origem do recurso" htmlFor="payment-bucket" help="Define de qual parte da Regra dos Três sairá este pagamento.">
+              <Select
+                id="payment-bucket"
+                value={values.fundingBucket ?? "COMPANY"}
+                onChange={(e) => setValues({ ...values, fundingBucket: e.target.value as FinancialPaymentFormValues["fundingBucket"] })}
+              >
+                <option value="COMPANY">Caixa da empresa</option>
+                <option value="SALARY">Salário</option>
+                <option value="RESERVE">Fundo de reserva</option>
+              </Select>
+            </Field>
+          ) : null}
           <Field label="Comprovante ou referência" htmlFor="payment-reference" help="Número do comprovante, boleto, Pix ou documento relacionado.">
             <Input
               id="payment-reference"

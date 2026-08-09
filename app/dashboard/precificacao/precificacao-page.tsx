@@ -1,4 +1,6 @@
 "use client";
+
+import { PrecificacaoSystemica } from "./precificacao-systemica";
 import { useEffect, useMemo, useState } from "react";
 import { Calculator, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,7 @@ import type {
   PricingTemplateFormValues,
 } from "./precificacao-schema";
 import { calculatePricing } from "./precificacao-selectors";
+import { pricingIndicatorLabels, pricingSimulationStatusLabels } from "./precificacao-labels";
 import { PricingSimulationDialog } from "./precificacao-simulation-dialog";
 import { PricingSimulationsList } from "./precificacao-simulations-list";
 import { defaultPricingPreferences } from "./precificacao-storage-adapter";
@@ -166,9 +169,9 @@ export function PrecificacaoPageContent() {
     const ok = editingTemplate
       ? await run(
           () => updatePricingTemplateAction(editingTemplate.id, input),
-          "Template atualizado.",
+          "Modelo atualizado.",
         )
-      : await run(() => createPricingTemplateAction(input), "Template criado.");
+      : await run(() => createPricingTemplateAction(input), "Modelo criado.");
     if (ok) {
       setTemplateOpen(false);
       setEditingTemplate(null);
@@ -184,7 +187,7 @@ export function PrecificacaoPageContent() {
             </PageHeaderIcon>
             <PageHeaderHeading
               title="Precificação"
-              description="Templates, simulações, cenários e fórmulas auditáveis em centavos."
+              description="Modelos, simulações, cenários e fórmulas auditáveis em centavos."
             />
           </PageHeaderIdentity>
           <PageHeaderActions>
@@ -199,7 +202,7 @@ export function PrecificacaoPageContent() {
                 setTemplateOpen(true);
               }}
             >
-              Novo template
+              Novo modelo
             </Button>
             <Button
               size="sm"
@@ -215,7 +218,7 @@ export function PrecificacaoPageContent() {
         </PageHeaderContent>
         <PageHeaderToolbar>
           <div className="flex w-full flex-col gap-2 lg:flex-row">
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               <Button
                 size="sm"
                 variant={preferences.view === "calculator" ? "default" : "ghost"}
@@ -240,7 +243,7 @@ export function PrecificacaoPageContent() {
             </div>
             <Input
               aria-label="Buscar precificações"
-              placeholder="Buscar título, código, template..."
+              placeholder="Buscar título, código, modelo..."
               value={preferences.searchTerm}
               onChange={(e) =>
                 setPreferences((p) => ({ ...p, searchTerm: e.target.value }))
@@ -255,7 +258,7 @@ export function PrecificacaoPageContent() {
             >
               <option value="ALL">Todos os status</option>
               {["DRAFT", "READY", "APPLIED", "OUTDATED", "ARCHIVED"].map((v) => (
-                <option key={v}>{v}</option>
+                <option key={v} value={v}>{pricingSimulationStatusLabels[v as keyof typeof pricingSimulationStatusLabels]}</option>
               ))}
             </Select>
             <Select
@@ -267,7 +270,7 @@ export function PrecificacaoPageContent() {
             >
               <option value="ALL">Todas as margens</option>
               {["LOSS", "LOW_MARGIN", "HEALTHY", "PREMIUM"].map((v) => (
-                <option key={v}>{v}</option>
+                <option key={v} value={v}>{pricingIndicatorLabels[v as keyof typeof pricingIndicatorLabels]}</option>
               ))}
             </Select>
             <label className="flex items-center gap-2 whitespace-nowrap text-xs">
@@ -283,6 +286,7 @@ export function PrecificacaoPageContent() {
           </div>
         </PageHeaderToolbar>
       </PageHeader>
+      <PrecificacaoSystemica />
       {error ? (
         <p
           role="alert"
@@ -309,7 +313,7 @@ export function PrecificacaoPageContent() {
           <MetricStrip className="sm:min-w-0 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-5">
             <MetricItem label="Simulações" value={simulations.length} />
             <MetricItem
-              label="Templates ativos"
+              label="Modelos ativos"
               value={templates.filter((t) => t.active && !t.archivedAt).length}
             />
             <MetricItem
@@ -368,7 +372,7 @@ export function PrecificacaoPageContent() {
               onDuplicate={(item) =>
                 void run(
                   () => duplicatePricingTemplateAction(item.id),
-                  "Template duplicado.",
+                  "Modelo duplicado.",
                 )
               }
               onArchive={(item) => setArchiving({ kind: "template", id: item.id })}
@@ -480,7 +484,7 @@ export function PrecificacaoPageContent() {
                 )
               : await run(
                   () => archivePricingTemplateAction(archiving.id, reason),
-                  "Template arquivado.",
+                  "Modelo arquivado.",
                 );
           if (ok) setArchiving(null);
         }}
@@ -507,7 +511,7 @@ function TemplateLibrary({
     return (
       <EmptyState
         title="Biblioteca vazia"
-        description="Crie o primeiro template reutilizável."
+        description="Crie o primeiro modelo reutilizável."
       />
     );
   return (
@@ -522,8 +526,7 @@ function TemplateLibrary({
             {item.description}
           </p>
           <div className="mt-3 text-xs text-muted-foreground">
-            {item.costComponents.length} componentes · {item.compositions.length}{" "}
-            composições
+            {item.costComponents.length} {item.costComponents.length === 1 ? "componente" : "componentes"} · {item.compositions.length} {item.compositions.length === 1 ? "composição" : "composições"}
           </div>
           <div className="mt-4 flex flex-wrap gap-1">
             <Button size="sm" onClick={() => onApply(item)}>
