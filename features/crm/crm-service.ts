@@ -93,7 +93,7 @@ export class CrmService {
         crmLeadId: current.id,
         clientId: client.id,
         clientName: client.name,
-        clientUpdatedAt: client.updatedAt,
+        clientUpdatedAt: client.updatedAt ?? new Date().toISOString(),
       }).catch(() => undefined);
       return converted;
     } catch {
