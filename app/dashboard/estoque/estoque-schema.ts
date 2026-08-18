@@ -10,6 +10,7 @@ export const stockItemFormSchema = z
     category: z.enum([
       "REFRIGERATION",
       "ELECTRICAL",
+      "IT",
       "SAFETY",
       "CONSUMABLES",
       "CLEANING",

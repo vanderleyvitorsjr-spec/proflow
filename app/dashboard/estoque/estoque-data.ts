@@ -3,6 +3,7 @@ import type { StockCategory, StockSeedItem, StockUnit } from "./estoque-types";
 export const stockCategoryLabels: Record<StockCategory, string> = {
   REFRIGERATION: "Refrigeração",
   ELECTRICAL: "Elétrica",
+  IT: "T.I. / Informática",
   SAFETY: "Segurança",
   CONSUMABLES: "Consumíveis",
   CLEANING: "Limpeza",

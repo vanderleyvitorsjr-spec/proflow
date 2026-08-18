@@ -50,6 +50,7 @@ export const defaultConfigState = (): ConfigState => ({
       categories: [
         "CLIMATIZATION",
         "ELECTRICAL",
+        "IT",
         "PREVENTIVE",
         "CORRECTIVE",
         "INSTALLATION",
@@ -71,6 +72,7 @@ export const defaultConfigState = (): ConfigState => ({
       categories: [
         "REFRIGERATION",
         "ELECTRICAL",
+        "IT",
         "SAFETY",
         "CONSUMABLES",
         "CLEANING",
@@ -82,7 +84,7 @@ export const defaultConfigState = (): ConfigState => ({
     },
     equipment: {
       categories: ["Ferramentas", "Medição", "Veículos", "Informática"],
-      types: ["TOOL", "VEHICLE", "COMPUTER", "MEASUREMENT_INSTRUMENT", "OTHER"],
+      types: ["TOOL", "VEHICLE", "COMPUTER", "SERVER", "PRINTER", "NETWORK_DEVICE", "MEASUREMENT_INSTRUMENT", "OTHER"],
       statuses: [
         "AVAILABLE",
         "IN_USE",

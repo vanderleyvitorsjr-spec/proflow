@@ -129,7 +129,7 @@ export function ClientFormDrawer({ open, client, saving, onClose, onSubmit }: Cl
               <CpfCnpjInput id="client-document" value={values.document ?? ""} onValueChange={(value) => setValue("document", value, { shouldValidate: true, shouldDirty: true })} aria-invalid={Boolean(errors.document)} />
             </Field>
             <Field label="Área de atendimento" htmlFor="client-segment" error={errors.segment?.message} help="Selecione quais serviços este cliente costuma contratar." required>
-              <Select id="client-segment" {...register("segment")}><option value="CLIMATIZATION">Climatização</option><option value="ELECTRICAL">Elétrica</option><option value="BOTH">Climatização e elétrica</option></Select>
+              <Select id="client-segment" {...register("segment")}><option value="CLIMATIZATION">Climatização</option><option value="ELECTRICAL">Elétrica</option><option value="IT">T.I.</option><option value="MULTI">Climatização, elétrica e T.I.</option><option value="BOTH">Climatização e elétrica</option></Select>
             </Field>
             <Field label="Situação do cliente" htmlFor="client-status" error={errors.status?.message} help="Use Recorrente para clientes frequentes e Requer atenção para cadastros que precisam de acompanhamento." required>
               <Select id="client-status" {...register("status")}><option value="ACTIVE">Ativo</option><option value="RECURRING">Recorrente</option><option value="ATTENTION">Requer atenção</option><option value="INACTIVE">Inativo</option></Select>

@@ -1,7 +1,7 @@
 export type StockView = "list" | "cards";
 export type StockStatus = "ARCHIVED" | "OUT_OF_STOCK" | "LOW_STOCK" | "AVAILABLE";
 export type StockCategory =
-  "REFRIGERATION" | "ELECTRICAL" | "SAFETY" | "CONSUMABLES" | "CLEANING" | "OTHER";
+  "REFRIGERATION" | "ELECTRICAL" | "IT" | "SAFETY" | "CONSUMABLES" | "CLEANING" | "OTHER";
 export type StockUnit =
   "UNIT" | "PAIR" | "METER" | "KILOGRAM" | "LITER" | "BOX" | "PACKAGE" | "ROLL";
 export type StockMovementType =

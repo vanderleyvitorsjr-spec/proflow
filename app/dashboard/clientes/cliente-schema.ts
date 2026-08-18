@@ -11,7 +11,7 @@ export const clientSchema = z
     whatsapp: z.string().trim().optional().default("").refine((value) => !value || [10, 11].includes(digits(value).length), "Informe um WhatsApp válido."),
     email: z.union([z.literal(""), z.email("Informe um e-mail válido.")]),
     type: z.enum(["RESIDENTIAL", "COMPANY", "CONDOMINIUM"]),
-    segment: z.enum(["CLIMATIZATION", "ELECTRICAL", "BOTH"]),
+    segment: z.enum(["CLIMATIZATION", "ELECTRICAL", "IT", "MULTI", "BOTH"]),
     status: z.enum(["ACTIVE", "RECURRING", "ATTENTION", "INACTIVE"]),
     street: z.string().trim().min(3, "Informe o endereço onde o cliente recebe atendimento."),
     number: z.string().trim().optional().default(""),

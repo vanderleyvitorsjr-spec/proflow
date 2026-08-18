@@ -4,14 +4,14 @@ import { Toolbar } from "@/components/ui/toolbar";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({ className, ...props }: HTMLAttributes<HTMLElement>) {
-  return <section className={cn("overflow-hidden rounded-xl border bg-card shadow-xs", className)} {...props} />;
+  return <section className={cn("overflow-hidden border-b border-border bg-transparent", className)} {...props} />;
 }
 
 export function PageHeaderContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between",
+        "flex flex-col gap-3 px-0 pb-4 pt-0 lg:flex-row lg:items-center lg:justify-between",
         className,
       )}
       {...props}
@@ -27,7 +27,7 @@ export function PageHeaderIcon({ className, children, ...props }: HTMLAttributes
   return (
     <div
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/10 text-primary",
+        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary",
         className,
       )}
       {...props}

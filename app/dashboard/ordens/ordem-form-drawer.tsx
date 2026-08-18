@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/select";
 import { CurrencyReaisInput, ProperNameInput } from "@/components/ui/br-masked-inputs";
 import { normalizeAddressText, normalizeUpperCode } from "@/lib/br-formatters";
 import { ptBrLabel, teamRoleLabel } from "@/lib/pt-br-labels";
+import { defaultProFlowServices } from "@/lib/proflow-service-catalog";
 import { ordemSchema, type OrdemFormInput, type OrdemFormValues } from "./ordens-schema";
 import type { OrdemRecord } from "./ordens-types";
 import { getOrdersConfiguration } from "./ordens-configuracoes-gateway";
@@ -226,6 +227,7 @@ export function OrdemFormDrawer({
                   settings?.categories ?? [
                     "CLIMATIZATION",
                     "ELECTRICAL",
+                    "IT",
                     "PREVENTIVE",
                     "CORRECTIVE",
                     "INSTALLATION",
@@ -239,6 +241,46 @@ export function OrdemFormDrawer({
                   ))}
               </Select>
             </Field>
+            {values.category === "IT" ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-sky-200 bg-sky-50/60 p-3 dark:border-sky-900 dark:bg-sky-950/20">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold">Serviços de T.I.</p>
+                  <p className="text-xs text-muted-foreground">Selecione um modelo para preencher automaticamente o serviço, a descrição e o checklist. Você pode editar tudo depois.</p>
+                </div>
+                <Select
+                  aria-label="Selecionar serviço de T.I."
+                  defaultValue=""
+                  onChange={(event) => {
+                    const service = defaultProFlowServices.find((item) => item.id === event.target.value);
+                    if (!service) return;
+                    setValue("title", service.name, { shouldValidate: true, shouldDirty: true });
+                    setValue("description", service.description, { shouldValidate: true, shouldDirty: true });
+                    setValue("checklistText", service.checklist.join("\n"), { shouldValidate: true, shouldDirty: true });
+                  }}
+                >
+                  <option value="">Escolha um serviço de T.I.</option>
+                  {defaultProFlowServices.filter((item) => item.area === "IT" && item.active).map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </Select>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {defaultProFlowServices.filter((item) => item.area === "IT" && item.active).slice(0, 6).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="rounded-lg border bg-background px-3 py-2 text-left text-xs transition hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30"
+                      onClick={() => {
+                        setValue("title", item.name, { shouldValidate: true, shouldDirty: true });
+                        setValue("description", item.description, { shouldValidate: true, shouldDirty: true });
+                        setValue("checklistText", item.checklist.join("\n"), { shouldValidate: true, shouldDirty: true });
+                      }}
+                    >
+                      <span className="font-semibold">{item.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <Field
               label="Descrição do problema ou serviço"
               description="Descreva o defeito relatado, o diagnóstico inicial ou o resultado esperado."
@@ -473,6 +515,7 @@ export function OrdemFormDrawer({
 const categories = [
     "CLIMATIZATION",
     "ELECTRICAL",
+    "IT",
     "PREVENTIVE",
     "CORRECTIVE",
     "INSTALLATION",

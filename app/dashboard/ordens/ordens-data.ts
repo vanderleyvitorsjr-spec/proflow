@@ -17,6 +17,7 @@ export type ServiceOrderPriority =
 export type ServiceOrderCategory =
   | "CLIMATIZATION"
   | "ELECTRICAL"
+  | "IT"
   | "PREVENTIVE"
   | "CORRECTIVE"
   | "INSTALLATION";

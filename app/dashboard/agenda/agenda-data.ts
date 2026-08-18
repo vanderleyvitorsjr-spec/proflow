@@ -5,6 +5,7 @@ export type AgendaEventType =
   | "PREVENTIVE"
   | "CORRECTIVE"
   | "ELECTRICAL"
+  | "TECH_SUPPORT"
   | "TECHNICAL_VISIT"
   | "BUDGET"
   | "MEETING";

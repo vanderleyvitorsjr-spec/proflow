@@ -63,7 +63,7 @@ export interface ProfessionalQuote {
   address?: string;
   city?: string;
   state?: string;
-  serviceType?: "CLIMATIZATION" | "ELECTRICAL" | "PREVENTIVE" | "CORRECTIVE" | "INSTALLATION";
+  serviceType?: "CLIMATIZATION" | "ELECTRICAL" | "IT" | "PREVENTIVE" | "CORRECTIVE" | "INSTALLATION";
   equipmentDescription?: string;
   title: string;
   description?: string;

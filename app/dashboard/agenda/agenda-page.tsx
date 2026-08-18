@@ -39,6 +39,7 @@ const typeLabels: Record<AgendaEventType, string> = {
   PREVENTIVE: "Manutenção preventiva",
   CORRECTIVE: "Manutenção corretiva",
   ELECTRICAL: "Serviço elétrico",
+  TECH_SUPPORT: "Suporte de T.I.",
   TECHNICAL_VISIT: "Visita técnica",
   BUDGET: "Orçamento",
   MEETING: "Reunião",

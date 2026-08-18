@@ -37,7 +37,34 @@ export const configurationStorageAdapter = {
     }
 
     const main = parse(raw);
-    if (main?.success) return main.data as ConfigState;
+    if (main?.success) {
+      const state = main.data as ConfigState;
+      // Migração leve de configurações existentes: versões anteriores do ProFlow
+      // não incluíam T.I. na Ordem de Serviço, estoque e tipos de equipamento.
+      // Fazemos a inclusão sem remover personalizações que o usuário já salvou.
+      const categories = state.operationalSettings.serviceOrder.categories;
+      const stockCategories = state.operationalSettings.stock.categories;
+      const equipmentTypes = state.operationalSettings.equipment.types;
+      let changed = false;
+
+      if (!categories.includes("IT")) {
+        categories.splice(Math.min(2, categories.length), 0, "IT");
+        changed = true;
+      }
+      if (!stockCategories.includes("IT")) {
+        stockCategories.push("IT");
+        changed = true;
+      }
+      for (const type of ["SERVER", "PRINTER", "NETWORK_DEVICE"] as const) {
+        if (!equipmentTypes.includes(type)) {
+          equipmentTypes.push(type);
+          changed = true;
+        }
+      }
+
+      if (changed) localStorage.setItem(KEY(), JSON.stringify(state));
+      return state;
+    }
 
     const backup = parse(localStorage.getItem(BACKUP()));
     if (backup?.success) {

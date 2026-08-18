@@ -20,7 +20,7 @@ export function TableFrame({ className, scrollHint = false, maxHeight, children,
   return (
     <div
       className={cn(
-        "proflow-scrollbar relative w-full overflow-auto rounded-[var(--radius-card)] border border-border bg-card",
+        "proflow-scrollbar relative w-full overflow-auto border border-border bg-card",
         className,
       )}
       style={{ ...style, maxHeight }}
@@ -71,7 +71,7 @@ export function Table({
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("border-b bg-surface-subtle", className)} {...props} />;
+  return <thead className={cn("border-b bg-transparent", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {

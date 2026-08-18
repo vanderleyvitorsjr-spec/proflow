@@ -43,6 +43,11 @@ const typeConfig: Record<
     className:
       "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300",
   },
+  TECH_SUPPORT: {
+    label: "T.I.",
+    className:
+      "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-300",
+  },
   TECHNICAL_VISIT: {
     label: "Visita técnica",
     className:

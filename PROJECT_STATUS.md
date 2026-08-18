@@ -767,3 +767,17 @@ public/              Assets estáticos
 - Migration nova: `20260805153000_company_module_states`.
 - Transpilação sintática dos arquivos do lote aprovada.
 - Testes completos, lint, TypeScript e build devem ser executados no ambiente local com as dependências já instaladas.
+
+### Evolução ProFlow inspirada no fluxo operacional do Profiz (18/08/2026)
+
+- Navegação reorganizada com acesso direto a Ordens de Serviço, Serviços, Produtos e Recibos.
+- Interface móvel ganhou barra inferior fixa para Início, Agenda, OS, Clientes e menu completo, mantendo sidebar no desktop.
+- Dashboard ganhou atalhos operacionais para as ações mais usadas em campo.
+- Novo Catálogo de Serviços com Climatização, Elétrica e T.I., preço padrão, garantia e checklist por serviço.
+- Nova área de Produtos com categoria, marca, custo, preço de venda, garantia e observações.
+- Nova área de Recibos com numeração, cliente, referência, valor, forma de pagamento, data e impressão.
+- T.I. passou a ser categoria nativa em clientes, orçamentos e ordens, além de suporte técnico na Agenda.
+- Estoque passou a aceitar itens de T.I./Informática.
+- Equipamentos foram ampliados com Servidor, Impressora e Equipamento de Rede, além de computador/notebook.
+- Catálogo inicial de T.I. inclui visita técnica, rede/compartilhamento, servidor e instalação/configuração de software.
+- As telas novas foram implementadas em layout responsivo para desktop, tablet e celular e respeitam os temas claro/escuro do ProFlow.

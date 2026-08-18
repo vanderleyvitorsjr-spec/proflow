@@ -9,6 +9,8 @@ export type ClientStatus =
 export type ClientSegment =
   | "CLIMATIZATION"
   | "ELECTRICAL"
+  | "IT"
+  | "MULTI"
   | "BOTH";
 
 export type ClientRecord = {

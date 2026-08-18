@@ -3,7 +3,7 @@
 :root {
   color-scheme: light;
 
-  --background: #f5f7fa;
+  --background: #f7f8fa;
   --foreground: #101828;
 
   --card: #ffffff;
@@ -12,7 +12,7 @@
   --popover: #ffffff;
   --popover-foreground: #0f172a;
 
-  --primary: #0b2a4a;
+  --primary: #0b6ea8;
   --primary-foreground: #ffffff;
 
   --secondary: #eef3f8;
@@ -21,7 +21,7 @@
   --muted: #f0f3f7;
   --muted-foreground: #667085;
 
-  --accent: #0ea5e9;
+  --accent: #0b6ea8;
   --accent-foreground: #ffffff;
 
   --destructive: #dc2626;
@@ -29,7 +29,7 @@
 
   --border: #e2e8f0;
   --input: #d7e0ea;
-  --ring: #0ea5e9;
+  --ring: #0b6ea8;
 
   --success: #16a34a;
   --warning: #d97706;
@@ -38,15 +38,20 @@
   --surface: #ffffff;
   --surface-subtle: #f8fafc;
   --surface-raised: #ffffff;
-  --sidebar: #071a2f;
-  --sidebar-foreground: #dce8f5;
-  --sidebar-muted: #8da5bd;
-  --sidebar-active: #0d345d;
+  --sidebar: #f2f3f5;
+  --sidebar-foreground: #1c2733;
+  --sidebar-muted: #5e6b78;
+  --sidebar-active: #dde2e7;
+  --sidebar-active-foreground: #111827;
+  --sidebar-card: #e6e9ed;
+  --sidebar-hover: #e1e5e9;
+  --sidebar-icon: #e7eaed;
+  --sidebar-border: #d9dde2;
 
   --radius: 0.625rem;
   --radius-control: 0.625rem;
-  --radius-card: 0.875rem;
-  --radius-panel: 1rem;
+  --radius-card: 0.75rem;
+  --radius-panel: 0.875rem;
 
   --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
   --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.045);
@@ -59,22 +64,22 @@
 .dark {
   color-scheme: dark;
 
-  --background: #07111f;
+  --background: #101112;
   --foreground: #f8fafc;
 
-  --card: #0d1929;
+  --card: #1b1c1e;
   --card-foreground: #f8fafc;
 
-  --popover: #0d1829;
+  --popover: #1b1c1e;
   --popover-foreground: #f8fafc;
 
-  --primary: #38bdf8;
+  --primary: #45a9df;
   --primary-foreground: #07101f;
 
-  --secondary: #152338;
+  --secondary: #242628;
   --secondary-foreground: #e2e8f0;
 
-  --muted: #122236;
+  --muted: #232527;
   --muted-foreground: #94a3b8;
 
   --accent: #38bdf8;
@@ -83,9 +88,9 @@
   --destructive: #f87171;
   --destructive-foreground: #450a0a;
 
-  --border: #23364b;
-  --input: #304158;
-  --ring: #38bdf8;
+  --border: #2d3033;
+  --input: #34373a;
+  --ring: #45a9df;
 
   --success: #4ade80;
   --warning: #fbbf24;
@@ -95,13 +100,18 @@
   --shadow-sm:
     0 1px 3px rgb(0 0 0 / 0.24),
     0 1px 2px rgb(0 0 0 / 0.16);
-  --surface: #0d1929;
-  --surface-subtle: #0a1524;
-  --surface-raised: #122238;
-  --sidebar: #040d18;
-  --sidebar-foreground: #e6eef7;
-  --sidebar-muted: #829ab2;
-  --sidebar-active: #0b3158;
+  --surface: #1b1c1e;
+  --surface-subtle: #171819;
+  --surface-raised: #222426;
+  --sidebar: #202123;
+  --sidebar-foreground: #f2f4f5;
+  --sidebar-muted: #a9afb5;
+  --sidebar-active: #505255;
+  --sidebar-active-foreground: #ffffff;
+  --sidebar-card: #292b2d;
+  --sidebar-hover: #303234;
+  --sidebar-icon: #2b2d2f;
+  --sidebar-border: #313336;
 
   --shadow-md:
     0 10px 30px rgb(0 0 0 / 0.25),
@@ -163,6 +173,11 @@ html[data-reduced-motion="true"] *::after {
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-card: var(--sidebar-card);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-icon: var(--sidebar-icon);
+  --color-sidebar-border: var(--sidebar-border);
 
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: calc(var(--radius) - 0.125rem);
@@ -336,7 +351,7 @@ html[data-accent="sky"] {
   --primary: #0284c7;
   --primary-foreground: #f8fafc;
   --accent: #38bdf8;
-  --ring: #38bdf8;
+  --ring: #45a9df;
 }
 
 html[data-accent="blue"] {
@@ -365,4 +380,23 @@ html[data-accent="amber"] {
   --primary-foreground: #fffbeb;
   --accent: #fbbf24;
   --ring: #fbbf24;
+}
+
+
+/* Linguagem visual operacional inspirada em apps de campo, preservando a identidade ProFlow */
+.proflow-page { max-width: 82rem; }
+
+.proflow-page > section:first-child,
+.proflow-page > div > section:first-child { scroll-margin-top: 1rem; }
+
+.dark tbody tr:nth-child(even) {
+  background: rgb(255 255 255 / 0.028);
+}
+
+.dark tbody tr:hover {
+  background: rgb(255 255 255 / 0.055);
+}
+
+@media (min-width: 1024px) {
+  .proflow-page { margin-inline: 0; }
 }

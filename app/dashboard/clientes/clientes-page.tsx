@@ -86,6 +86,8 @@ const typeLabels: Record<ClientType, string> = {
 const segmentLabels: Record<ClientSegment, string> = {
   CLIMATIZATION: "Climatização",
   ELECTRICAL: "Elétrica",
+  IT: "T.I.",
+  MULTI: "Climatização, elétrica e T.I.",
   BOTH: "Climatização e elétrica",
 };
 
