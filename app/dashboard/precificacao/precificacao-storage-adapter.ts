@@ -186,7 +186,19 @@ const result = z.object({
   differenceToMinimumCents: z.number().int(),
   indicator: z.enum(["LOSS", "LOW_MARGIN", "HEALTHY", "PREMIUM"]),
 });
-const parameters = z.object({ description: z.string(), category: z.string() });
+const parameters = z.object({
+  description: z.string(),
+  category: z.string(),
+  segment: z.enum(["CLIMATIZATION", "ELECTRICAL", "IT"]).optional(),
+  serviceType: z.string().optional(),
+  complexity: z.enum(["SIMPLE", "INTERMEDIATE", "ADVANCED", "CRITICAL"]).optional(),
+  urgency: z.enum(["NORMAL", "PRIORITY", "EMERGENCY", "AFTER_HOURS", "WEEKEND", "HOLIDAY"]).optional(),
+  risk: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
+  warranty: z.enum(["NONE", "STANDARD", "EXTENDED"]).optional(),
+  billingMode: z.enum(["SERVICE", "HOUR", "DAY", "DEVICE", "USER", "POINT", "VISIT", "PROJECT", "MONTHLY"]).optional(),
+  sla: z.string().optional(),
+  technicalData: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+});
 const revision = z.object({
   id: z.string(),
   version: z.number().int().positive(),

@@ -200,6 +200,50 @@ export const DecimalBRInput = React.forwardRef<
 });
 DecimalBRInput.displayName = "DecimalBRInput";
 
+export const DecimalValueBRInput = React.forwardRef<
+  HTMLInputElement,
+  NumberValueProps & { maximumFractionDigits?: number }
+>(({ value, onValueChange, maximumFractionDigits = 2, onBlur, onFocus, ...props }, ref) => {
+  const [display, setDisplay] = React.useState(() =>
+    formatDecimalInputBR(value, maximumFractionDigits),
+  );
+  const focusedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!focusedRef.current) {
+      setDisplay(formatDecimalInputBR(value, maximumFractionDigits));
+    }
+  }, [value, maximumFractionDigits]);
+
+  return (
+    <Input
+      {...props}
+      ref={ref}
+      type="text"
+      inputMode="decimal"
+      value={display}
+      onFocus={(event) => {
+        focusedRef.current = true;
+        event.currentTarget.select();
+        onFocus?.(event);
+      }}
+      onChange={(event) => {
+        const next = event.target.value.replace(/[^0-9.,-]/g, "");
+        setDisplay(next);
+        onValueChange(parseDecimalBR(next));
+      }}
+      onBlur={(event) => {
+        focusedRef.current = false;
+        const parsed = parseDecimalBR(event.currentTarget.value);
+        setDisplay(formatDecimalInputBR(parsed, maximumFractionDigits));
+        onValueChange(parsed);
+        onBlur?.(event);
+      }}
+    />
+  );
+});
+DecimalValueBRInput.displayName = "DecimalValueBRInput";
+
 export const CurrencyFormInput = React.forwardRef<
   HTMLInputElement,
   UncontrolledNumericProps

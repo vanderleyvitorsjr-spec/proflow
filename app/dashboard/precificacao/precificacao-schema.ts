@@ -11,6 +11,13 @@ const category = z.enum([
   "INSPECTION",
   "OTHER",
 ]);
+const segment = z.enum(["CLIMATIZATION", "ELECTRICAL", "IT"]);
+const complexity = z.enum(["SIMPLE", "INTERMEDIATE", "ADVANCED", "CRITICAL"]);
+const urgency = z.enum(["NORMAL", "PRIORITY", "EMERGENCY", "AFTER_HOURS", "WEEKEND", "HOLIDAY"]);
+const risk = z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
+const warranty = z.enum(["NONE", "STANDARD", "EXTENDED"]);
+const billingMode = z.enum(["SERVICE", "HOUR", "DAY", "DEVICE", "USER", "POINT", "VISIT", "PROJECT", "MONTHLY"]);
+const technicalData = z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]));
 const rules = z
   .object({
     taxRateBasisPoints: z.coerce.number().int().min(0).max(10000),
@@ -149,6 +156,15 @@ export const pricingSimulationFormSchema = z.object({
   scenarioLabel: z.string().trim().min(1).max(40),
   description: z.string().trim().max(500).default(""),
   category,
+  segment: segment.default("CLIMATIZATION"),
+  serviceType: z.string().trim().max(120).default(""),
+  complexity: complexity.default("SIMPLE"),
+  urgency: urgency.default("NORMAL"),
+  risk: risk.default("LOW"),
+  warranty: warranty.default("STANDARD"),
+  billingMode: billingMode.default("SERVICE"),
+  sla: z.string().trim().max(40).default(""),
+  technicalData: technicalData.default({}),
   components: z.array(component).min(1, "Adicione ao menos um componente."),
   commercialRules: rules,
   status: z.enum(["DRAFT", "READY"]).default("DRAFT"),

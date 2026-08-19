@@ -69,6 +69,9 @@ export type FinancialPublicSettings = {
   allowOverpayment: false;
 };
 export type PricingPublicSettings = {
+  monthlyFixedCostCents: number;
+  workingDaysPerMonth: number;
+  workingHoursPerDay: number;
   minimumMarginBasisPoints: number;
   recommendedMarginBasisPoints: number;
   premiumMarginBasisPoints: number;

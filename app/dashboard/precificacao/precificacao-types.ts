@@ -1,3 +1,11 @@
+export type PricingSegment = "CLIMATIZATION" | "ELECTRICAL" | "IT";
+export type PricingComplexity = "SIMPLE" | "INTERMEDIATE" | "ADVANCED" | "CRITICAL";
+export type PricingUrgency = "NORMAL" | "PRIORITY" | "EMERGENCY" | "AFTER_HOURS" | "WEEKEND" | "HOLIDAY";
+export type PricingRisk = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type PricingWarranty = "NONE" | "STANDARD" | "EXTENDED";
+export type PricingBillingMode = "SERVICE" | "HOUR" | "DAY" | "DEVICE" | "USER" | "POINT" | "VISIT" | "PROJECT" | "MONTHLY";
+export type PricingTechnicalValue = string | number | boolean;
+export type PricingTechnicalData = Record<string, PricingTechnicalValue>;
 export type PricingCategory =
   | "INSTALLATION"
   | "MAINTENANCE"
@@ -217,7 +225,19 @@ export type PricingTemplate = {
   updatedAt: string;
   history: PricingHistory[];
 };
-export type PricingParameters = { description: string; category: PricingCategory };
+export type PricingParameters = {
+  description: string;
+  category: PricingCategory;
+  segment?: PricingSegment;
+  serviceType?: string;
+  complexity?: PricingComplexity;
+  urgency?: PricingUrgency;
+  risk?: PricingRisk;
+  warranty?: PricingWarranty;
+  billingMode?: PricingBillingMode;
+  sla?: string;
+  technicalData?: PricingTechnicalData;
+};
 export type PricingResult = {
   directCostCents: number;
   overheadCents: number;

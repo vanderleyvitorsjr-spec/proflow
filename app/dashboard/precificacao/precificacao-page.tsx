@@ -247,18 +247,6 @@ export function PrecificacaoPageContent() {
               }
             />
             <Select
-              aria-label="Status"
-              value={preferences.statusFilter}
-              onChange={(e) =>
-                setPreferences((p) => ({ ...p, statusFilter: e.target.value }))
-              }
-            >
-              <option value="ALL">Todos os status</option>
-              {["DRAFT", "READY", "APPLIED", "OUTDATED", "ARCHIVED"].map((v) => (
-                <option key={v}>{v}</option>
-              ))}
-            </Select>
-            <Select
               aria-label="Indicador"
               value={preferences.indicatorFilter}
               onChange={(e) =>
@@ -266,8 +254,13 @@ export function PrecificacaoPageContent() {
               }
             >
               <option value="ALL">Todas as margens</option>
-              {["LOSS", "LOW_MARGIN", "HEALTHY", "PREMIUM"].map((v) => (
-                <option key={v}>{v}</option>
+              {[
+                ["LOSS", "Prejuízo"],
+                ["LOW_MARGIN", "Margem baixa"],
+                ["HEALTHY", "Margem saudável"],
+                ["PREMIUM", "Margem excelente"],
+              ].map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
               ))}
             </Select>
             <label className="flex items-center gap-2 whitespace-nowrap text-xs">

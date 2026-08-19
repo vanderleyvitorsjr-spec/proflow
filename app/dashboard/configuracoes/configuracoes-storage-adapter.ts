@@ -62,6 +62,26 @@ export const configurationStorageAdapter = {
         }
       }
 
+      // Migração dos padrões antigos de precificação que estavam elevando o preço.
+      // Só alteramos valores que ainda são exatamente os defaults antigos, preservando
+      // qualquer personalização feita pelo usuário.
+      if (state.pricingSettings.minimumMarginBasisPoints === 2000) {
+        state.pricingSettings.minimumMarginBasisPoints = 1500;
+        changed = true;
+      }
+      if (state.pricingSettings.recommendedMarginBasisPoints === 3500) {
+        state.pricingSettings.recommendedMarginBasisPoints = 2000;
+        changed = true;
+      }
+      if (state.pricingSettings.premiumMarginBasisPoints === 5000) {
+        state.pricingSettings.premiumMarginBasisPoints = 2500;
+        changed = true;
+      }
+      if (state.pricingSettings.costPerKmCents === 0) {
+        state.pricingSettings.costPerKmCents = 250;
+        changed = true;
+      }
+
       if (changed) localStorage.setItem(KEY(), JSON.stringify(state));
       return state;
     }

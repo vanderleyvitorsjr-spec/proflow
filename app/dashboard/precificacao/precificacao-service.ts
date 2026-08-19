@@ -136,7 +136,19 @@ export class PricingService {
         "O preço promocional está abaixo do mínimo. Confirme explicitamente para salvar.",
       );
     const version = (current?.currentVersion ?? 0) + 1,
-      parameters = { description: value.description, category: value.category };
+      parameters = {
+        description: value.description,
+        category: value.category,
+        segment: value.segment,
+        serviceType: value.serviceType || undefined,
+        complexity: value.complexity,
+        urgency: value.urgency,
+        risk: value.risk,
+        warranty: value.warranty,
+        billingMode: value.billingMode,
+        sla: value.sla || undefined,
+        technicalData: value.technicalData,
+      };
     const simulation: PricingSimulation = {
       id: id ?? crypto.randomUUID(),
       sequence,

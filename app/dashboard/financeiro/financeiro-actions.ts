@@ -183,6 +183,57 @@ export const createServiceOrderReceivableAction = (
     );
     return { transaction, existing: false };
   });
+export const ensureCompletedServiceOrderReceivableAction = (orderId: string) =>
+  action(async () => {
+    const state = await service.listState();
+    const key = `SERVICE_ORDER:${orderId}:RECEIVABLE:MAIN`;
+    const existing = state.transactions.find(
+      (item) => item.idempotencyKey === key && !item.archivedAt,
+    );
+    if (existing) return { transaction: existing, existing: true };
+
+    const order = await financialRelationsGateway.requireEligibleOrder(orderId);
+    const account = state.accounts.find((item) => item.isDefault && !item.archivedAt)
+      ?? state.accounts.find((item) => !item.archivedAt);
+    if (!account) throw new Error("Cadastre uma conta financeira antes de concluir a Ordem de Serviço.");
+
+    const today = new Date().toISOString().slice(0, 10);
+    const transaction = await service.createObligation(
+      "RECEIVABLE",
+      {
+        title: `Recebível da OS ${order.number}`,
+        description: order.title,
+        category: "Serviços",
+        accountId: account.id,
+        total: moneyInput(order.estimatedValueCents),
+        issueDate: today,
+        competenceDate: today,
+        firstDueDate: today,
+        installmentCount: 1,
+        supplier: "",
+        customerName: order.client.name,
+        clientId: order.client.id,
+        notes: `Gerado automaticamente ao concluir a Ordem de Serviço ${order.number}.`,
+      },
+      {
+        source: "SERVICE_ORDER",
+        sourceId: order.id,
+        clientId: order.client.id,
+        clientNameSnapshot: order.client.name,
+        customerName: order.client.name,
+        serviceOrderId: order.id,
+        serviceOrderNumberSnapshot: order.number,
+        serviceOrderTitleSnapshot: order.title,
+        serviceOrderValueSnapshotCents: order.estimatedValueCents,
+        serviceOrderUpdatedAtSnapshot: order.updatedAt,
+        purpose: "MAIN",
+        idempotencyKey: key,
+        manuallyModified: false,
+      },
+    );
+    return { transaction, existing: false };
+  });
+
 export const listFinancialDivergencesAction = () =>
   action(async () => {
     const state = await service.listState(),

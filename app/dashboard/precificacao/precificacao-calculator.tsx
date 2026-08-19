@@ -14,7 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { DecimalValueBRInput } from "@/components/ui/br-masked-inputs";
 
 import type { PricingCalculationInput } from "./precificacao-data";
 
@@ -53,12 +53,10 @@ function NumericField({
       <span className="text-xs font-semibold text-muted-foreground">{label}</span>
 
       <div className="relative">
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
+        <DecimalValueBRInput
           value={value}
-          onChange={(event) => onChange(Number(event.target.value) || 0)}
+          maximumFractionDigits={2}
+          onValueChange={(next) => onChange(Math.max(0, next))}
           className="h-9 rounded-[var(--radius-control)] pr-14"
         />
 
@@ -90,20 +88,14 @@ export function PrecificacaoCalculator({
     values.foodCost +
     values.thirdPartyCost;
 
-  const taxAmount = directCost * (values.taxRate / 100);
-  const commissionAmount = directCost * (values.commissionRate / 100);
-
-  const costBeforeMargin = directCost + taxAmount + commissionAmount;
-
-  const marginAmount = costBeforeMargin * (values.marginRate / 100);
-
-  const grossPrice = costBeforeMargin + marginAmount;
-
+  const divisor = 1 - (values.taxRate + values.commissionRate + values.marginRate) / 100;
+  const grossPrice = divisor > 0 ? directCost / divisor : 0;
+  const marginAmount = grossPrice * (values.marginRate / 100);
   const discountAmount = grossPrice * (values.discountRate / 100);
-
   const finalPrice = Math.max(0, grossPrice - discountAmount);
-  const estimatedProfit = finalPrice - costBeforeMargin;
-
+  const taxAmount = finalPrice * (values.taxRate / 100);
+  const commissionAmount = finalPrice * (values.commissionRate / 100);
+  const estimatedProfit = finalPrice - directCost - taxAmount - commissionAmount;
   const effectiveMargin = finalPrice > 0 ? (estimatedProfit / finalPrice) * 100 : 0;
 
   return (
@@ -281,7 +273,7 @@ export function PrecificacaoCalculator({
               </p>
 
               <p className="mt-2 text-sm text-slate-300">
-                Valor considerando custos, encargos, margem e desconto.
+                Valor calculado pelo divisor financeiro sobre o custo real, sem margem sobre margem.
               </p>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
@@ -358,7 +350,7 @@ export function PrecificacaoCalculator({
                 Custo total
               </span>
               <strong className="text-foreground">
-                {formatCurrency(costBeforeMargin)}
+                {formatCurrency(directCost)}
               </strong>
             </div>
 

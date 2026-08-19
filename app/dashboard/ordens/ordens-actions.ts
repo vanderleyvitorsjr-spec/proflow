@@ -19,6 +19,15 @@ const service = new OrdensService(
   new OrdensRepository(ordensStorageAdapter),
   new PendingAgendaIntegration(),
 );
+
+async function publishCompletionIntegrations(order: OrdemRecord) {
+  await publishServiceOrderCompleted(order);
+  const { ensureCompletedServiceOrderReceivableAction } = await import(
+    "@/app/dashboard/financeiro/financeiro-actions"
+  );
+  const financial = await ensureCompletedServiceOrderReceivableAction(order.id);
+  if (!financial.ok) throw new Error(financial.error.message);
+}
 export const listOrdensAction = () => service.list();
 export const getOrdemAction = (id: string) => service.get(id);
 export const createOrdemAction = (input: OrdemFormValues) => service.create(input);
@@ -26,7 +35,7 @@ export const updateOrdemAction = async (id: string, input: OrdemFormValues) => {
   const previous = await service.get(id);
   const order = await service.update(id, input);
   if (previous?.status !== "COMPLETED" && order.status === "COMPLETED")
-    await publishServiceOrderCompleted(order);
+    await publishCompletionIntegrations(order);
   return order;
 };
 export const changeOrdemStatusAction = async (
@@ -36,7 +45,7 @@ export const changeOrdemStatusAction = async (
   const previous = await service.get(id);
   const order = await service.changeStatus(id, status);
   if (previous?.status !== "COMPLETED" && order.status === "COMPLETED")
-    await publishServiceOrderCompleted(order);
+    await publishCompletionIntegrations(order);
   return order;
 };
 export const updateOrdemChecklistAction = (id: string, items: OrdemChecklistItem[]) =>
@@ -50,7 +59,7 @@ export const resumeOrdemExecutionAction = (id: string) => service.resumeExecutio
 export const completeOrdemExecutionAction = async (id: string) => {
   const previous = await service.get(id);
   const order = await service.completeExecution(id);
-  if (previous?.status !== "COMPLETED") await publishServiceOrderCompleted(order);
+  if (previous?.status !== "COMPLETED") await publishCompletionIntegrations(order);
   return order;
 };
 export const addOrdemWorkNoteAction = (

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { ProFlowLogo } from "@/components/brand-proflow-logo";
 
 import { LoginForm } from "./login-form";
 
@@ -54,14 +55,9 @@ export default async function LoginPage({
 
       <div className="relative mx-auto grid min-h-screen w-full max-w-[1500px] lg:grid-cols-[1.08fr_0.92fr]">
         <section className="hidden min-h-screen flex-col justify-between px-12 py-10 lg:flex xl:px-16 xl:py-14">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl border border-sky-300/25 bg-sky-400/10 shadow-[0_0_40px_rgba(56,189,248,.16)]">
-              <Workflow className="size-5 text-sky-300" />
-            </div>
-            <div>
-              <p className="text-lg font-bold tracking-tight">ProFlow</p>
-              <p className="text-xs text-slate-400">Gestão operacional inteligente</p>
-            </div>
+          <div>
+            <ProFlowLogo className="[&>span]:text-white" />
+            <p className="mt-1 pl-[2.65rem] text-xs text-slate-400">Gestão operacional inteligente</p>
           </div>
 
           <div className="max-w-2xl">
@@ -110,16 +106,9 @@ export default async function LoginPage({
 
         <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:bg-black/10">
           <div className="w-full max-w-[470px]">
-            <div className="mb-6 flex items-center justify-center gap-3 lg:hidden">
-              <div className="flex size-11 items-center justify-center rounded-2xl border border-sky-300/25 bg-sky-400/10">
-                <Workflow className="size-5 text-sky-300" />
-              </div>
-              <div>
-                <p className="text-lg font-bold">ProFlow</p>
-                <p className="text-xs text-slate-400">
-                  Gestão operacional inteligente
-                </p>
-              </div>
+            <div className="mb-6 flex flex-col items-center justify-center lg:hidden">
+              <ProFlowLogo className="[&>span]:text-white" />
+              <p className="mt-1 text-xs text-slate-400">Gestão operacional inteligente</p>
             </div>
 
             <Card className="border-white/10 bg-slate-900/85 p-6 text-white shadow-2xl shadow-black/35 backdrop-blur-xl sm:p-8">

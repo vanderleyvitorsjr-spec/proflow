@@ -16,7 +16,6 @@ import {
   Sun,
   UserRound,
   Users,
-  Wrench,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -30,6 +29,7 @@ import { normalizeProperName } from "@/lib/br-formatters";
 import { setCompanyStorageContext } from "@/lib/storage/company-storage-key";
 import { cn } from "@/lib/utils";
 import { GlobalCommandCenter } from "./global-command-center";
+import { ProFlowLogo } from "@/components/brand-proflow-logo";
 
 function getPageTitle(pathname: string) {
   const item = [...dashboardNavigation]
@@ -73,16 +73,8 @@ export function DashboardShell({ children, context }: { children: React.ReactNod
       )}
     >
       <div className="flex h-[5.25rem] items-center gap-3 px-4">
-        <Link href="/dashboard" className={cn("flex min-w-0 items-center gap-3", isCollapsed && "mx-auto")}>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Wrench className="h-5 w-5" aria-hidden="true" />
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-[1.05rem] font-bold tracking-tight text-sidebar-foreground">ProFlow</p>
-              <p className="truncate text-[0.68rem] font-medium text-sidebar-muted">Gestão técnica</p>
-            </div>
-          )}
+        <Link href="/dashboard" className={cn("flex min-w-0 items-center", isCollapsed && "mx-auto")}>
+          <ProFlowLogo compact={isCollapsed} />
         </Link>
         <Button
           type="button"
@@ -199,13 +191,17 @@ export function DashboardShell({ children, context }: { children: React.ReactNod
             <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
 
-          <div className="min-w-0 lg:hidden">
-            <p className="truncate text-base font-semibold tracking-tight text-foreground">{pageTitle}</p>
-            <p className="hidden text-[0.68rem] font-medium text-muted-foreground sm:block">{normalizeProperName(context.companyName)}</p>
+          <div className="flex min-w-0 items-center gap-2 lg:hidden">
+            <ProFlowLogo compact className="shrink-0" />
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold tracking-tight text-foreground">{pageTitle}</p>
+              <p className="hidden text-[0.68rem] font-medium text-muted-foreground sm:block">{normalizeProperName(context.companyName)}</p>
+            </div>
           </div>
 
-          <div className="hidden w-full max-w-xl items-center lg:flex">
-            <GlobalCommandCenter />
+          <div className="hidden w-full max-w-2xl items-center gap-3 lg:flex">
+            <ProFlowLogo compact className="shrink-0" />
+            <div className="min-w-0 flex-1"><GlobalCommandCenter /></div>
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">

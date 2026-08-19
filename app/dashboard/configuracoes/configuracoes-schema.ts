@@ -141,6 +141,9 @@ export const configStateSchema = z.object({
     allowOverpayment: z.literal(false),
   }),
   pricingSettings: z.object({
+    monthlyFixedCostCents: z.number().int().nonnegative().default(0),
+    workingDaysPerMonth: z.number().int().positive().default(22),
+    workingHoursPerDay: z.number().positive().default(8),
     minimumMarginBasisPoints: z.number().int().nonnegative(),
     recommendedMarginBasisPoints: z.number().int().nonnegative(),
     premiumMarginBasisPoints: z.number().int().nonnegative(),

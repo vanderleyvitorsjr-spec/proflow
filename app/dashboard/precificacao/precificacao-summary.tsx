@@ -75,7 +75,7 @@ export function PrecificacaoSummary({
       value: numberFormatter.format(reviewServices),
       description: "Precisam de validação de custos",
       icon: FileClock,
-      iconClass: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+      iconClass: "bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400",
     },
     {
       label: "Lucro estimado",

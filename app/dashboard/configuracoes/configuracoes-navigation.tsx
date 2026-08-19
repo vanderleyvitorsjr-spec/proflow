@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { CurrencyCentsInput, DecimalValueBRInput, PercentageBasisPointsInput } from "@/components/ui/br-masked-inputs";
 import {
   PageHeader,
   PageHeaderActions,
@@ -46,7 +47,6 @@ import { ptBrLabel, teamRoleLabel } from "@/lib/pt-br-labels";
 type View = ConfigSection | "history" | "transfer";
 const items: { id: View; label: string; icon: typeof Settings2 }[] = [
   { id: "company", label: "Empresa", icon: Building2 },
-  { id: "team", label: "Equipe", icon: Users },
   { id: "operational", label: "Operação", icon: SlidersHorizontal },
   { id: "financial", label: "Financeiro", icon: Calculator },
   { id: "pricing", label: "Precificação", icon: Settings2 },
@@ -367,7 +367,6 @@ export function ConfigurationCenter() {
         ["businessHours", "Horário de atendimento"],
         ["displayName", "Nome exibido"],
         ["shortName", "Nome curto"],
-        ["logoMetadata", "Metadado da logomarca"],
         ["iconMetadata", "Metadado do ícone"],
         ["primaryColor", "Cor principal", "color"],
         ["secondaryColor", "Cor secundária", "color"],
@@ -706,47 +705,56 @@ export function ConfigurationCenter() {
         ["minimumMarginBasisPoints", "Margem mínima"],
         ["recommendedMarginBasisPoints", "Margem recomendada"],
         ["premiumMarginBasisPoints", "Margem premium"],
-        ["taxBasisPoints", "Imposto padrão"],
-        ["commissionBasisPoints", "Comissão padrão"],
-        ["laborBurdenBasisPoints", "Encargos de mão de obra"],
-        ["technicalLossBasisPoints", "Perda técnica"],
-        ["overheadBasisPoints", "Overhead"],
+        ["taxBasisPoints", "Imposto sobre faturamento"],
+        ["commissionBasisPoints", "Taxa do cartão / antecipação"],
       ];
       return panel(
         "Parâmetros de precificação",
-        "Percentuais em basis points e valores monetários em centavos.",
+        "Defina a base da hora técnica e as regras comerciais usadas na formação do preço.",
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <label className={field}>
+            Custos fixos mensais (R$)
+            <CurrencyCentsInput
+              className="mt-1"
+              value={p.monthlyFixedCostCents}
+              onValueChange={(value) => set("monthlyFixedCostCents", value)}
+            />
+            <span className="mt-1 block text-[0.68rem] text-muted-foreground">Inclua pró-labore, DAS/contador, internet, telefone, software, aluguel e demais custos fixos. Digite o valor normalmente; o campo formata em reais.</span>
+          </label>
+          <label className={field}>
+            Dias produtivos por mês
+            <DecimalValueBRInput className="mt-1" value={p.workingDaysPerMonth} maximumFractionDigits={0} onValueChange={(value) => set("workingDaysPerMonth", Math.max(1, Math.round(value)))} />
+          </label>
+          <label className={field}>
+            Horas faturáveis por dia
+            <DecimalValueBRInput className="mt-1" value={p.workingHoursPerDay} maximumFractionDigits={2} onValueChange={(value) => set("workingHoursPerDay", Math.max(0.5, value))} />
+            <span className="mt-1 block text-[0.68rem] text-muted-foreground">Use as horas que realmente podem ser vendidas em serviços. Se parte do dia fica em orçamento, compras, administração ou deslocamentos não faturados, não conte essas horas como faturáveis.</span>
+          </label>
           {percentages.map(([key, label]) => (
             <label key={key} className={field}>
               {label} (%)
-              <Input
+              <PercentageBasisPointsInput
                 className="mt-1"
-                type="number"
-                step="0.01"
-                value={Number(p[key]) / 100}
-                onChange={(e) => set(key, Math.round(Number(e.target.value) * 100))}
+                value={Number(p[key])}
+                onValueChange={(value) => set(key, value)}
               />
             </label>
           ))}
           <label className={field}>
             Custo por km (R$)
-            <Input
+            <CurrencyCentsInput
               className="mt-1"
-              type="number"
-              step="0.01"
-              value={p.costPerKmCents / 100}
-              onChange={(e) =>
-                set("costPerKmCents", Math.round(Number(e.target.value) * 100))
-              }
+              value={p.costPerKmCents}
+              onValueChange={(value) => set("costPerKmCents", value)}
             />
           </label>
           <label className={field}>
-            Horas mensais de equipamentos
-            <Input
+            Horas mensais de uso dos equipamentos
+            <DecimalValueBRInput
               className="mt-1"
-              type="number"
               value={p.equipmentMonthlyHours}
-              onChange={(e) => set("equipmentMonthlyHours", Number(e.target.value))}
+              maximumFractionDigits={1}
+              onValueChange={(value) => set("equipmentMonthlyHours", Math.max(1, value))}
             />
           </label>
           <label className={field}>
