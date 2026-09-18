@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  calculateQuote,
+  calculateQuote, duplicateQuoteItem, reorderQuoteItems, validateQuoteItem,
   calculateQuoteItem,
   compareQuoteVersions,
   quoteFinancialSummary,
@@ -65,11 +65,14 @@ describe("Conversão e condições comerciais — 20 cenários", () => {
   const missingCases: Array<[string, Partial<ProfessionalQuote>]> = [
     ["Cliente", { clientId: "" }], ["Título", { title: "" }], ["Pelo menos um item válido", { items: [] }],
     ["Endereço do Atendimento", { address: "" }], ["Tipo de Serviço", { serviceType: undefined }],
-    ["Responsável", { responsible: "" }], ["Situação compatível", { status: "DRAFT" }],
+    ["Responsável", { responsible: "" }], ["Orçamento aprovado", { status: "DRAFT" }],
     ["Orçamento ainda não convertido", { serviceOrderId: "order-1" }],
   ];
   for (const [field, changes] of missingCases) it(`informa ausência de ${field}`, () => assert.ok(validateQuoteConversion(quote(changes)).includes(field)));
-  it("calcula lucro e margem em centavos", () => assert.deepEqual(quoteFinancialSummary(quote()).profitCents, 12_000));
+  it("calcula lucro e margem em centavos considerando quantidade", () => assert.deepEqual(quoteFinancialSummary(quote()).profitCents, 4_000));
+  it("duplica item como linha independente", () => { const duplicated = duplicateQuoteItem([item()], "item-1", "item-2"); assert.equal(duplicated.length, 2); assert.notEqual(duplicated[0], duplicated[1]); });
+  it("reorganiza e persiste a ordem dos itens", () => { const reordered = reorderQuoteItems([item({ id: "a", order: 0 }), item({ id: "b", order: 1 })], "b", -1); assert.deepEqual(reordered.map((entry) => [entry.id, entry.order]), [["b", 0], ["a", 1]]); });
+  it("valida descrição, quantidade e desconto", () => assert.equal(validateQuoteItem(item({ description: "", quantity: 0, discountCents: 30_000 })).length, 3));
   it("compara versões sem sobrescrever a anterior", () => assert.equal(compareQuoteVersions(quote(), quote({ version: 2, totalCents: 25_000 })).previousTotalCents, 20_000));
 });
 

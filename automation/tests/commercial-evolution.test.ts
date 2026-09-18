@@ -4,7 +4,7 @@ import { calculateQuote, calculateQuoteItem, normalizeQuote, quoteMatchesSearch,
 import { calculateTransparentPrice, normalizeCatalogService, serviceSnapshot, type CatalogService, type PriceSimulationInput } from "../../app/dashboard/precificacao/catalogo-servicos-domain";
 import { compareQuotation, purchaseOrderNumber, quotationNumber, selectQuotationResponse, type SupplierQuotationResponse } from "../../app/dashboard/fornecedores/compras-domain";
 import { calculateNextMaintenance, maintenanceSituation, warrantySituation } from "../../app/dashboard/equipamentos/equipamento-tecnico-domain";
-import { documentIdentityFields, quoteDocument, serviceOrderDocument, technicalReportDocument, visibleDocumentFields } from "../../components/documents/professional-document-domain";
+import { documentEnumLabel, documentIdentityFields, quoteDocument, receiptDocument, serviceOrderDocument, technicalReportDocument, visibleDocumentFields } from "../../components/documents/professional-document-domain";
 import { neutralizeSpreadsheetFormula, toBrazilianCsv } from "../../lib/csv-br";
 import { formatBrazilianPhone, formatCnpj, formatCpf, formatCurrencyBRLFromCents } from "../../lib/br-formatters";
 
@@ -31,7 +31,8 @@ describe("Orçamentos profissionais", () => {
   it("rejeita quantidade negativa", () => assert.throws(() => makeItem({ quantity: -1 })));
   it("rejeita valor inválido", () => assert.throws(() => makeItem({ unitPriceCents: Number.NaN })));
   it("confirma desconto excessivo", () => assert.throws(() => makeItem({ discountCents: 30_000 })));
-  it("calcula subtotal", () => assert.equal(calculateQuote([makeItem(), makeItem()]).subtotalCents, 38_000));
+  it("calcula subtotal bruto", () => assert.equal(calculateQuote([makeItem(), makeItem()]).subtotalCents, 40_000));
+  it("consolida descontos dos itens", () => assert.equal(calculateQuote([makeItem(), makeItem()]).itemDiscountCents, 2_000));
   it("aplica desconto", () => assert.equal(calculateQuote([makeItem()], 2_000).totalCents, 17_000));
   it("aplica acréscimo", () => assert.equal(calculateQuote([makeItem()], 0, 2_000).totalCents, 21_000));
   it("aplica imposto", () => assert.equal(calculateQuote([makeItem()], 0, 0, 1_000).totalCents, 20_000));
@@ -120,6 +121,27 @@ describe("Documentos e Exportações", () => {
   it("gera CSV com BOM", () => assert.equal(toBrazilianCsv([["Cabeçalho"]]).charCodeAt(0), 0xfeff));
   it("gera cabeçalho em português", () => assert.ok(toBrazilianCsv([["Descrição"]]).includes("Descrição")));
   it("gera Orçamento", () => assert.equal(quoteDocument({ number: "ORC-1", version: 1, client: "Cliente", items: [], subtotalCents: 0, discountCents: 0, surchargeCents: 0, totalCents: 0 }).title, "Orçamento"));
+  it("traduz SERVICE no documento", () => assert.equal(documentEnumLabel("SERVICE"), "Serviço"));
+  it("não expõe SERVICE na tabela do Orçamento", () => {
+    const document = quoteDocument({ number: "ORC-1", version: 1, client: "Cliente", items: [{ description: "Serviço", quantity: 1, unit: "SERVICE", unitPriceCents: 1000, discountCents: 0, totalCents: 1000 }], subtotalCents: 1000, discountCents: 0, surchargeCents: 0, totalCents: 1000 });
+    assert.equal(document.sections.find((section) => section.table)?.table?.rows[0]?.[2], "Serviço");
+  });
+  it("rotula prazo e garantia", () => {
+    const document = quoteDocument({ number: "ORC-1", version: 1, client: "Cliente", items: [], subtotalCents: 0, discountCents: 0, surchargeCents: 0, totalCents: 0, deadline: "5 dias", warranty: "90 dias" });
+    assert.deepEqual(document.highlightFields?.slice(-2).map((field) => field.label), ["Prazo de execução", "Garantia"]);
+  });
+  it("mantém custos internos fora do Orçamento", () => {
+    const serialized = JSON.stringify(quoteDocument({ number: "ORC-1", version: 1, client: "Cliente", items: [], subtotalCents: 0, discountCents: 0, surchargeCents: 0, totalCents: 0 }));
+    assert.equal(/custo interno|lucro|margem/i.test(serialized), false);
+  });
+  it("mantém identidade da empresa no documento", () => assert.equal(quoteDocument({ identity: { companyName: "Empresa A", logoUrl: "/logo-a" }, number: "ORC-1", version: 1, client: "Cliente", items: [], subtotalCents: 0, discountCents: 0, surchargeCents: 0, totalCents: 0 }).identity?.companyName, "Empresa A"));
+  it("não mistura identidades de empresas", () => {
+    const a = quoteDocument({ identity: { companyName: "Empresa A" }, number: "A", version: 1, client: "Cliente", items: [], subtotalCents: 0, discountCents: 0, surchargeCents: 0, totalCents: 0 });
+    const b = quoteDocument({ identity: { companyName: "Empresa B" }, number: "B", version: 1, client: "Cliente", items: [], subtotalCents: 0, discountCents: 0, surchargeCents: 0, totalCents: 0 });
+    assert.notEqual(a.identity?.companyName, b.identity?.companyName);
+  });
+  it("recibo informa natureza não fiscal", () => assert.equal(receiptDocument({ number: "REC-1", receivedFrom: "Cliente", amountCents: 1000, description: "Serviço", paidAt: "2026-09-18" }).nonFiscal, true));
+  it("recibo destaca o total recebido", () => assert.equal(receiptDocument({ number: "REC-1", receivedFrom: "Cliente", amountCents: 485000, description: "Serviço", paidAt: "2026-09-18" }).financialSummary?.[0]?.featured, true));
   it("gera Ordem", () => assert.equal(serviceOrderDocument({ number: "OS-1", client: "Cliente", service: "Serviço" }).title, "Ordem de Serviço"));
   it("gera Relatório Técnico", () => assert.equal(technicalReportDocument({ number: "RT-1", equipment: "Equipamento", issue: "Falha", diagnosis: "Diagnóstico", services: [] }).title, "Relatório Técnico"));
 });

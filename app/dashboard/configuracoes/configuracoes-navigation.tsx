@@ -44,6 +44,7 @@ import type { ConfigSection, ConfigState, TeamMember } from "./configuracoes-typ
 import { ConfigurationTeamDialog } from "./configuracoes-team-dialog";
 import { ConfigurationConfirmationDialog } from "./configuracoes-confirmation-dialog";
 import { ptBrLabel, teamRoleLabel } from "@/lib/pt-br-labels";
+import { uploadStoredDocumentAction } from "@/app/dashboard/documentos/document-file-actions";
 type View = ConfigSection | "history" | "transfer";
 const items: { id: View; label: string; icon: typeof Settings2 }[] = [
   { id: "company", label: "Empresa", icon: Building2 },
@@ -129,6 +130,7 @@ export function ConfigurationCenter() {
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false),
+    [uploadingLogo, setUploadingLogo] = useState(false),
     [teamSearch, setTeamSearch] = useState(""),
     [teamDialog, setTeamDialog] = useState<TeamMember | null | undefined>(),
     [confirmation, setConfirmation] = useState<{
@@ -347,7 +349,7 @@ export function ConfigurationCenter() {
     const state = loadedState;
     if (view === "company") {
       const company = state.company,
-        set = (key: keyof typeof company, value: string | string[]) =>
+        set = (key: keyof typeof company, value: string | string[] | boolean) =>
           update("company", { ...company, [key]: value }, "company");
       const fields: [keyof typeof company, string, string?][] = [
         ["legalName", "Razão social"],
@@ -378,6 +380,25 @@ export function ConfigurationCenter() {
         "Empresa e identidade",
         "Dados empresariais e conteúdo exibido nos documentos.",
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className={`${field} rounded-lg border p-3 sm:col-span-2 xl:col-span-3`}>
+            <span>Logotipo dos documentos</span>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {company.logoMetadata ? <img src={`/api/documentos-arquivos/${company.logoMetadata}?inline=1`} alt="Logotipo atual da empresa" className="h-14 max-w-48 rounded border bg-white object-contain p-1" /> : <span className="text-xs text-muted-foreground">Nenhum logotipo enviado. O nome da empresa será usado como alternativa.</span>}
+              <label className="cursor-pointer rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted">
+                {uploadingLogo ? "Enviando..." : company.logoMetadata ? "Substituir logotipo" : "Enviar logotipo"}
+                <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo} onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setUploadingLogo(true); setError("");
+                  try { const form = new FormData(); form.set("file", file); const uploaded = await uploadStoredDocumentAction(form); set("logoMetadata", uploaded.id); setMessage("Logotipo enviado. Salve a seção para aplicá-lo aos documentos."); }
+                  catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível enviar o logotipo."); }
+                  finally { setUploadingLogo(false); event.target.value = ""; }
+                }}/>
+              </label>
+              {company.logoMetadata ? <Button type="button" size="sm" variant="secondary" onClick={() => set("logoMetadata", "")}>Remover</Button> : null}
+              <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={company.showLogoOnDocuments} onChange={(event) => set("showLogoOnDocuments", event.target.checked)}/>Exibir nos documentos</label>
+            </div>
+          </div>
           {fields.map(([key, label, type]) => (
             <label key={key} className={field}>
               {label}

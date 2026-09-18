@@ -1,4 +1,4 @@
-import { normalizeProperName } from "../../../lib/br-formatters";
+import { formatCurrencyBRLFromCents, formatDateBR, normalizeProperName } from "../../../lib/br-formatters";
 
 export const quoteStatuses = [
   "DRAFT", "REVIEW", "WAITING_SEND", "SENT", "VIEWED", "APPROVED",
@@ -14,7 +14,16 @@ export type QuoteUnit =
 export interface QuoteItem {
   id: string;
   sourceId?: string;
-  sourceSnapshot?: { code: string; name: string; capturedAt: string };
+  sourceSnapshot?: {
+    kind?: "CATALOG_SERVICE" | "STOCK_ITEM";
+    code: string;
+    name: string;
+    description?: string;
+    unit?: string;
+    unitPriceCents?: number;
+    estimatedCostCents?: number;
+    capturedAt: string;
+  };
   description: string;
   category: QuoteItemCategory;
   quantity: number;
@@ -58,6 +67,8 @@ export interface ProfessionalQuote {
   clientName: string;
   clientDocument?: string;
   clientPhone?: string;
+  clientEmail?: string;
+  zipCode?: string;
   responsible?: string;
   companyName?: string;
   address?: string;
@@ -75,6 +86,7 @@ export interface ProfessionalQuote {
   customerNotes?: string;
   items: QuoteItem[];
   subtotalCents: number;
+  itemDiscountCents?: number;
   discountCents: number;
   surchargeCents: number;
   taxCents: number;
@@ -122,16 +134,42 @@ export function calculateQuoteItem(
   return { ...input, totalCents: Math.max(0, gross - input.discountCents) };
 }
 
+export function validateQuoteItem(item: QuoteItem) {
+  const errors: string[] = [];
+  if (!item.description.trim()) errors.push("Informe a descrição do item.");
+  if (!Number.isFinite(item.quantity) || item.quantity <= 0) errors.push("A quantidade deve ser maior que zero.");
+  if (!Number.isInteger(item.unitPriceCents) || item.unitPriceCents < 0) errors.push("Informe um valor unitário válido.");
+  const gross = Math.round(item.quantity * item.unitPriceCents);
+  if (!Number.isInteger(item.discountCents) || item.discountCents < 0 || item.discountCents > gross)
+    errors.push("O desconto não pode superar o subtotal do item.");
+  return errors;
+}
+
+export function duplicateQuoteItem(items: readonly QuoteItem[], itemId: string, newId: string) {
+  const source = items.find((item) => item.id === itemId);
+  if (!source) return [...items];
+  return [...items, { ...structuredClone(source), id: newId, order: items.length }];
+}
+
+export function reorderQuoteItems(items: readonly QuoteItem[], itemId: string, direction: -1 | 1) {
+  const index = items.findIndex((item) => item.id === itemId), target = index + direction;
+  if (index < 0 || target < 0 || target >= items.length) return [...items];
+  const reordered = [...items], [moved] = reordered.splice(index, 1);
+  reordered.splice(target, 0, moved!);
+  return reordered.map((item, order) => ({ ...item, order }));
+}
+
 export function calculateQuote(
   items: readonly QuoteItem[],
   discountCents = 0,
   surchargeCents = 0,
   taxCents = 0,
 ) {
-  const subtotalCents = items.reduce((total, item) => total + item.totalCents, 0);
-  const totalCents = Math.max(0, subtotalCents - discountCents + surchargeCents + taxCents);
-  const estimatedCostCents = items.reduce((total, item) => total + item.estimatedCostCents, 0);
-  return { subtotalCents, discountCents, surchargeCents, taxCents, totalCents, estimatedCostCents };
+  const subtotalCents = items.reduce((total, item) => total + Math.round(item.quantity * item.unitPriceCents), 0);
+  const itemDiscountCents = items.reduce((total, item) => total + item.discountCents, 0);
+  const totalCents = Math.max(0, subtotalCents - itemDiscountCents - discountCents + surchargeCents + taxCents);
+  const estimatedCostCents = items.reduce((total, item) => total + Math.round(item.quantity * item.estimatedCostCents), 0);
+  return { subtotalCents, itemDiscountCents, discountCents, surchargeCents, taxCents, totalCents, estimatedCostCents };
 }
 
 export function normalizeQuote(input: ProfessionalQuote): ProfessionalQuote {
@@ -179,8 +217,30 @@ export function quotePaymentSchedule(totalCents: number, terms: QuotePaymentTerm
   return [{ label: "Condição Personalizada", amountCents: totalCents, dueDate: terms.firstDueDate }];
 }
 
+export function describeQuotePaymentTerms(totalCents: number, terms: QuotePaymentTerms) {
+  const schedule = quotePaymentSchedule(totalCents, terms);
+  const conditions: Record<QuotePaymentTerms["type"], string> = {
+    CASH: "À vista", ENTRY_BALANCE: "Entrada + saldo", INSTALLMENTS: "Parcelado",
+    MILESTONES: "Por etapas", CUSTOM: "Personalizado",
+  };
+  const methods: Record<QuotePaymentTerms["method"], string> = {
+    PIX: "Pix", CASH: "Dinheiro", CREDIT_CARD: "Cartão de crédito",
+    DEBIT_CARD: "Cartão de débito", BOLETO: "Boleto",
+    BANK_TRANSFER: "Transferência bancária", OTHER: "Outro",
+  };
+  const rows = schedule.map((entry) =>
+    `${entry.label}: ${formatCurrencyBRLFromCents(entry.amountCents)}${entry.dueDate ? ` — ${formatDateBR(entry.dueDate)}` : ""}`,
+  );
+  return [
+    `CONDIÇÃO DE PAGAMENTO\n${conditions[terms.type]}`,
+    `FORMA DE PAGAMENTO\n${methods[terms.method]}`,
+    rows.length ? `CRONOGRAMA\n${rows.join("\n")}` : undefined,
+    terms.notes ? `OBSERVAÇÕES\n${terms.notes}` : undefined,
+  ].filter(Boolean).join("\n\n");
+}
+
 export function quoteFinancialSummary(quote: ProfessionalQuote) {
-  const costCents = quote.items.reduce((sum, item) => sum + item.estimatedCostCents, 0);
+  const costCents = quote.items.reduce((sum, item) => sum + Math.round(item.quantity * item.estimatedCostCents), 0);
   const profitCents = quote.totalCents - costCents;
   const marginBasisPoints = quote.totalCents > 0 ? Math.round(profitCents / quote.totalCents * 10_000) : 0;
   const alerts: string[] = [];
@@ -201,7 +261,7 @@ export function validateQuoteConversion(quote: ProfessionalQuote) {
   if (!quote.address?.trim()) missing.push("Endereço do Atendimento");
   if (!quote.serviceType) missing.push("Tipo de Serviço");
   if (!quote.responsible?.trim()) missing.push("Responsável");
-  if (!["APPROVED", "SENT", "VIEWED"].includes(quote.status)) missing.push("Situação compatível");
+  if (quote.status !== "APPROVED") missing.push("Orçamento aprovado");
   if (quote.serviceOrderId) missing.push("Orçamento ainda não convertido");
   return missing;
 }

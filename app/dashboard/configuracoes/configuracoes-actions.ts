@@ -4,6 +4,7 @@ import { ConfigurationService, configurationError } from "./configuracoes-servic
 import { configurationStorageAdapter } from "./configuracoes-storage-adapter";
 import type { ConfigResult } from "./configuracoes-result";
 import type { ConfigSection, TeamMember } from "./configuracoes-types";
+import type { DocumentIdentity } from "@/components/documents/professional-document-domain";
 const service = new ConfigurationService(
   new ConfigurationRepository(configurationStorageAdapter),
 );
@@ -23,6 +24,26 @@ const action = async <T>(
 };
 export const getConfigurationsAction = () => action(() => service.list());
 export const getPublicConfigurationsAction = () => action(() => service.publicSettings());
+export const getDocumentIdentityAction = () => action(async (): Promise<DocumentIdentity> => {
+  const { company } = await service.list();
+  const cityLine = [company.zipCode, company.city, company.state].filter(Boolean).join(" · ");
+  return {
+    logoUrl: company.showLogoOnDocuments && company.logoMetadata
+      ? `/api/documentos-arquivos/${company.logoMetadata}?inline=1`
+      : undefined,
+    companyName: company.tradeName || company.legalName || (company.displayName && company.displayName.trim().toLocaleLowerCase("pt-BR") !== "proflow" ? company.displayName : undefined),
+    legalName: company.legalName,
+    document: company.document,
+    phone: company.phone,
+    whatsapp: company.whatsapp,
+    email: company.email,
+    address: [company.address, cityLine].filter(Boolean).join(" — "),
+    website: company.website,
+    primaryColor: company.primaryColor,
+    footer: company.documentFooter || [company.phone, company.whatsapp, company.email, company.website].filter(Boolean).join(" · "),
+    signature: company.textualSignature,
+  };
+});
 export const getActiveTeamAction = () => action(() => service.activeTeam());
 export const getTeamMemberPublicAction = (id: string) =>
   action(async () => (await service.publicSettings()).team.find((item) => item.id === id) ?? null);

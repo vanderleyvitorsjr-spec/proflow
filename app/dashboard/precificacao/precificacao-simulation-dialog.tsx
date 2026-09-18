@@ -217,31 +217,66 @@ function asPreviewComponents(lines: Line[]) {
 type MarketReference = {
   label: string;
   note: string;
+  lowerReferenceCents?: number;
   upperReferenceCents?: number;
+  source?: string;
 };
 
 function getMarketReference(segment: PricingSegment, serviceType: string): MarketReference | null {
   if (segment === "CLIMATIZATION" && /instalação de split/i.test(serviceType)) {
     return {
-      label: "Instalação padrão de Split em Porto Seguro/BA: R$ 338 a R$ 702, média publicada de R$ 520",
-      note: "Use apenas como faixa de conferência. O cálculo do ProFlow continua partindo dos seus custos reais.",
-      upperReferenceCents: 70200,
+      label: "Instalação padrão de Split: R$ 338 a R$ 702 (referência pública regional)",
+      note: "Use somente para conferência. Materiais, metragem, acesso e capacidade do equipamento alteram o preço.",
+      lowerReferenceCents: 33800, upperReferenceCents: 70200,
     };
   }
   if (segment === "ELECTRICAL") {
     return {
-      label: "Serviço residencial simples de eletricista: referência pública a partir de R$ 299,90 para até 3 serviços",
-      note: "Materiais, infraestrutura nova e serviços complexos podem elevar bastante o valor.",
-      upperReferenceCents: 60000,
+      label: "Serviços elétricos variam fortemente conforme escopo e infraestrutura existente.",
+      note: "A referência de mercado não substitui o cálculo por mão de obra, materiais, deslocamento e risco.",
     };
   }
-  if (segment === "IT") {
-    return {
-      label: "Assistência de computador em Porto Seguro: anúncios locais encontrados a partir de R$ 99",
-      note: "Redes, servidores, backup e atendimento empresarial não possuem tabela pública local confiável; nesses casos prevalece o custo/hora e o escopo.",
-    };
-  }
-  return null;
+  if (segment !== "IT") return null;
+  const normalized = serviceType.toLocaleLowerCase("pt-BR");
+  if (/formatação|reinstalação do windows/.test(normalized)) return {
+    label: "Formatação / reinstalação: R$ 100 a R$ 350",
+    note: "Faixa pública encontrada para Porto Seguro e Bahia. Backup, licença e recuperação de dados devem ser cobrados separadamente.",
+    lowerReferenceCents: 10000, upperReferenceCents: 35000, source: "Pesquisa de mercado 2026",
+  };
+  if (/limpeza|otimização/.test(normalized)) return {
+    label: "Limpeza / otimização de computador: R$ 120 a R$ 450",
+    note: "A faixa varia conforme notebook/desktop, desmontagem, pasta térmica e complexidade.",
+    lowerReferenceCents: 12000, upperReferenceCents: 45000, source: "Pesquisa de mercado 2026",
+  };
+  if (/suporte remoto|suporte presencial|visita técnica|diagnóstico/.test(normalized)) return {
+    label: "Suporte de T.I.: R$ 70 a R$ 200 por hora; chamados avulsos podem chegar a R$ 500",
+    note: "Atendimento presencial pode somar deslocamento. Complexidade, urgência e SLA elevam a cobrança.",
+    lowerReferenceCents: 7000, upperReferenceCents: 20000, source: "Referências nacionais 2026 e prestadores da Bahia",
+  };
+  if (/contrato mensal/.test(normalized)) return {
+    label: "Suporte mensal: aproximadamente R$ 50 a R$ 200 por usuário/mês em planos usuais",
+    note: "Servidor, monitoramento, backup, segurança, SLA e visitas presenciais devem ampliar o valor do contrato.",
+    lowerReferenceCents: 5000, upperReferenceCents: 20000, source: "Referências nacionais 2026",
+  };
+  if (/servidor|firewall|rede|switch|access point|wi-fi|cabeamento|rack|nas/.test(normalized)) return {
+    label: "Infraestrutura de T.I.: precificação por hora/projeto é mais confiável do que uma tabela fixa",
+    note: "Use horas técnicas, quantidade de pontos/equipamentos, materiais, deslocamento, risco e SLA. Referências de hora técnica em 2026 ficam com frequência entre R$ 80 e R$ 200/h para suporte, podendo ser maiores em redes e especialidades.",
+    lowerReferenceCents: 8000, upperReferenceCents: 20000, source: "Referências nacionais 2026",
+  };
+  return {
+    label: "Serviços de T.I.: referência de hora técnica de R$ 70 a R$ 200/h para suporte comum",
+    note: "Use como comparação, nunca como custo. O preço do ProFlow deve continuar partindo dos seus custos reais, escopo, risco e margem.",
+    lowerReferenceCents: 7000, upperReferenceCents: 20000, source: "Referências de mercado 2026",
+  };
+}
+function suggestedBillingModeForIT(serviceType: string): PricingBillingMode {
+  const value = serviceType.toLocaleLowerCase("pt-BR");
+  if (/contrato mensal|monitoramento|backup automático/.test(value)) return "MONTHLY";
+  if (/pontos de rede|cabeamento|crimpagem/.test(value)) return "POINT";
+  if (/implantação de computadores|estação de trabalho|migração de computador|formatação|reinstalação|configuração de computador/.test(value)) return "DEVICE";
+  if (/servidor|rede|firewall|rack|nas|microsoft 365|google workspace|integração/.test(value)) return "PROJECT";
+  if (/suporte remoto|suporte presencial|visita técnica|diagnóstico|correção de erros/.test(value)) return "HOUR";
+  return "SERVICE";
 }
 
 function buildPricingWarnings(
@@ -390,6 +425,7 @@ export function PricingSimulationDialog({
     return result;
   }, [adjustedLines]);
   const marketReference = getMarketReference(segment, serviceType);
+  const activeLaborProfiles = laborProfiles.filter((profile) => profile.active);
   const laborHours = adjustedLines
     .filter((line) => line.type === "LABOR")
     .reduce((sum, line) => sum + Number(line.quantity || 0), 0);
@@ -475,7 +511,7 @@ export function PricingSimulationDialog({
               <div className="sm:col-span-2"><Label htmlFor="pricing-title">Nome do serviço</Label><Input id="pricing-title" name="title" defaultValue={simulation?.title} autoFocus required /></div>
               <div><Label>Segmento</Label><Select value={segment} onChange={(e) => { setSegment(e.target.value as PricingSegment); setServiceType(""); setTechnicalData({}); }}><option value="CLIMATIZATION">Ar-condicionado / Refrigeração</option><option value="ELECTRICAL">Elétrica</option><option value="IT">T.I.</option></Select></div>
               
-              <div className="sm:col-span-2"><Label>Tipo de serviço</Label><Select value={serviceType} onChange={(e) => setServiceType(e.target.value)}><option value="">Selecione...</option>{serviceOptions[segment].map((service) => <option key={service} value={service}>{service}</option>)}</Select></div>
+              <div className="sm:col-span-2"><Label>Tipo de serviço</Label><Select value={serviceType} onChange={(e) => { const next = e.target.value; setServiceType(next); if (segment === "IT") setBillingMode(suggestedBillingModeForIT(next)); }}><option value="">Selecione...</option>{serviceOptions[segment].map((service) => <option key={service} value={service}>{service}</option>)}</Select></div>
               <div><Label>Categoria financeira</Label><Select name="category" defaultValue={simulation?.parameters.category ?? "OTHER"}>{categories.map((c) => <option key={c} value={c}>{categoryLabels[c]}</option>)}</Select></div>
               <div><Label>Forma de cobrança</Label><Select value={billingMode} onChange={(e) => setBillingMode(e.target.value as PricingBillingMode)}><option value="SERVICE">Por serviço</option><option value="HOUR">Por hora</option><option value="DAY">Por diária</option><option value="DEVICE">Por dispositivo</option><option value="USER">Por usuário</option><option value="POINT">Por ponto</option><option value="VISIT">Por visita</option><option value="PROJECT">Por projeto</option><option value="MONTHLY">Mensal</option></Select></div>
               
@@ -493,6 +529,7 @@ export function PricingSimulationDialog({
                 {technicalFields(segment).map(([key, label]) => <div key={key}><Label>{label}</Label><Input value={String(technicalData[key] ?? "")} onChange={(e) => setTechnicalData((current) => ({ ...current, [key]: e.target.value }))} /></div>)}
               </div>
               {segment === "IT" && serviceType.includes("OCT") ? <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs"><strong>Escopo OCT sugerido:</strong> pasta centralizada, máquina OCT, recepção, sala principal, sala 2, permissões, testes de leitura/gravação e orientação da equipe.</div> : null}
+              {segment === "IT" ? <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 text-xs text-muted-foreground"><strong className="text-foreground">Como preencher T.I.:</strong> escolha o serviço para o ProFlow sugerir a forma de cobrança; informe quantos equipamentos/usuários/pontos entram no escopo e registre somente dados que alteram esforço, risco ou custo. Prazo de entrega não é a mesma coisa que horas técnicas.</div> : null}
             </div> : null}
           </section>
 
@@ -510,12 +547,12 @@ export function PricingSimulationDialog({
               <Result label="Horas faturáveis por dia" value={`${configuration?.workingHoursPerDay || 8} h`} />
               <Result label="Custo da hora técnica" value={formatCurrencyBRLFromCents(calculatedHourlyCostCents)} emphasis />
             </div>
-            {(configuration?.monthlyFixedCostCents || 0) <= 0 ? <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-300">Configure os custos fixos mensais em Configurações → Precificação. Sem essa base, o ProFlow não consegue calcular corretamente o custo real da hora-homem.</p> : null}
+            {(configuration?.monthlyFixedCostCents || 0) <= 0 ? <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-300">Configure os custos fixos em Configurações → Precificação para calcular a hora automaticamente. Enquanto isso, você pode informar manualmente o custo da hora na linha de mão de obra; o ProFlow calculará normalmente com esse valor.</p> : null}
           </section>
 
           <section className="rounded-xl border bg-card">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">
-              <div><h3 className="text-sm font-semibold">Composição do custo real</h3><p className="text-xs text-muted-foreground">Materiais e deslocamento são lançados diretamente em reais. Mão de obra usa horas; equipamentos podem puxar custo do cadastro.</p></div>
+              <div><h3 className="text-sm font-semibold">Composição do custo real</h3><p className="text-xs text-muted-foreground">{segment === "IT" ? "Informe somente os custos que realmente fazem parte deste atendimento: tempo técnico, peças/licenças, deslocamento presencial e terceiros. Não repita custos fixos já incluídos na hora técnica." : "Materiais e deslocamento são lançados diretamente em reais. Mão de obra usa horas; equipamentos podem puxar custo do cadastro."}</p></div>
               <div className="flex flex-wrap gap-1">{types.map((type) => <Button key={type} type="button" size="sm" variant="secondary" onClick={() => setLines((current) => [...current, defaultLine(type)])}>+ {typeLabels[type]}</Button>)}</div>
             </div>
             <div className="space-y-2 p-3">
@@ -527,15 +564,15 @@ export function PricingSimulationDialog({
                     <Button type="button" variant="ghost" disabled={lines.length === 1} onClick={() => setLines((current) => current.filter((item) => item.key !== line.key))}>Remover</Button>
                   </div>
 
-                  {line.type === "MATERIAL" ? <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_13rem]"><p className="self-center text-xs text-muted-foreground">Informe o custo total de materiais desta linha em dinheiro.</p><div><Label>Valor dos materiais (R$)</Label><CurrencyCentsInput value={Number(line.fixedAmountCents ?? line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value, fixedAmountCents: value, calculationMode: "FIXED", quantity: 1, unit: "serviço" })}/></div></div> : null}
+                  {line.type === "MATERIAL" ? <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_13rem]"><p className="self-center text-xs text-muted-foreground">{segment === "IT" ? "Peças, SSD, memória, cabos, conectores ou licenças fornecidas neste serviço. Informe o seu custo de aquisição, não o preço de venda." : "Informe o custo total de materiais desta linha em dinheiro."}</p><div><Label>Valor dos materiais (R$)</Label><CurrencyCentsInput value={Number(line.fixedAmountCents ?? line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value, fixedAmountCents: value, calculationMode: "FIXED", quantity: 1, unit: "serviço" })}/></div></div> : null}
 
-                  {line.type === "LABOR" ? <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><div><Label>Perfil técnico</Label><Select onChange={(e) => { const profile = laborProfiles.find((p) => p.id === e.target.value); if (profile) change(line.key, { description: profile.name, unitCostCents: profile.hourlyCostCents, fixedAmountCents: profile.fixedAdditionalCents, percentageRateBasisPoints: profile.burdenRateBasisPoints }); }}><option value="">Escolher perfil...</option>{laborProfiles.filter((p) => p.active).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></div><div><Label>Horas-homem previstas</Label><DecimalValueBRInput value={Number(line.quantity)} maximumFractionDigits={2} onValueChange={(value) => change(line.key, { quantity: Math.max(0, value), unit: "hora", calculationMode: "PER_HOUR" })}/></div><div><Label>Custo da hora técnica (R$)</Label><CurrencyCentsInput value={Number(line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value })}/></div><div className="self-end pb-2 text-xs text-muted-foreground">Se houver ajudante ou técnico com custo diferente, adicione outra linha de mão de obra. Ex.: 2 técnicos × 3 h = 6 horas-homem.</div></div> : null}
+                  {line.type === "LABOR" ? <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><div><Label>Perfil técnico</Label><Select onChange={(e) => { const profile = activeLaborProfiles.find((p) => p.id === e.target.value); if (profile) change(line.key, { description: profile.name, unitCostCents: profile.hourlyCostCents, fixedAmountCents: profile.fixedAdditionalCents, percentageRateBasisPoints: profile.burdenRateBasisPoints }); }}><option value="">{activeLaborProfiles.length ? "Escolher perfil..." : "Nenhum perfil cadastrado"}</option>{activeLaborProfiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select><p className="mt-1 text-[11px] text-muted-foreground">O perfil preenche o custo interno da hora. Se não houver perfil, digite o custo manualmente ao lado.</p></div><div><Label>Horas-homem previstas</Label><DecimalValueBRInput value={Number(line.quantity)} maximumFractionDigits={2} onValueChange={(value) => change(line.key, { quantity: Math.max(0, value), unit: "hora", calculationMode: "PER_HOUR" })}/><p className="mt-1 text-[11px] text-muted-foreground">Tempo efetivo de trabalho. Dois técnicos por 2 horas correspondem a 4 horas-homem.</p></div><div><Label>Custo da hora técnica (R$)</Label><CurrencyCentsInput value={Number(line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value })}/><p className="mt-1 text-[11px] text-muted-foreground">É custo interno, não preço cobrado do cliente. Pode ser calculado pelos custos fixos ou informado manualmente.</p></div><div className="self-end pb-2 text-xs text-muted-foreground">{segment === "IT" ? "Em T.I., inclua aqui diagnóstico, configuração, testes, backup e documentação quando consumirem tempo técnico." : "Se houver ajudante ou técnico com custo diferente, adicione outra linha de mão de obra."}</div></div> : null}
 
                   {line.type === "EQUIPMENT" ? <EquipmentLine line={line} equipment={equipment} monthlyHours={configuration?.equipmentMonthlyHours ?? 176} onChange={(patch) => change(line.key, patch)} /> : null}
 
                   {line.type === "TRAVEL" ? <TravelLine line={line} defaultCostPerKmCents={configuration?.costPerKmCents || 250} onChange={(patch) => change(line.key, patch)} /> : null}
 
-                  {line.type === "OVERHEAD" || line.type === "OTHER" ? <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_13rem]"><p className="self-center text-xs text-muted-foreground">{line.type === "OVERHEAD" ? "Componente antigo: custos fixos devem preferencialmente entrar na hora técnica para evitar duplicidade." : "Use para estacionamento, pedágio, alimentação, terceiros ou outro custo direto do serviço."}</p><div><Label>Valor (R$)</Label><CurrencyCentsInput value={Number(line.fixedAmountCents ?? line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value, fixedAmountCents: value, calculationMode: "FIXED" })}/></div></div> : null}
+                  {line.type === "OVERHEAD" || line.type === "OTHER" ? <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_13rem]"><p className="self-center text-xs text-muted-foreground">{line.type === "OVERHEAD" ? "Componente antigo: custos fixos devem preferencialmente entrar na hora técnica para evitar duplicidade." : segment === "IT" ? "Use para laboratório especializado, recuperação terceirizada, frete ou outro custo direto que não seja mão de obra, peça/licença ou deslocamento." : "Use para estacionamento, pedágio, alimentação, terceiros ou outro custo direto do serviço."}</p><div><Label>Valor (R$)</Label><CurrencyCentsInput value={Number(line.fixedAmountCents ?? line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value, fixedAmountCents: value, calculationMode: "FIXED" })}/></div></div> : null}
 
                   <div className="mt-2 flex justify-end text-xs text-muted-foreground">Custo desta linha: <strong className="ml-1 text-foreground">{formatCurrencyBRLFromCents(componentTotal(line))}</strong></div>
                 </div>
@@ -579,12 +616,12 @@ export function PricingSimulationDialog({
               <strong className="text-foreground">Como interpretar o lucro:</strong> a mão de obra, o pró-labore e os custos fixos não são o lucro. Eles precisam estar cobertos no custo do serviço. A margem de lucro é o que sobra para a empresa depois desses custos, impostos e taxas. Com margem de 20%, o lucro operacional tende a representar 20% do preço final quando não há desconto.
             </div>
             {laborIncomplete ? <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-700 dark:text-red-300"><strong>Precificação incompleta:</strong> a mão de obra está zerada. Não use o preço recomendado enquanto as horas-homem e o custo da hora técnica não estiverem preenchidos.</div> : null}
-            {marketReference ? <div className="mt-3 rounded-lg border bg-muted/20 p-3 text-xs"><strong>Referência de mercado:</strong> {marketReference.label}. {marketReference.note}</div> : null}
+            {marketReference ? <div className="mt-3 rounded-lg border bg-muted/20 p-3 text-xs"><strong>Referência de mercado:</strong> {marketReference.label}. {marketReference.note}{marketReference.source ? <> <span className="text-muted-foreground">Fonte-base: {marketReference.source}.</span></> : null}</div> : null}
             {pricingWarnings.length ? <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-800 dark:text-amber-200"><strong>Preço potencialmente fora do padrão.</strong><ul className="mt-1 list-disc space-y-1 pl-5">{pricingWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
             {preview.promotionalPriceCents < preview.minimumPriceCents ? <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-700 dark:text-red-300"><strong>Alerta:</strong> o preço final está abaixo do preço mínimo calculado. Revise desconto, margem, imposto ou taxa de cartão.</div> : null}
           </section> : null}
 
-          <div className="rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground"><Info className="mr-1 inline h-4 w-4"/>O preço é formado por custo da hora técnica + materiais + equipamentos rateados + deslocamento + outros custos. Margem, imposto e taxa de cartão entram uma única vez pelo divisor financeiro.</div>
+          <div className="rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground"><Info className="mr-1 inline h-4 w-4"/>{segment === "IT" ? "Em T.I., o preço parte do tempo técnico e dos custos diretos do atendimento. A referência de mercado serve para comparação; ela não substitui seu custo real. Margem, imposto e taxa de pagamento entram uma única vez." : "O preço é formado por custo da hora técnica + materiais + equipamentos rateados + deslocamento + outros custos. Margem, imposto e taxa de cartão entram uma única vez pelo divisor financeiro."}</div>
           {configurationWarning ? <p role="status" className="text-xs text-yellow-700 dark:text-yellow-300">{configurationWarning}</p> : null}
           <footer className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-2 border-t bg-background/95 px-4 py-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-6 sm:px-6">{laborIncomplete ? <span className="mr-auto text-xs font-medium text-red-600 dark:text-red-300">Informe a mão de obra antes de salvar.</span> : null}<Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button><Button disabled={busy || laborIncomplete}>{busy ? "Salvando..." : "Salvar precificação"}</Button></footer>
         </form>

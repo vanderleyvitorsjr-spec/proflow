@@ -1,24 +1,18 @@
-"use client";
-
-import { scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
-import { emptyQuotesEnvelope, type QuotesEnvelope } from "./orcamentos-domain";
-
-const key = () => scopedBrowserStorageKey("orcamentos", 1);
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
+import { calculateQuote, emptyQuotesEnvelope, type QuotesEnvelope } from "./orcamentos-domain";
 
 export const quotesStorageAdapter = {
-  load(): QuotesEnvelope {
-    const raw = localStorage.getItem(key());
-    if (!raw) return emptyQuotesEnvelope();
-    try {
-      const parsed = JSON.parse(raw) as Partial<QuotesEnvelope>;
-      return parsed.version === 1 && Array.isArray(parsed.quotes) && Number.isInteger(parsed.nextSequence)
-        ? parsed as QuotesEnvelope
-        : emptyQuotesEnvelope();
-    } catch {
-      return emptyQuotesEnvelope();
-    }
+  async load(): Promise<QuotesEnvelope> {
+    const state = await readRemoteModuleState("orcamentos", emptyQuotesEnvelope());
+    return {
+      ...state,
+      quotes: state.quotes.map((quote) => ({
+        ...quote,
+        ...calculateQuote(quote.items, quote.discountCents, quote.surchargeCents, quote.taxCents),
+      })),
+    };
   },
-  save(value: QuotesEnvelope) {
-    localStorage.setItem(key(), JSON.stringify(value));
+  async save(value: QuotesEnvelope) {
+    return writeRemoteModuleState("orcamentos", value);
   },
 };

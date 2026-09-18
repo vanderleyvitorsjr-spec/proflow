@@ -27,6 +27,11 @@ import {
   transactionStatus,
 } from "./financeiro-status";
 const service = new FinancialService(new FinancialRepository(financialStorageAdapter));
+export type ReceiptSource = {
+  transactionId: string; paymentId?: string; number: string; customerName: string;
+  description: string; amountCents: number; paidAt: string; method: string;
+  serviceOrderNumber?: string; canceled: boolean;
+};
 async function action<T>(operation: () => Promise<T>): Promise<ActionResult<T>> {
   try {
     return { ok: true, data: await operation() };
@@ -83,6 +88,51 @@ export const listFinancialReportAction = () =>
   });
 export const getFinancialTransactionAction = (id: string) =>
   action(() => service.getTransaction(id));
+export const getReceiptRelatedClientAction = (id: string) => action(async () => {
+  const transaction = await service.getTransaction(id);
+  if (!transaction) return null;
+  let clientId = transaction.clientId;
+  if (!clientId && transaction.serviceOrderId)
+    clientId = (await financialRelationsGateway.getOrder(transaction.serviceOrderId))?.clientId;
+  if (!clientId) return null;
+  const client = await financialRelationsGateway.requireClient(clientId);
+  return { id: client.id, name: client.name, phone: client.phone, email: client.email };
+});
+export const listReceiptSourcesAction = () => action(async (): Promise<ReceiptSource[]> => {
+  const state = await service.listState();
+  return state.transactions
+    .filter((transaction) => transaction.direction === "INCOME" && !transaction.archivedAt)
+    .flatMap<ReceiptSource>((transaction) => {
+      const payments = transaction.installments.flatMap((installment) =>
+        installment.payments.map((payment) => ({
+          transactionId: transaction.id,
+          paymentId: payment.id,
+          number: `REC-${new Date(payment.paidAt).getFullYear()}-${String(transaction.sequence).padStart(5, "0")}-${String(installment.number).padStart(2, "0")}`,
+          customerName: transaction.customerName || transaction.clientNameSnapshot || "Cliente não informado",
+          description: transaction.description || transaction.title,
+          amountCents: payment.amountCents,
+          paidAt: payment.paidAt,
+          method: payment.method,
+          serviceOrderNumber: transaction.serviceOrderNumberSnapshot,
+          canceled: Boolean(payment.reversedAt || transaction.canceledAt),
+        })),
+      );
+      if (payments.length || transaction.kind !== "REALIZED") return payments;
+      return [{
+        transactionId: transaction.id,
+        paymentId: undefined,
+        number: `REC-${new Date(transaction.realizedAt || transaction.issueDate).getFullYear()}-${String(transaction.sequence).padStart(5, "0")}`,
+        customerName: transaction.customerName || transaction.clientNameSnapshot || "Cliente não informado",
+        description: transaction.description || transaction.title,
+        amountCents: transaction.totalCents,
+        paidAt: transaction.realizedAt || transaction.issueDate,
+        method: "Não informada",
+        serviceOrderNumber: transaction.serviceOrderNumberSnapshot,
+        canceled: Boolean(transaction.canceledAt),
+      }];
+    })
+    .sort((a, b) => b.paidAt.localeCompare(a.paidAt));
+});
 export const createFinancialAccountAction = (input: FinancialAccountFormValues) =>
   action(() => service.createAccount(input));
 export const updateFinancialAccountAction = (

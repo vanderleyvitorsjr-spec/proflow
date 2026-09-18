@@ -34,6 +34,8 @@ const modulePermissions: Record<
     read: "ORDERS_VIEW",
     write: "ORDERS_UPDATE",
   },
+  orcamentos: { read: "ORDERS_VIEW", write: "ORDERS_UPDATE" },
+  "catalogo-servicos": { read: "ORDERS_VIEW", write: "ORDERS_UPDATE" },
 };
 
 function canAccess(

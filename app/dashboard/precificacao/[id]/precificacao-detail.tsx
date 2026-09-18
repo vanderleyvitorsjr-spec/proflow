@@ -33,6 +33,7 @@ import {
   listPricingCommercialReferencesAction,
   linkPricingCommercialAction,
   applyPricingToOrderAction,
+  listPricingAction,
 } from "../precificacao-actions";
 import { PricingRelationsDialog } from "../precificacao-relations-dialog";
 import { PricingApplicationDialog } from "../precificacao-application-dialog";
@@ -45,7 +46,7 @@ import { PricingReversePricing } from "../precificacao-reverse-pricing";
 import type { PricingSimulationFormValues } from "../precificacao-schema";
 import { calculatePricing } from "../precificacao-selectors";
 import { PricingSimulationDialog } from "../precificacao-simulation-dialog";
-import type { PricingCostDivergence, PricingSimulation } from "../precificacao-types";
+import type { LaborProfile, PricingCostDivergence, PricingSimulation, PricingTemplate } from "../precificacao-types";
 import type { StockPricingReference } from "@/lib/contracts/estoque.contract";
 import type { EquipmentPricingReference } from "@/lib/contracts/equipamentos.contract";
 import type { ClientPublicReference } from "@/lib/contracts/clientes.contract";
@@ -64,17 +65,20 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
     [replaceComponentId, setReplaceComponentId] = useState<string | undefined>(),
     [stock, setStock] = useState<StockPricingReference[]>([]),
     [equipment, setEquipment] = useState<EquipmentPricingReference[]>([]),
+    [laborProfiles, setLaborProfiles] = useState<LaborProfile[]>([]),
+    [templates, setTemplates] = useState<PricingTemplate[]>([]),
     [divergences, setDivergences] = useState<PricingCostDivergence[]>([]),
     [error, setError] = useState<string | null>(null),
     [success, setSuccess] = useState<string | null>(null);
   const [relationsOpen, setRelationsOpen] = useState(false), [applicationOpen, setApplicationOpen] = useState(false), [clients, setClients] = useState<ClientPublicReference[]>([]), [leads, setLeads] = useState<CrmPricingReference[]>([]), [orders, setOrders] = useState<ServiceOrderPricingReference[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const [result, sources, divergenceResult, commercial] = await Promise.all([
+    const [result, sources, divergenceResult, commercial, pricing] = await Promise.all([
       getPricingSimulationAction(simulationId),
       listPricingSourcesAction(),
       getPricingDivergencesAction(simulationId),
       listPricingCommercialReferencesAction(),
+      listPricingAction(),
     ]);
     if (result.ok) setSimulation(result.data);
     else setError(result.error.message);
@@ -84,6 +88,7 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
     }
     if (divergenceResult.ok) setDivergences(divergenceResult.data);
     if (commercial.ok) { setClients(commercial.data.clients); setLeads(commercial.data.leads); setOrders(commercial.data.orders); }
+    if (pricing.ok) { setLaborProfiles(pricing.data.laborProfiles.filter((profile) => profile.active)); setTemplates(pricing.data.templates.filter((template) => template.active && !template.archivedAt)); }
     setLoading(false);
   }, [simulationId]);
   useEffect(() => {
@@ -425,8 +430,8 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
       <PricingSimulationDialog
         open={editing}
         simulation={simulation}
-        templates={[]}
-        laborProfiles={[]}
+        templates={templates}
+        laborProfiles={laborProfiles}
         busy={busy}
         error={error}
         onClose={() => setEditing(false)}

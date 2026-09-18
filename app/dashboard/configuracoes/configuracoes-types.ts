@@ -33,6 +33,7 @@ export type CompanySettings = {
   displayName: string;
   shortName: string;
   logoMetadata: string;
+  showLogoOnDocuments: boolean;
   iconMetadata: string;
   primaryColor: string;
   secondaryColor: string;

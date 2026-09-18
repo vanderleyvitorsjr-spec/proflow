@@ -32,6 +32,7 @@ export const defaultConfigState = (): ConfigState => ({
     displayName: "ProFlow",
     shortName: "ProFlow",
     logoMetadata: "",
+    showLogoOnDocuments: true,
     iconMetadata: "",
     primaryColor: "#0284c7",
     secondaryColor: "#0f172a",

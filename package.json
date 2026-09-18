@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "npm run test:unit",
     "test:unit": "tsc -p automation/tsconfig.test.json && node --test .next/automation-tests/automation/tests/automation-infrastructure.test.js .next/automation-tests/automation/tests/workspace-bi.test.js .next/automation-tests/automation/tests/auth-foundation.test.js .next/automation-tests/automation/tests/experience-evolution.test.js .next/automation-tests/automation/tests/operational-evolution.test.js .next/automation-tests/automation/tests/commercial-evolution.test.js .next/automation-tests/automation/tests/operational-ui-completion.test.js .next/automation-tests/automation/tests/operational-360.test.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
