@@ -101,6 +101,96 @@ const serviceOptions: Record<PricingSegment, string[]> = {
   ],
 };
 
+
+
+type ITServicePreset = {
+  billingMode: PricingBillingMode;
+  laborHours: number;
+  complexity: PricingComplexity;
+  risk?: PricingRisk;
+  warranty?: PricingWarranty;
+  explanation: string;
+};
+
+const IT_SERVICE_PRESETS: Record<string, ITServicePreset> = {
+  "Visita técnica": { billingMode: "VISIT", laborHours: 1, complexity: "SIMPLE", explanation: "Reserva 1 hora técnica para deslocamento local, triagem e orientação. Deslocamento em km continua separado." },
+  "Diagnóstico": { billingMode: "SERVICE", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Considera 1,5 h para análise, testes e identificação da causa. Reparo e peças não estão incluídos automaticamente." },
+  "Suporte remoto": { billingMode: "HOUR", laborHours: 1, complexity: "SIMPLE", explanation: "Parte de 1 hora técnica. Aumente as horas se o chamado exigir investigação prolongada." },
+  "Suporte presencial": { billingMode: "HOUR", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Parte de 1,5 h técnicas; deslocamento é calculado separadamente." },
+  "Configuração de computador": { billingMode: "DEVICE", laborHours: 1.5, complexity: "SIMPLE", explanation: "Estimativa por computador para ajustes, atualizações, testes e entrega." },
+  "Instalação de programas": { billingMode: "DEVICE", laborHours: 1, complexity: "SIMPLE", explanation: "Estimativa por equipamento. Licenças pagas entram em Materiais/licenças." },
+  "Atualização de sistema": { billingMode: "DEVICE", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Inclui preparação, atualização e testes básicos por equipamento." },
+  "Correção de erros": { billingMode: "SERVICE", laborHours: 2, complexity: "INTERMEDIATE", explanation: "Parte de 2 h por exigir diagnóstico e correção; ajuste conforme a falha encontrada." },
+  "Formatação": { billingMode: "DEVICE", laborHours: 3, complexity: "INTERMEDIATE", explanation: "Considera backup básico, instalação, drivers, atualizações e testes. Recuperação de dados e licença são custos separados." },
+  "Reinstalação do Windows": { billingMode: "DEVICE", laborHours: 3, complexity: "INTERMEDIATE", explanation: "Estimativa por equipamento para reinstalação, drivers, atualizações e testes." },
+  "Instalação de drivers": { billingMode: "DEVICE", laborHours: 1, complexity: "SIMPLE", explanation: "Estimativa por computador para localizar, instalar e validar drivers." },
+  "Configuração de impressora": { billingMode: "DEVICE", laborHours: 1, complexity: "SIMPLE", explanation: "Inclui instalação, comunicação, driver e teste de impressão." },
+  "Configuração de periféricos": { billingMode: "DEVICE", laborHours: 0.75, complexity: "SIMPLE", explanation: "Estimativa por periférico para instalação, configuração e teste." },
+  "Otimização": { billingMode: "DEVICE", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Inclui diagnóstico de desempenho, ajustes e validação." },
+  "Remoção de malware": { billingMode: "DEVICE", laborHours: 2.5, complexity: "ADVANCED", risk: "MEDIUM", explanation: "Inclui varredura, remoção, correções e testes; risco de dados eleva o esforço." },
+  "Instalação de rede": { billingMode: "PROJECT", laborHours: 4, complexity: "ADVANCED", explanation: "Base inicial de projeto. Pontos, equipamentos e cabeamento devem ajustar o esforço e os materiais." },
+  "Configuração de roteador": { billingMode: "DEVICE", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Inclui acesso, WAN/LAN, Wi‑Fi, segurança básica e testes." },
+  "Configuração de Wi-Fi": { billingMode: "PROJECT", laborHours: 2, complexity: "INTERMEDIATE", explanation: "Inclui análise básica, configuração e testes de cobertura/conectividade." },
+  "Configuração de switch": { billingMode: "DEVICE", laborHours: 2, complexity: "ADVANCED", explanation: "Inclui configuração e validação; VLANs e ambiente gerenciado podem exigir mais horas." },
+  "Access Point": { billingMode: "DEVICE", laborHours: 2, complexity: "INTERMEDIATE", explanation: "Estimativa por AP para instalação lógica, configuração e testes." },
+  "Cabeamento de rede": { billingMode: "POINT", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Estimativa por ponto; cabo, conectores, canaleta e certificação entram separadamente." },
+  "Crimpagem": { billingMode: "POINT", laborHours: 0.5, complexity: "SIMPLE", explanation: "Estimativa por ponto/conector, incluindo montagem e teste básico." },
+  "Organização de rede": { billingMode: "PROJECT", laborHours: 3, complexity: "INTERMEDIATE", explanation: "Base para identificação, organização física/lógica e testes." },
+  "Configuração de IP/DNS/DHCP": { billingMode: "PROJECT", laborHours: 2, complexity: "ADVANCED", explanation: "Inclui planejamento, configuração e validação de endereçamento e serviços de rede." },
+  "Compartilhamento de arquivos": { billingMode: "PROJECT", laborHours: 2, complexity: "INTERMEDIATE", risk: "MEDIUM", explanation: "Inclui permissões, compartilhamento e testes de acesso; quantidade de usuários/estações pode ampliar as horas." },
+  "Diagnóstico de rede": { billingMode: "SERVICE", laborHours: 2.5, complexity: "ADVANCED", explanation: "Considera análise de conectividade, equipamentos, endereçamento e testes." },
+  "Instalação de servidor": { billingMode: "PROJECT", laborHours: 6, complexity: "CRITICAL", risk: "HIGH", explanation: "Base de projeto para instalação, configuração inicial, segurança e testes." },
+  "Configuração de servidor": { billingMode: "PROJECT", laborHours: 4, complexity: "CRITICAL", risk: "HIGH", explanation: "Considera configuração, permissões, serviços, segurança e validação." },
+  "Manutenção de servidor": { billingMode: "PROJECT", laborHours: 3, complexity: "ADVANCED", risk: "HIGH", explanation: "Inclui diagnóstico, manutenção e testes; indisponibilidade e dados justificam risco maior." },
+  "Criação de usuários e permissões": { billingMode: "USER", laborHours: 1.5, complexity: "INTERMEDIATE", risk: "MEDIUM", explanation: "Base inicial; quantidade de usuários e regras de acesso aumenta o esforço." },
+  "Migração": { billingMode: "PROJECT", laborHours: 6, complexity: "CRITICAL", risk: "HIGH", explanation: "Base para planejamento, cópia, validação e contingência. Volume e risco de dados devem ser registrados." },
+  "Backup": { billingMode: "SERVICE", laborHours: 2, complexity: "INTERMEDIATE", risk: "MEDIUM", explanation: "Inclui preparação, cópia e validação básica. Armazenamento/licenças são custos separados." },
+  "Restauração": { billingMode: "SERVICE", laborHours: 3, complexity: "ADVANCED", risk: "HIGH", explanation: "Inclui recuperação a partir de backup existente e validação; recuperação forense é serviço de terceiro." },
+  "NAS / armazenamento": { billingMode: "PROJECT", laborHours: 4, complexity: "ADVANCED", risk: "HIGH", explanation: "Inclui configuração, volumes, compartilhamentos, permissões e testes." },
+  "Monitoramento": { billingMode: "MONTHLY", laborHours: 3, complexity: "ADVANCED", explanation: "Base de implantação; a mensalidade deve considerar horas inclusas e quantidade de ativos." },
+  "Backup automático": { billingMode: "MONTHLY", laborHours: 3, complexity: "ADVANCED", risk: "HIGH", explanation: "Base para configurar rotina, retenção, destino e teste de restauração." },
+  "Firewall / controle de acesso": { billingMode: "PROJECT", laborHours: 4, complexity: "CRITICAL", risk: "HIGH", explanation: "Inclui regras, segurança, testes e documentação; ambiente crítico exige mais horas." },
+  "Organização de rack": { billingMode: "PROJECT", laborHours: 4, complexity: "ADVANCED", explanation: "Base para identificação, reorganização, patching e testes." },
+  "Pontos de rede": { billingMode: "POINT", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Estimativa por ponto; materiais e dificuldade física são adicionais." },
+  "Nobreak": { billingMode: "DEVICE", laborHours: 1, complexity: "SIMPLE", explanation: "Estimativa por equipamento para instalação/configuração e teste." },
+  "Implantação de computadores": { billingMode: "DEVICE", laborHours: 2, complexity: "INTERMEDIATE", explanation: "Estimativa por estação para configuração, softwares, rede e testes." },
+  "Estação de trabalho": { billingMode: "DEVICE", laborHours: 2, complexity: "INTERMEDIATE", explanation: "Base por estação completa, incluindo configuração e validação." },
+  "Migração de computador": { billingMode: "DEVICE", laborHours: 3, complexity: "ADVANCED", risk: "MEDIUM", explanation: "Inclui dados, perfil, configurações e validação no novo equipamento." },
+  "E-mail empresarial": { billingMode: "USER", laborHours: 1.5, complexity: "INTERMEDIATE", explanation: "Base de configuração; migração e quantidade de caixas podem ampliar o esforço." },
+  "Microsoft 365": { billingMode: "PROJECT", laborHours: 4, complexity: "ADVANCED", risk: "MEDIUM", explanation: "Base para tenant, usuários, políticas e configuração inicial; licenças são separadas." },
+  "Google Workspace": { billingMode: "PROJECT", laborHours: 4, complexity: "ADVANCED", risk: "MEDIUM", explanation: "Base para domínio, usuários, políticas e configuração inicial; licenças são separadas." },
+  "Integração de equipamentos": { billingMode: "PROJECT", laborHours: 4, complexity: "ADVANCED", explanation: "Base para levantamento, integração, testes e documentação." },
+  "Documentação de infraestrutura": { billingMode: "PROJECT", laborHours: 3, complexity: "INTERMEDIATE", explanation: "Base para levantamento, desenho lógico, inventário e documentação." },
+  "Implantação de compartilhamento de dados em rede para exames OCT": { billingMode: "PROJECT", laborHours: 6, complexity: "CRITICAL", risk: "HIGH", warranty: "STANDARD", explanation: "Inclui levantamento, compartilhamento, permissões, estações, testes de leitura/gravação e orientação da equipe." },
+  "Contrato mensal de T.I.": { billingMode: "MONTHLY", laborHours: 8, complexity: "ADVANCED", risk: "MEDIUM", warranty: "STANDARD", explanation: "Base mensal de 8 horas inclusas. Ajuste horas, visitas, usuários, servidores e SLA conforme o contrato." },
+  "Outro serviço de T.I.": { billingMode: "SERVICE", laborHours: 1, complexity: "SIMPLE", explanation: "Base neutra de 1 hora. Ajuste as horas conforme o escopo real antes de salvar." },
+};
+
+function itPreset(serviceType: string) {
+  return IT_SERVICE_PRESETS[serviceType] ?? IT_SERVICE_PRESETS["Outro serviço de T.I."];
+}
+
+function itRelevantTechnicalFields(serviceType: string) {
+  const value = serviceType.toLocaleLowerCase("pt-BR");
+  const fields: Array<[string, string, string]> = [];
+  const add = (key: string, label: string, help: string) => { if (!fields.some(([item]) => item === key)) fields.push([key, label, help]); };
+  if (/computador|formatação|windows|drivers|programas|otimização|malware|estação|migração de computador|implantação de computadores/.test(value)) add("computers", "Quantidade de computadores", "A quantidade multiplica a estimativa de horas quando a cobrança é por dispositivo.");
+  if (/servidor|nas|backup|restauração|migração|firewall|monitoramento/.test(value)) add("servers", "Servidores envolvidos", "Mais servidores normalmente ampliam testes, configuração e tempo técnico.");
+  if (/impressora/.test(value)) add("printers", "Quantidade de impressoras", "Usado para dimensionar o tempo de configuração e testes.");
+  if (/rede|roteador|wi-fi|switch|access point|rack|firewall|integração/.test(value)) add("networkDevices", "Equipamentos de rede", "Quantidade de roteadores, switches, APs ou outros ativos que precisam ser configurados/testados.");
+  if (/usuário|permiss|e-mail|microsoft 365|google workspace|compartilhamento|contrato mensal/.test(value)) add("users", "Usuários atendidos", "Ajuda a dimensionar criação, permissões, configuração e suporte recorrente.");
+  if (/ponto|cabeamento|crimpagem/.test(value)) add("networkPoints", "Pontos de rede", "Na cobrança por ponto, esta quantidade multiplica a estimativa técnica do serviço.");
+  if (/visita|suporte presencial/.test(value)) add("attendanceType", "Tipo de atendimento", "Informe presencial, remoto ou híbrido. O deslocamento presencial é calculado em uma linha separada.");
+  if (/contrato mensal|monitoramento|backup automático/.test(value)) {
+    add("includedHours", "Horas técnicas inclusas por mês", "Define a capacidade técnica prevista no contrato e pode substituir a estimativa padrão de horas.");
+    add("monthlyVisits", "Visitas presenciais por mês", "Registra o compromisso recorrente; deslocamentos devem ser lançados quando houver custo.");
+  }
+  if (/backup|restauração|migração|servidor|nas|compartilhamento|oct/.test(value)) add("dataRisk", "Risco sobre os dados", "Descreva baixo, médio, alto ou crítico. Serve para justificar risco e escopo; selecione também o nível de risco comercial quando necessário.");
+  if (/oct|integração/.test(value)) add("additionalStations", "Estações adicionais", "Estações além do equipamento principal aumentam configuração, permissões e testes.");
+  if (!fields.length) add("mainDevice", "Equipamento ou ambiente principal", "Identifique o ativo principal apenas para deixar o escopo claro; este campo textual não altera o preço sozinho.");
+  return fields;
+}
+
 const typeLabels = {
   MATERIAL: "Materiais",
   LABOR: "Mão de obra",
@@ -269,16 +359,6 @@ function getMarketReference(segment: PricingSegment, serviceType: string): Marke
     lowerReferenceCents: 7000, upperReferenceCents: 20000, source: "Referências de mercado 2026",
   };
 }
-function suggestedBillingModeForIT(serviceType: string): PricingBillingMode {
-  const value = serviceType.toLocaleLowerCase("pt-BR");
-  if (/contrato mensal|monitoramento|backup automático/.test(value)) return "MONTHLY";
-  if (/pontos de rede|cabeamento|crimpagem/.test(value)) return "POINT";
-  if (/implantação de computadores|estação de trabalho|migração de computador|formatação|reinstalação|configuração de computador/.test(value)) return "DEVICE";
-  if (/servidor|rede|firewall|rack|nas|microsoft 365|google workspace|integração/.test(value)) return "PROJECT";
-  if (/suporte remoto|suporte presencial|visita técnica|diagnóstico|correção de erros/.test(value)) return "HOUR";
-  return "SERVICE";
-}
-
 function buildPricingWarnings(
   recommendedPriceCents: number,
   totals: Record<string, number>,
@@ -462,6 +542,37 @@ export function PricingSimulationDialog({
     setLines((current) => current.map((line) => line.type === "LABOR" ? { ...line, unitCostCents: calculatedHourlyCostCents, percentageRateBasisPoints: 0, fixedAmountCents: 0 } : line));
   };
 
+  const applyITServicePreset = (nextServiceType: string) => {
+    const preset = itPreset(nextServiceType);
+    setBillingMode(preset.billingMode);
+    setComplexity(preset.complexity);
+    setRisk(preset.risk ?? "LOW");
+    setWarranty(preset.warranty ?? "NONE");
+    setTechnicalData({});
+    setLines((current) => current.map((line) => {
+      if (line.type !== "LABOR") return line;
+      const fallbackHourlyCost = Number(line.unitCostCents) > 0 ? Number(line.unitCostCents) : calculatedHourlyCostCents;
+      return { ...line, quantity: preset.laborHours, unit: "hora", calculationMode: "PER_HOUR", unitCostCents: fallbackHourlyCost };
+    }));
+  };
+
+  const changeITTechnicalData = (key: string, rawValue: string) => {
+    setTechnicalData((current) => ({ ...current, [key]: rawValue }));
+    if (segment !== "IT") return;
+    const preset = itPreset(serviceType);
+    const numeric = Number(rawValue.replace(",", "."));
+    if (!Number.isFinite(numeric) || numeric <= 0) return;
+    let hours = preset.laborHours;
+    if (key === "includedHours") hours = numeric;
+    else if (key === "computers" && ["DEVICE"].includes(preset.billingMode)) hours = preset.laborHours * numeric;
+    else if (key === "printers" && preset.billingMode === "DEVICE") hours = preset.laborHours * numeric;
+    else if (key === "networkPoints" && preset.billingMode === "POINT") hours = preset.laborHours * numeric;
+    else if (key === "users" && preset.billingMode === "USER") hours = preset.laborHours * numeric;
+    else if (key === "additionalStations") hours = preset.laborHours + Math.max(0, numeric) * 0.75;
+    else return;
+    setLines((current) => current.map((line) => line.type === "LABOR" ? { ...line, quantity: Math.max(0.25, hours), unit: "hora", calculationMode: "PER_HOUR" } : line));
+  };
+
   if (!open) return null;
 
   return (
@@ -511,7 +622,7 @@ export function PricingSimulationDialog({
               <div className="sm:col-span-2"><Label htmlFor="pricing-title">Nome do serviço</Label><Input id="pricing-title" name="title" defaultValue={simulation?.title} autoFocus required /></div>
               <div><Label>Segmento</Label><Select value={segment} onChange={(e) => { setSegment(e.target.value as PricingSegment); setServiceType(""); setTechnicalData({}); }}><option value="CLIMATIZATION">Ar-condicionado / Refrigeração</option><option value="ELECTRICAL">Elétrica</option><option value="IT">T.I.</option></Select></div>
               
-              <div className="sm:col-span-2"><Label>Tipo de serviço</Label><Select value={serviceType} onChange={(e) => { const next = e.target.value; setServiceType(next); if (segment === "IT") setBillingMode(suggestedBillingModeForIT(next)); }}><option value="">Selecione...</option>{serviceOptions[segment].map((service) => <option key={service} value={service}>{service}</option>)}</Select></div>
+              <div className="sm:col-span-2"><Label>Tipo de serviço</Label><Select value={serviceType} onChange={(e) => { const next = e.target.value; setServiceType(next); if (segment === "IT") applyITServicePreset(next); }}><option value="">Selecione...</option>{serviceOptions[segment].map((service) => <option key={service} value={service}>{service}</option>)}</Select></div>
               <div><Label>Categoria financeira</Label><Select name="category" defaultValue={simulation?.parameters.category ?? "OTHER"}>{categories.map((c) => <option key={c} value={c}>{categoryLabels[c]}</option>)}</Select></div>
               <div><Label>Forma de cobrança</Label><Select value={billingMode} onChange={(e) => setBillingMode(e.target.value as PricingBillingMode)}><option value="SERVICE">Por serviço</option><option value="HOUR">Por hora</option><option value="DAY">Por diária</option><option value="DEVICE">Por dispositivo</option><option value="USER">Por usuário</option><option value="POINT">Por ponto</option><option value="VISIT">Por visita</option><option value="PROJECT">Por projeto</option><option value="MONTHLY">Mensal</option></Select></div>
               
@@ -526,10 +637,10 @@ export function PricingSimulationDialog({
             {technicalFields(segment).length > 0 ? <div className="border-t p-4">
               <div className="mb-3 flex items-center gap-2"><Wrench className="h-4 w-4 text-primary"/><strong className="text-sm">Dados adicionais de {segmentLabels[segment]}</strong></div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {technicalFields(segment).map(([key, label]) => <div key={key}><Label>{label}</Label><Input value={String(technicalData[key] ?? "")} onChange={(e) => setTechnicalData((current) => ({ ...current, [key]: e.target.value }))} /></div>)}
+                {(segment === "IT" ? itRelevantTechnicalFields(serviceType) : technicalFields(segment).map(([key, label]) => [key, label, "Registre este dado quando ele alterar quantidade, esforço, material, risco ou acesso do serviço."] as [string, string, string])).map(([key, label, help]) => <div key={key}><Label>{label}</Label><Input value={String(technicalData[key] ?? "")} onChange={(e) => segment === "IT" ? changeITTechnicalData(key, e.target.value) : setTechnicalData((current) => ({ ...current, [key]: e.target.value }))} /><p className="mt-1 text-[11px] text-muted-foreground">{help}</p></div>)}
               </div>
               {segment === "IT" && serviceType.includes("OCT") ? <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs"><strong>Escopo OCT sugerido:</strong> pasta centralizada, máquina OCT, recepção, sala principal, sala 2, permissões, testes de leitura/gravação e orientação da equipe.</div> : null}
-              {segment === "IT" ? <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 text-xs text-muted-foreground"><strong className="text-foreground">Como preencher T.I.:</strong> escolha o serviço para o ProFlow sugerir a forma de cobrança; informe quantos equipamentos/usuários/pontos entram no escopo e registre somente dados que alteram esforço, risco ou custo. Prazo de entrega não é a mesma coisa que horas técnicas.</div> : null}
+              {segment === "IT" ? <div className="mt-3 space-y-2 rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 text-xs text-muted-foreground"><p><strong className="text-foreground">Como preencher T.I.:</strong> o tipo de serviço agora aplica uma estimativa inicial de horas, forma de cobrança e complexidade. Quantidades como computadores, usuários e pontos ajustam as horas quando forem relevantes. Você pode corrigir a estimativa manualmente depois.</p>{serviceType ? <p><strong className="text-foreground">O que este serviço considera:</strong> {itPreset(serviceType).explanation} <span className="font-semibold text-primary">Estimativa inicial: {itPreset(serviceType).laborHours.toLocaleString("pt-BR")} h.</span></p> : <p>Selecione um tipo de serviço para ver quais informações realmente precisam ser preenchidas.</p>}</div> : null}
             </div> : null}
           </section>
 
@@ -566,7 +677,7 @@ export function PricingSimulationDialog({
 
                   {line.type === "MATERIAL" ? <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_13rem]"><p className="self-center text-xs text-muted-foreground">{segment === "IT" ? "Peças, SSD, memória, cabos, conectores ou licenças fornecidas neste serviço. Informe o seu custo de aquisição, não o preço de venda." : "Informe o custo total de materiais desta linha em dinheiro."}</p><div><Label>Valor dos materiais (R$)</Label><CurrencyCentsInput value={Number(line.fixedAmountCents ?? line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value, fixedAmountCents: value, calculationMode: "FIXED", quantity: 1, unit: "serviço" })}/></div></div> : null}
 
-                  {line.type === "LABOR" ? <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><div><Label>Perfil técnico</Label><Select onChange={(e) => { const profile = activeLaborProfiles.find((p) => p.id === e.target.value); if (profile) change(line.key, { description: profile.name, unitCostCents: profile.hourlyCostCents, fixedAmountCents: profile.fixedAdditionalCents, percentageRateBasisPoints: profile.burdenRateBasisPoints }); }}><option value="">{activeLaborProfiles.length ? "Escolher perfil..." : "Nenhum perfil cadastrado"}</option>{activeLaborProfiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select><p className="mt-1 text-[11px] text-muted-foreground">O perfil preenche o custo interno da hora. Se não houver perfil, digite o custo manualmente ao lado.</p></div><div><Label>Horas-homem previstas</Label><DecimalValueBRInput value={Number(line.quantity)} maximumFractionDigits={2} onValueChange={(value) => change(line.key, { quantity: Math.max(0, value), unit: "hora", calculationMode: "PER_HOUR" })}/><p className="mt-1 text-[11px] text-muted-foreground">Tempo efetivo de trabalho. Dois técnicos por 2 horas correspondem a 4 horas-homem.</p></div><div><Label>Custo da hora técnica (R$)</Label><CurrencyCentsInput value={Number(line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value })}/><p className="mt-1 text-[11px] text-muted-foreground">É custo interno, não preço cobrado do cliente. Pode ser calculado pelos custos fixos ou informado manualmente.</p></div><div className="self-end pb-2 text-xs text-muted-foreground">{segment === "IT" ? "Em T.I., inclua aqui diagnóstico, configuração, testes, backup e documentação quando consumirem tempo técnico." : "Se houver ajudante ou técnico com custo diferente, adicione outra linha de mão de obra."}</div></div> : null}
+                  {line.type === "LABOR" ? <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><div><Label>Perfil técnico</Label><Select onChange={(e) => { const profile = activeLaborProfiles.find((p) => p.id === e.target.value); if (profile) change(line.key, { description: profile.name, unitCostCents: profile.hourlyCostCents, fixedAmountCents: profile.fixedAdditionalCents, percentageRateBasisPoints: profile.burdenRateBasisPoints }); }}><option value="">{activeLaborProfiles.length ? "Escolher perfil..." : "Nenhum perfil cadastrado"}</option>{activeLaborProfiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select><p className="mt-1 text-[11px] text-muted-foreground">O perfil preenche o custo interno da hora. Se não houver perfil, digite o custo manualmente ao lado.</p></div><div><Label>Horas-homem previstas</Label><DecimalValueBRInput value={Number(line.quantity)} maximumFractionDigits={2} onValueChange={(value) => change(line.key, { quantity: Math.max(0, value), unit: "hora", calculationMode: "PER_HOUR" })}/><p className="mt-1 text-[11px] text-muted-foreground">Tempo efetivo que entra no custo. Em T.I., o tipo de serviço preenche uma estimativa inicial; quantidades relevantes podem ajustar este total.</p></div><div><Label>Custo da hora técnica (R$)</Label><CurrencyCentsInput value={Number(line.unitCostCents)} onValueChange={(value) => change(line.key, { unitCostCents: value })}/><p className="mt-1 text-[11px] text-muted-foreground">É custo interno, não preço cobrado do cliente. Pode ser calculado pelos custos fixos ou informado manualmente.</p></div><div className="self-end pb-2 text-xs text-muted-foreground">{segment === "IT" ? "Em T.I., inclua aqui diagnóstico, configuração, testes, backup e documentação quando consumirem tempo técnico." : "Se houver ajudante ou técnico com custo diferente, adicione outra linha de mão de obra."}</div></div> : null}
 
                   {line.type === "EQUIPMENT" ? <EquipmentLine line={line} equipment={equipment} monthlyHours={configuration?.equipmentMonthlyHours ?? 176} onChange={(patch) => change(line.key, patch)} /> : null}
 

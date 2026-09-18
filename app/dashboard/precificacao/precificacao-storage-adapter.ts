@@ -348,6 +348,14 @@ const makeComponent = (
   createdAt: now,
   updatedAt: now,
 });
+function defaultLaborProfiles() {
+  return [
+    { id: crypto.randomUUID(), name: "Auxiliar técnico", hourlyCostCents: 3500, burdenRateBasisPoints: 3000, fixedAdditionalCents: 0, active: true, notes: "Perfil inicial editável. Ajuste ao custo real da empresa." },
+    { id: crypto.randomUUID(), name: "Técnico", hourlyCostCents: 6500, burdenRateBasisPoints: 3500, fixedAdditionalCents: 0, active: true, notes: "Perfil inicial editável para atendimentos técnicos gerais." },
+    { id: crypto.randomUUID(), name: "Especialista", hourlyCostCents: 9500, burdenRateBasisPoints: 4000, fixedAdditionalCents: 0, active: true, notes: "Perfil inicial editável para redes, servidores e serviços de maior complexidade." },
+  ];
+}
+
 function initialState(): PricingStorageState {
   const now = "2026-07-01T12:00:00.000Z",
     definitions: [string, string, string, number, number, number][] = [
@@ -457,32 +465,7 @@ function initialState(): PricingStorageState {
     nextSimulationSequence: simulations.length + 1,
     templates,
     simulations,
-    laborProfiles: [
-      {
-        id: crypto.randomUUID(),
-        name: "Auxiliar",
-        hourlyCostCents: 3500,
-        burdenRateBasisPoints: 3000,
-        fixedAdditionalCents: 0,
-        active: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Técnico",
-        hourlyCostCents: 6500,
-        burdenRateBasisPoints: 3500,
-        fixedAdditionalCents: 0,
-        active: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Especialista",
-        hourlyCostCents: 9500,
-        burdenRateBasisPoints: 4000,
-        fixedAdditionalCents: 0,
-        active: true,
-      },
-    ],
+    laborProfiles: defaultLaborProfiles(),
     preferences: { ...defaultPricingPreferences },
   };
 }
@@ -551,7 +534,11 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
       const v2 = value.version === 1 ? { ...value, version: 2, preferences: { ...(value.preferences as Record<string, unknown>), standardMonthlyEquipmentHours: 160 } } : value;
       const migrated = v2.version === 2 ? { ...v2, version: 3, simulations: ((v2.simulations as Array<Record<string, unknown>>) ?? []).map((entry) => ({ ...entry, applications: entry.applications ?? [], revisions: ((entry.revisions as Array<Record<string, unknown>>) ?? []).map((revisionEntry) => ({ ...revisionEntry, id: revisionEntry.id ?? crypto.randomUUID() })) })) } : v2;
       const parsed = stateSchema.safeParse(migrated);
-      return parsed.success ? (parsed.data as PricingStorageState) : null;
+      if (!parsed.success) return null;
+      const state = parsed.data as PricingStorageState;
+      // Estados antigos em produção podem ter sido salvos sem perfis de mão de obra.
+      // Restaura perfis iniciais editáveis sem apagar nenhum dado existente.
+      return state.laborProfiles.length ? state : { ...state, laborProfiles: defaultLaborProfiles() };
     } catch {
       return null;
     }

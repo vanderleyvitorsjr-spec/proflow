@@ -1,0 +1,19 @@
+ProFlow - correção T.I., perfis e logomarca
+
+Arquivos alterados:
+- app/dashboard/precificacao/precificacao-simulation-dialog.tsx
+- app/dashboard/precificacao/precificacao-storage-adapter.ts
+- components/documents/professional-document.tsx
+
+Principais correções:
+1. T.I.: o tipo de serviço passa a aplicar estimativa inicial própria de horas, forma de cobrança, complexidade e risco quando aplicável.
+2. Quantidades relevantes (computadores, usuários, pontos etc.) ajustam horas técnicas nos modos correspondentes.
+3. Campos adicionais de T.I. agora são contextuais ao serviço e explicam para que servem e quando influenciam a estimativa.
+4. Estados antigos sem perfis de mão de obra recebem perfis iniciais editáveis (Auxiliar técnico, Técnico, Especialista), sem apagar dados existentes.
+5. Logomarca documental passa a aceitar área visual maior no cabeçalho de Orçamento/Recibo.
+
+Depois de substituir os arquivos, valide:
+npx tsc --noEmit
+npm run lint -- --quiet
+npm test
+npm run build
