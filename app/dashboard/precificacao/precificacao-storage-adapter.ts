@@ -1,4 +1,4 @@
-import { scopedBrowserBackupKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
+import { readRemoteModuleState, recoverRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { z } from "zod";
 import { calculatePricing } from "./precificacao-selectors";
 import { PricingDomainError } from "./precificacao-errors";
@@ -10,8 +10,6 @@ import type {
   PricingStorageState,
   PricingTemplate,
 } from "./precificacao-types";
-const KEY = () => scopedBrowserStorageKey("precificacao");
-const BACKUP = () => scopedBrowserBackupKey("precificacao");
 const history = z.object({
   id: z.string(),
   type: z.string(),
@@ -474,31 +472,28 @@ export interface PricingStorageAdapter {
   write(state: PricingStorageState): Promise<PricingStorageState>;
   recoverBackup(): Promise<PricingStorageState>;
 }
-export class LocalPricingStorageAdapter implements PricingStorageAdapter {
+const MODULE = "precificacao";
+// Empresa nova recebe os modelos neutros e perfis de mão de obra, sem simulações fictícias.
+const emptyState = (): PricingStorageState => ({ ...initialState(), simulations: [], nextSimulationSequence: 1 });
+
+/**
+ * A Precificação fica no servidor, por empresa (antes ficava só no navegador).
+ * Na primeira leitura, os dados já salvos neste navegador são importados.
+ */
+export class RemotePricingStorageAdapter implements PricingStorageAdapter {
   async read() {
-    if (typeof window === "undefined") return initialState();
-    const raw = localStorage.getItem(KEY());
-    if (!raw) {
-      const state = initialState();
-      localStorage.setItem(KEY(), JSON.stringify(state));
-      return structuredClone(state);
-    }
+    if (typeof window === "undefined") return emptyState();
+    const value = await readRemoteModuleState<unknown>(MODULE, emptyState());
+    const raw = JSON.stringify(value);
     const parsed = this.parse(raw);
-    if (parsed && this.isLegacy(raw)) {
-      localStorage.setItem(BACKUP(), raw);
-      localStorage.setItem(KEY(), JSON.stringify(parsed));
-    }
-    if (parsed) return parsed;
-    const backup = localStorage.getItem(BACKUP()),
-      recovered = backup && this.parse(backup);
-    if (recovered) {
-      localStorage.setItem(KEY(), JSON.stringify(recovered));
-      return recovered;
-    }
-    throw new PricingDomainError(
-      "STORAGE_CORRUPTED",
-      "Os dados e o backup de Precificação estão corrompidos. Nada foi sobrescrito.",
-    );
+    if (!parsed)
+      throw new PricingDomainError(
+        "STORAGE_CORRUPTED",
+        "Os dados de Precificação no servidor estão em formato inválido. Nada foi sobrescrito.",
+      );
+    // Estados antigos importados do navegador são gravados já no formato atual.
+    if (this.isLegacy(raw)) return writeRemoteModuleState(MODULE, parsed);
+    return parsed;
   }
   async write(state: PricingStorageState) {
     if (typeof window === "undefined") return state;
@@ -508,24 +503,24 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
         "VALIDATION",
         "O estado da Precificação é inválido e não foi salvo.",
       );
-    const raw = localStorage.getItem(KEY()),
-      current = raw && this.parse(raw);
-    if (current && current.revision !== state.revision)
-      throw new PricingDomainError(
-        "CONFLICT",
-        "A Precificação foi alterada em outra aba. Recarregue antes de salvar.",
-      );
-    if (raw && current) localStorage.setItem(BACKUP(), raw);
     const next = { ...state, revision: state.revision + 1 };
-    localStorage.setItem(KEY(), JSON.stringify(next));
-    return next;
+    try {
+      return await writeRemoteModuleState(MODULE, next);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (message.includes("outra janela"))
+        throw new PricingDomainError(
+          "CONFLICT",
+          "A Precificação foi alterada em outra aba ou aparelho. Recarregue antes de salvar.",
+        );
+      throw error;
+    }
   }
   async recoverBackup() {
-    if (typeof window === "undefined") return initialState();
-    const raw = localStorage.getItem(BACKUP()),
-      parsed = raw && this.parse(raw);
+    if (typeof window === "undefined") return emptyState();
+    const value = await recoverRemoteModuleState<unknown>(MODULE);
+    const parsed = this.parse(JSON.stringify(value));
     if (!parsed) throw new PricingDomainError("NOT_FOUND", "Não existe backup válido.");
-    localStorage.setItem(KEY(), JSON.stringify(parsed));
     return parsed;
   }
   private parse(raw: string) {
@@ -551,4 +546,4 @@ export class LocalPricingStorageAdapter implements PricingStorageAdapter {
     }
   }
 }
-export const pricingStorageAdapter = new LocalPricingStorageAdapter();
+export const pricingStorageAdapter = new RemotePricingStorageAdapter();

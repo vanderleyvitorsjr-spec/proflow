@@ -16,25 +16,38 @@ async function request<T>(module: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-function readLegacy<T>(module: string): T | null {
+function readLegacy<T>(module: string, extraKeys: readonly string[]): T | null {
   if (typeof window === "undefined") return null;
   let scoped: string | null = null;
   try { scoped = scopedBrowserStorageKey(module); } catch { scoped = null; }
-  // Somente a chave isolada da empresa autenticada é importada. A chave global
-  // antiga (sem empresa) não é lida: num navegador compartilhado ela pode conter
-  // dados de outra empresa.
-  if (!scoped) return null;
-  const raw = window.localStorage.getItem(scoped);
-  if (!raw) return null;
-  try { return JSON.parse(raw) as T; } catch { return null; }
+  // Por padrão, somente a chave isolada da empresa autenticada é importada. A
+  // chave global antiga (sem empresa) não é lida: num navegador compartilhado
+  // ela pode conter dados de outra empresa. Chaves extras só entram quando o
+  // módulo as declara explicitamente (catálogos sem dados sensíveis).
+  const keys = [scoped, ...extraKeys].filter(Boolean) as string[];
+  for (const key of keys) {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) continue;
+    try { return JSON.parse(raw) as T; } catch { /* tenta a próxima chave */ }
+  }
+  return null;
 }
 
-export async function readRemoteModuleState<T>(module: string, fallback: T): Promise<T> {
+export type RemoteModuleStateOptions = {
+  /** Chaves antigas do navegador a importar na primeira leitura, além da chave da empresa. */
+  legacyKeys?: readonly string[];
+};
+
+export async function readRemoteModuleState<T>(
+  module: string,
+  fallback: T,
+  options: RemoteModuleStateOptions = {},
+): Promise<T> {
   const remote = await request<ReadResponse<T>>(module);
   revisions.set(module, remote.revision);
   if (remote.found && remote.payload !== null) return remote.payload;
 
-  const legacy = readLegacy<T>(module);
+  const legacy = readLegacy<T>(module, options.legacyKeys ?? []);
   const initial = legacy ?? structuredClone(fallback);
   await writeRemoteModuleState(module, initial);
   return initial;

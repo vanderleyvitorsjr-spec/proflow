@@ -8,24 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageHeaderActions, PageHeaderContent, PageHeaderHeading, PageHeaderIdentity } from "@/components/ui/page-header";
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { defaultProFlowServices, proFlowAreaLabels, type ProFlowArea, type ProFlowServiceCatalogItem } from "@/lib/proflow-service-catalog";
 
-const STORAGE_KEY = "proflow:service-catalog:v1";
+// O catálogo de Serviços fica no servidor, por empresa. A chave antiga do
+// navegador é importada uma única vez, na primeira abertura.
+const MODULE = "servicos";
+const LEGACY_KEY = "proflow:service-catalog:v1";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
-function loadCatalog() {
-  if (typeof window === "undefined") return defaultProFlowServices;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProFlowServices;
-    const parsed = JSON.parse(raw) as ProFlowServiceCatalogItem[];
-    if (!Array.isArray(parsed)) return defaultProFlowServices;
-    const storedIds = new Set(parsed.map((item) => item.id));
-    const missingDefaults = defaultProFlowServices.filter((item) => !storedIds.has(item.id));
-    return [...parsed, ...missingDefaults];
-  } catch {
-    return defaultProFlowServices;
-  }
+function withDefaults(stored: unknown): ProFlowServiceCatalogItem[] {
+  if (!Array.isArray(stored)) return defaultProFlowServices;
+  const parsed = stored as ProFlowServiceCatalogItem[];
+  const storedIds = new Set(parsed.map((item) => item.id));
+  const missingDefaults = defaultProFlowServices.filter((item) => !storedIds.has(item.id));
+  return [...parsed, ...missingDefaults];
 }
 
 export default function ServicosPage() {
@@ -34,10 +31,20 @@ export default function ServicosPage() {
   const [area, setArea] = useState<"ALL" | ProFlowArea>("ALL");
   const [editing, setEditing] = useState<ProFlowServiceCatalogItem | null>(null);
 
-  useEffect(() => { queueMicrotask(() => setItems(loadCatalog())); }, []);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    readRemoteModuleState<ProFlowServiceCatalogItem[]>(MODULE, defaultProFlowServices, { legacyKeys: [LEGACY_KEY] })
+      .then((value) => setItems(withDefaults(value)))
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Não foi possível carregar os serviços."));
+  }, []);
   function persist(next: ProFlowServiceCatalogItem[]) {
+    const previous = items;
     setItems(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setError("");
+    writeRemoteModuleState(MODULE, next).catch((reason: unknown) => {
+      setItems(previous);
+      setError(reason instanceof Error ? reason.message : "Não foi possível salvar o serviço.");
+    });
   }
   const filtered = useMemo(() => items.filter((item) => {
     const matchesArea = area === "ALL" || item.area === area;
@@ -48,6 +55,7 @@ export default function ServicosPage() {
 
   return <div className="space-y-4 pb-20 lg:pb-0">
     <PageHeader><PageHeaderContent><PageHeaderIdentity><Wrench className="h-5 w-5"/><PageHeaderHeading title="Serviços" description="Catálogo operacional para Climatização, Elétrica e T.I., pronto para uso em orçamentos e ordens." /></PageHeaderIdentity><PageHeaderActions><Button size="sm" onClick={() => setEditing({ id: crypto.randomUUID(), name: "", area: "CLIMATIZATION", description: "", unit: "SERVICE", priceCents: 0, warrantyDays: 0, checklist: [], active: true })}><Plus className="h-4 w-4"/>Novo serviço</Button></PageHeaderActions></PageHeaderContent></PageHeader>
+      {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
 
     <section className="grid gap-3 sm:grid-cols-3">
       {(["CLIMATIZATION", "ELECTRICAL", "IT"] as const).map((key) => <Card key={key}><CardContent className="p-4"><p className="text-xs text-muted-foreground">{proFlowAreaLabels[key]}</p><p className="mt-1 text-2xl font-bold">{items.filter((item) => item.area === key && item.active).length}</p><p className="text-xs text-muted-foreground">serviços ativos</p></CardContent></Card>)}

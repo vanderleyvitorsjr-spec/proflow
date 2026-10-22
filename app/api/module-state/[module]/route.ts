@@ -45,6 +45,11 @@ const modulePermissions: Record<
   },
   orcamentos: { read: "ORDERS_VIEW", write: ["ORDERS_CREATE", "ORDERS_UPDATE"] },
   "catalogo-servicos": { read: "ORDERS_VIEW", write: ["ORDERS_UPDATE"] },
+  servicos: { read: "ORDERS_VIEW", write: ["ORDERS_UPDATE"] },
+  produtos: { read: "ORDERS_VIEW", write: ["ORDERS_UPDATE", "INVENTORY_MANAGE"] },
+  precificacao: { read: "ORDERS_VIEW", write: ["ORDERS_UPDATE"] },
+  fornecedores: { read: "INVENTORY_VIEW", write: ["INVENTORY_MANAGE"] },
+  compras: { read: "INVENTORY_VIEW", write: ["INVENTORY_MANAGE"] },
 };
 
 function canAccess(

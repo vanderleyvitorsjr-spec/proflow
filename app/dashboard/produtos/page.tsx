@@ -10,9 +10,13 @@ import { Select } from "@/components/ui/select";
 import { PageHeader, PageHeaderActions, PageHeaderContent, PageHeaderHeading, PageHeaderIdentity } from "@/components/ui/page-header";
 import type { ProFlowArea } from "@/lib/proflow-service-catalog";
 import { proFlowAreaLabels } from "@/lib/proflow-service-catalog";
+import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 
 type Product = { id: string; name: string; category: ProFlowArea | "TOOLS" | "OTHER"; brand: string; priceCents: number; costCents: number; warrantyDays: number; notes: string; active: boolean };
-const KEY = "proflow:products:v1";
+// Produtos ficam no servidor, por empresa. A chave antiga do navegador é
+// importada uma única vez, na primeira abertura, para não perder o catálogo.
+const MODULE = "produtos";
+const LEGACY_KEY = "proflow:products:v1";
 const labels: Record<Product["category"], string> = { CLIMATIZATION: "Climatização", ELECTRICAL: "Elétrica", IT: "T.I.", TOOLS: "Ferramentas", OTHER: "Outros" };
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const seed: Product[] = [
@@ -26,11 +30,25 @@ export default function ProdutosPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"ALL" | Product["category"]>("ALL");
   const [editing, setEditing] = useState<Product | null>(null);
-  useEffect(() => { queueMicrotask(() => { try { const raw = localStorage.getItem(KEY); if (raw) setItems(JSON.parse(raw)); } catch {} }); }, []);
-  const saveAll = (next: Product[]) => { setItems(next); localStorage.setItem(KEY, JSON.stringify(next)); };
+  const [error, setError] = useState("");
+  useEffect(() => {
+    readRemoteModuleState<Product[]>(MODULE, seed, { legacyKeys: [LEGACY_KEY] })
+      .then((value) => setItems(Array.isArray(value) ? value : seed))
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Não foi possível carregar os produtos."));
+  }, []);
+  const saveAll = (next: Product[]) => {
+    const previous = items;
+    setItems(next);
+    setError("");
+    writeRemoteModuleState(MODULE, next).catch((reason: unknown) => {
+      setItems(previous);
+      setError(reason instanceof Error ? reason.message : "Não foi possível salvar o produto.");
+    });
+  };
   const filtered = useMemo(() => items.filter((item) => (category === "ALL" || item.category === category) && (!query.trim() || `${item.name} ${item.brand} ${item.notes}`.toLowerCase().includes(query.toLowerCase()))), [items, query, category]);
   return <div className="space-y-4 pb-20 lg:pb-0">
     <PageHeader><PageHeaderContent><PageHeaderIdentity><Boxes className="h-5 w-5"/><PageHeaderHeading title="Produtos" description="Catálogo de produtos para climatização, elétrica e T.I., com preço, custo e garantia." /></PageHeaderIdentity><PageHeaderActions><Button size="sm" onClick={() => setEditing({ id: crypto.randomUUID(), name: "", category: "CLIMATIZATION", brand: "", priceCents: 0, costCents: 0, warrantyDays: 0, notes: "", active: true })}><Plus className="h-4 w-4"/>Novo produto</Button></PageHeaderActions></PageHeaderContent></PageHeader>
+    {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
     <div className="flex flex-col gap-2 rounded-xl border bg-card p-3 sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/><Input className="pl-9" placeholder="Buscar produto..." value={query} onChange={(e) => setQuery(e.target.value)}/></div><Select className="sm:w-52" value={category} onChange={(e) => setCategory(e.target.value as typeof category)}><option value="ALL">Todas as categorias</option>{Object.entries(labels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</Select></div>
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{filtered.map((item) => <Card key={item.id}><CardContent className="p-4"><div className="flex items-start justify-between gap-3"><div><Badge variant={item.category === "IT" ? "info" : item.category === "ELECTRICAL" ? "warning" : "neutral"}>{labels[item.category]}</Badge><h2 className="mt-2 font-semibold">{item.name}</h2><p className="text-xs text-muted-foreground">{item.brand || "Marca não informada"}</p></div><Button size="sm" variant="ghost" onClick={() => setEditing(item)}>Editar</Button></div><div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-muted/50 p-3 text-xs"><div><span className="text-muted-foreground">Venda</span><p className="font-semibold">{item.priceCents ? money.format(item.priceCents/100) : "A definir"}</p></div><div><span className="text-muted-foreground">Garantia</span><p className="font-semibold">{item.warrantyDays ? `${item.warrantyDays} dias` : "Não informada"}</p></div></div></CardContent></Card>)}</div>
     {editing ? <ProductDrawer product={editing} onClose={() => setEditing(null)} onSave={(product) => { const exists = items.some((x) => x.id === product.id); saveAll(exists ? items.map((x) => x.id === product.id ? product : x) : [product, ...items]); setEditing(null); }}/>: null}
