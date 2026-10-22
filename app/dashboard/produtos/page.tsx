@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { PageHeader, PageHeaderActions, PageHeaderContent, PageHeaderHeading, PageHeaderIdentity } from "@/components/ui/page-header";
 import type { ProFlowArea } from "@/lib/proflow-service-catalog";
 import { proFlowAreaLabels } from "@/lib/proflow-service-catalog";
-import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
+import { mergeById, readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 
 type Product = { id: string; name: string; category: ProFlowArea | "TOOLS" | "OTHER"; brand: string; priceCents: number; costCents: number; warrantyDays: number; notes: string; active: boolean };
 // Produtos ficam no servidor, por empresa. A chave antiga do navegador é
@@ -32,7 +32,7 @@ export default function ProdutosPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    readRemoteModuleState<Product[]>(MODULE, seed, { legacyKeys: [LEGACY_KEY] })
+    readRemoteModuleState<Product[]>(MODULE, seed, { legacyKeys: [LEGACY_KEY], mergeLegacy: mergeById })
       .then((value) => setItems(Array.isArray(value) ? value : seed))
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Não foi possível carregar os produtos."));
   }, []);

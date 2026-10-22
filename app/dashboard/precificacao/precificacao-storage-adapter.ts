@@ -483,7 +483,9 @@ const emptyState = (): PricingStorageState => ({ ...initialState(), simulations:
 export class RemotePricingStorageAdapter implements PricingStorageAdapter {
   async read() {
     if (typeof window === "undefined") return emptyState();
-    const value = await readRemoteModuleState<unknown>(MODULE, emptyState());
+    const value = await readRemoteModuleState<unknown>(MODULE, emptyState(), {
+      mergeLegacy: (remote, local) => this.mergeLocal(remote, local),
+    });
     const raw = JSON.stringify(value);
     const parsed = this.parse(raw);
     if (!parsed)
@@ -515,6 +517,49 @@ export class RemotePricingStorageAdapter implements PricingStorageAdapter {
         );
       throw error;
     }
+  }
+  /**
+   * Acrescenta ao servidor as simulações e modelos que só existem neste
+   * navegador (criados antes da Precificação ir para o servidor). Nunca remove
+   * nem altera o que já está no servidor; ignora os exemplos da carga inicial.
+   */
+  private mergeLocal(remoteRaw: unknown, localRaw: unknown): PricingStorageState | null {
+    const remote = this.parse(JSON.stringify(remoteRaw));
+    const local = this.parse(JSON.stringify(localRaw));
+    if (!remote || !local) return null;
+    const simulationIds = new Set(remote.simulations.map((item) => item.id));
+    let simulationSequence = Math.max(
+      remote.nextSimulationSequence,
+      ...remote.simulations.map((item) => item.sequence + 1),
+    );
+    const isSeed = (simulation: PricingSimulation) =>
+      simulation.revisions.some((revision) => revision.origin === "INITIAL_SEED");
+    const newSimulations = local.simulations
+      .filter((item) => !simulationIds.has(item.id) && !isSeed(item))
+      .map((item) => ({ ...item, sequence: simulationSequence++ }));
+    const templateIds = new Set(remote.templates.map((item) => item.id));
+    const templateCodes = new Set(remote.templates.map((item) => item.code));
+    let templateSequence = Math.max(
+      remote.nextTemplateSequence,
+      ...remote.templates.map((item) => item.sequence + 1),
+    );
+    const newTemplates = local.templates
+      .filter((item) => !templateIds.has(item.id) && !templateCodes.has(item.code))
+      .map((item) => ({ ...item, sequence: templateSequence++ }));
+    const profileNames = new Set(remote.laborProfiles.map((item) => item.name.trim().toLocaleLowerCase("pt-BR")));
+    const profileIds = new Set(remote.laborProfiles.map((item) => item.id));
+    const newProfiles = local.laborProfiles.filter(
+      (item) => !profileIds.has(item.id) && !profileNames.has(item.name.trim().toLocaleLowerCase("pt-BR")),
+    );
+    if (!newSimulations.length && !newTemplates.length && !newProfiles.length) return null;
+    return {
+      ...remote,
+      simulations: [...remote.simulations, ...newSimulations],
+      nextSimulationSequence: simulationSequence,
+      templates: [...remote.templates, ...newTemplates],
+      nextTemplateSequence: templateSequence,
+      laborProfiles: [...remote.laborProfiles, ...newProfiles],
+    };
   }
   async recoverBackup() {
     if (typeof window === "undefined") return emptyState();

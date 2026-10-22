@@ -33,23 +33,58 @@ function readLegacy<T>(module: string, extraKeys: readonly string[]): T | null {
   return null;
 }
 
-export type RemoteModuleStateOptions = {
+export type RemoteModuleStateOptions<T> = {
   /** Chaves antigas do navegador a importar na primeira leitura, além da chave da empresa. */
   legacyKeys?: readonly string[];
+  /**
+   * Junta ao estado do servidor os registros que só existem neste navegador
+   * (dados criados antes de o módulo ir para o servidor, em outro aparelho).
+   * Deve somente ACRESCENTAR registros ausentes; retorna null quando não há nada novo.
+   * Roda uma única vez por navegador e módulo.
+   */
+  mergeLegacy?: (remote: T, local: unknown) => T | null;
 };
+
+function mergeMarkerKey(module: string) {
+  let scoped: string;
+  try { scoped = scopedBrowserStorageKey(module); } catch { return null; }
+  return `${scoped}:merged-to-server`;
+}
+
+async function mergeLegacyOnce<T>(module: string, remote: T, options: RemoteModuleStateOptions<T>): Promise<T | null> {
+  if (typeof window === "undefined" || !options.mergeLegacy) return null;
+  const marker = mergeMarkerKey(module);
+  if (!marker) return null;
+  try { if (window.localStorage.getItem(marker)) return null; } catch { return null; }
+  const local = readLegacy<unknown>(module, options.legacyKeys ?? []);
+  let merged: T | null = null;
+  if (local !== null) {
+    try { merged = options.mergeLegacy(remote, local); } catch { merged = null; }
+    if (merged !== null) merged = await writeRemoteModuleState(module, merged);
+  }
+  // Só marca depois de gravar: se a gravação falhar, tenta de novo na próxima abertura.
+  try { window.localStorage.setItem(marker, new Date().toISOString()); } catch { /* sem armazenamento local */ }
+  return merged;
+}
 
 export async function readRemoteModuleState<T>(
   module: string,
   fallback: T,
-  options: RemoteModuleStateOptions = {},
+  options: RemoteModuleStateOptions<T> = {},
 ): Promise<T> {
   const remote = await request<ReadResponse<T>>(module);
   revisions.set(module, remote.revision);
-  if (remote.found && remote.payload !== null) return remote.payload;
+  if (remote.found && remote.payload !== null) {
+    return (await mergeLegacyOnce(module, remote.payload, options)) ?? remote.payload;
+  }
 
   const legacy = readLegacy<T>(module, options.legacyKeys ?? []);
   const initial = legacy ?? structuredClone(fallback);
   await writeRemoteModuleState(module, initial);
+  const marker = mergeMarkerKey(module);
+  if (marker && legacy !== null) {
+    try { window.localStorage.setItem(marker, new Date().toISOString()); } catch { /* sem armazenamento local */ }
+  }
   return initial;
 }
 
@@ -69,4 +104,12 @@ export async function recoverRemoteModuleState<T>(module: string): Promise<T> {
   });
   revisions.set(module, result.revision);
   return result.payload;
+}
+
+/** Junção para listas simples: acrescenta itens locais cujo id não existe no servidor. */
+export function mergeById<T extends { id: string }>(remote: T[], local: unknown): T[] | null {
+  if (!Array.isArray(remote) || !Array.isArray(local)) return null;
+  const known = new Set(remote.map((item) => item.id));
+  const added = (local as T[]).filter((item) => item && typeof item.id === "string" && !known.has(item.id));
+  return added.length ? [...remote, ...added] : null;
 }

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageHeaderActions, PageHeaderContent, PageHeaderHeading, PageHeaderIdentity } from "@/components/ui/page-header";
-import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
+import { mergeById, readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
 import { defaultProFlowServices, proFlowAreaLabels, type ProFlowArea, type ProFlowServiceCatalogItem } from "@/lib/proflow-service-catalog";
 
 // O catálogo de Serviços fica no servidor, por empresa. A chave antiga do
@@ -33,7 +33,7 @@ export default function ServicosPage() {
 
   const [error, setError] = useState("");
   useEffect(() => {
-    readRemoteModuleState<ProFlowServiceCatalogItem[]>(MODULE, defaultProFlowServices, { legacyKeys: [LEGACY_KEY] })
+    readRemoteModuleState<ProFlowServiceCatalogItem[]>(MODULE, defaultProFlowServices, { legacyKeys: [LEGACY_KEY], mergeLegacy: mergeById })
       .then((value) => setItems(withDefaults(value)))
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Não foi possível carregar os serviços."));
   }, []);

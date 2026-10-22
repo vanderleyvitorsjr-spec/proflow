@@ -9,6 +9,23 @@ const isValid = (value: unknown): value is PurchasesEnvelope => {
   return Boolean(candidate && candidate.version === 1 && Array.isArray(candidate.quotations) && Array.isArray(candidate.orders));
 };
 
+// Acrescenta Cotações e Pedidos que só existem neste navegador. Nunca remove nada do servidor.
+function mergeLocalPurchases(remote: unknown, local: unknown): unknown {
+  if (!isValid(remote) || !isValid(local)) return null;
+  const quotationIds = new Set(remote.quotations.map((item) => item.id));
+  const orderIds = new Set(remote.orders.map((item) => item.id));
+  const quotations = local.quotations.filter((item) => !quotationIds.has(item.id));
+  const orders = local.orders.filter((item) => !orderIds.has(item.id));
+  if (!quotations.length && !orders.length) return null;
+  return {
+    ...remote,
+    quotations: [...remote.quotations, ...quotations],
+    orders: [...remote.orders, ...orders],
+    nextQuotationSequence: Math.max(remote.nextQuotationSequence, local.nextQuotationSequence),
+    nextOrderSequence: Math.max(remote.nextOrderSequence, local.nextOrderSequence),
+  };
+}
+
 /**
  * Cotações e Pedidos de Compra ficam no servidor, por empresa.
  *
@@ -22,7 +39,7 @@ let lastWrite: Promise<unknown> = Promise.resolve();
 export const purchasesStorageAdapter = {
   async ready() {
     await lastWrite.catch(() => undefined);
-    const value = await readRemoteModuleState<unknown>(MODULE, emptyPurchases());
+    const value = await readRemoteModuleState<unknown>(MODULE, emptyPurchases(), { mergeLegacy: mergeLocalPurchases });
     cache = isValid(value) ? value : emptyPurchases();
   },
   load(): PurchasesEnvelope {
