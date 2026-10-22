@@ -1,3 +1,4 @@
+import { responsibleOptions } from "@/lib/session/current-user-display";
 import { getActiveTeamAction } from "@/app/dashboard/configuracoes/configuracoes-actions";
 import type { TeamMemberPublicReference } from "@/lib/contracts/configuracoes.contract";
 
@@ -13,5 +14,5 @@ export async function listEquipmentResponsibles(): Promise<{
     };
   }
 
-  return { items: result.data };
+  return { items: result.data.length ? result.data : responsibleOptions([]) };
 }

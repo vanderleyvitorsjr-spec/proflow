@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { dashboardNavigation } from "@/constants/navigation";
 import { logoutAction } from "@/app/login/actions";
 import type { CurrentUserContext } from "@/lib/auth/context";
+import { setCurrentUserDisplay } from "@/lib/session/current-user-display";
 import { hasPermission, ROLE_LABELS } from "@/lib/auth/permissions";
 import { normalizeProperName } from "@/lib/br-formatters";
 import { setCompanyStorageContext } from "@/lib/storage/company-storage-key";
@@ -43,6 +44,7 @@ function getPageTitle(pathname: string) {
 
 export function DashboardShell({ children, context }: { children: React.ReactNode; context: CurrentUserContext }) {
   setCompanyStorageContext(context.companyId);
+  setCurrentUserDisplay({ id: context.internalUserId, name: normalizeProperName(context.userName), role: context.role });
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);

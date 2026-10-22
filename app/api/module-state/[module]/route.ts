@@ -5,37 +5,46 @@ import { getCurrentUserContext } from "@/lib/auth/context";
 import { hasPermission, type Permission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
+// Leitura: uma permissão. Escrita: qualquer uma das permissões da lista.
+// Ex.: a função Atendimento possui ORDERS_CREATE (mas não ORDERS_UPDATE) e
+// precisa conseguir criar Ordens e Orçamentos.
 const modulePermissions: Record<
   string,
-  { read: Permission; write: Permission }
+  { read: Permission; write: readonly Permission[] }
 > = {
-  clientes: { read: "CLIENTS_VIEW", write: "CLIENTS_UPDATE" },
-  crm: { read: "CRM_VIEW", write: "CRM_MANAGE" },
-  agenda: { read: "AGENDA_VIEW", write: "AGENDA_MANAGE" },
-  ordens: { read: "ORDERS_VIEW", write: "ORDERS_UPDATE" },
-  financeiro: { read: "FINANCE_VIEW", write: "FINANCE_UPDATE" },
-  estoque: { read: "INVENTORY_VIEW", write: "INVENTORY_MANAGE" },
-  equipamentos: { read: "EQUIPMENT_VIEW", write: "EQUIPMENT_MANAGE" },
-  configuracoes: { read: "SETTINGS_VIEW", write: "SETTINGS_MANAGE" },
-  perfil: { read: "SETTINGS_VIEW", write: "SETTINGS_MANAGE" },
+  clientes: { read: "CLIENTS_VIEW", write: ["CLIENTS_CREATE", "CLIENTS_UPDATE"] },
+  crm: { read: "CRM_VIEW", write: ["CRM_MANAGE"] },
+  agenda: { read: "AGENDA_VIEW", write: ["AGENDA_MANAGE"] },
+  ordens: {
+    read: "ORDERS_VIEW",
+    write: ["ORDERS_CREATE", "ORDERS_UPDATE", "ORDERS_COMPLETE"],
+  },
+  financeiro: {
+    read: "FINANCE_VIEW",
+    write: ["FINANCE_CREATE", "FINANCE_UPDATE", "FINANCE_CONFIRM_PAYMENT"],
+  },
+  estoque: { read: "INVENTORY_VIEW", write: ["INVENTORY_MANAGE", "INVENTORY_MOVE"] },
+  equipamentos: { read: "EQUIPMENT_VIEW", write: ["EQUIPMENT_MANAGE"] },
+  configuracoes: { read: "SETTINGS_VIEW", write: ["SETTINGS_MANAGE"] },
+  perfil: { read: "SETTINGS_VIEW", write: ["SETTINGS_MANAGE"] },
   "workspace-operacional": {
     read: "ORDERS_VIEW",
-    write: "ORDERS_UPDATE",
+    write: ["ORDERS_UPDATE", "ORDERS_COMPLETE"],
   },
   "central-operacional": {
     read: "ORDERS_VIEW",
-    write: "ORDERS_UPDATE",
+    write: ["ORDERS_UPDATE"],
   },
   automacoes: {
     read: "AUTOMATIONS_VIEW",
-    write: "AUTOMATIONS_MANAGE",
+    write: ["AUTOMATIONS_MANAGE"],
   },
   documentos: {
     read: "ORDERS_VIEW",
-    write: "ORDERS_UPDATE",
+    write: ["ORDERS_CREATE", "ORDERS_UPDATE"],
   },
-  orcamentos: { read: "ORDERS_VIEW", write: "ORDERS_UPDATE" },
-  "catalogo-servicos": { read: "ORDERS_VIEW", write: "ORDERS_UPDATE" },
+  orcamentos: { read: "ORDERS_VIEW", write: ["ORDERS_CREATE", "ORDERS_UPDATE"] },
+  "catalogo-servicos": { read: "ORDERS_VIEW", write: ["ORDERS_UPDATE"] },
 };
 
 function canAccess(
@@ -45,16 +54,20 @@ function canAccess(
   module: string,
   mode: "read" | "write",
 ) {
-  const permission = modulePermissions[module]?.[mode];
+  const rule = modulePermissions[module];
 
-  if (!permission) {
+  if (!rule) {
     return false;
   }
 
-  return hasPermission(context.role, permission, {
-    allow: context.permissions,
-    deny: context.deniedPermissions,
-  });
+  const candidates = mode === "read" ? [rule.read] : rule.write;
+
+  return candidates.some((permission) =>
+    hasPermission(context.role, permission, {
+      allow: context.permissions,
+      deny: context.deniedPermissions,
+    }),
+  );
 }
 
 function toJsonInput(

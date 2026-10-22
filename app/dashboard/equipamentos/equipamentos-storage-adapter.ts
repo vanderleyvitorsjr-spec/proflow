@@ -48,7 +48,7 @@ export interface EquipmentStorageAdapter {
 
 export class RemoteEquipmentStorageAdapter implements EquipmentStorageAdapter {
   async read() {
-    const value = await readRemoteModuleState<unknown>("equipamentos", initialEquipmentState);
+    const value = await readRemoteModuleState<unknown>("equipamentos", { ...initialEquipmentState, nextSequence: 1, assets: [] });
     const parsed = this.parse(JSON.stringify(value));
     if (!parsed) throw new EquipmentStorageError("Os dados de Equipamentos armazenados no servidor estão inválidos.");
     if (parsed.migrated) await writeRemoteModuleState("equipamentos", parsed.state);

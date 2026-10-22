@@ -26,7 +26,7 @@ export default function ProdutosPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"ALL" | Product["category"]>("ALL");
   const [editing, setEditing] = useState<Product | null>(null);
-  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setItems(JSON.parse(raw)); } catch {} }, []);
+  useEffect(() => { queueMicrotask(() => { try { const raw = localStorage.getItem(KEY); if (raw) setItems(JSON.parse(raw)); } catch {} }); }, []);
   const saveAll = (next: Product[]) => { setItems(next); localStorage.setItem(KEY, JSON.stringify(next)); };
   const filtered = useMemo(() => items.filter((item) => (category === "ALL" || item.category === category) && (!query.trim() || `${item.name} ${item.brand} ${item.notes}`.toLowerCase().includes(query.toLowerCase()))), [items, query, category]);
   return <div className="space-y-4 pb-20 lg:pb-0">

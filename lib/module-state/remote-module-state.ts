@@ -1,6 +1,6 @@
 "use client";
 
-import { legacyStorageKey, scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
+import { scopedBrowserStorageKey } from "@/lib/storage/company-storage-key";
 
 type ReadResponse<T> = { found: boolean; revision: number; payload: T | null };
 const revisions = new Map<string, number>();
@@ -20,12 +20,13 @@ function readLegacy<T>(module: string): T | null {
   if (typeof window === "undefined") return null;
   let scoped: string | null = null;
   try { scoped = scopedBrowserStorageKey(module); } catch { scoped = null; }
-  for (const key of [scoped, legacyStorageKey(module)].filter(Boolean) as string[]) {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) continue;
-    try { return JSON.parse(raw) as T; } catch { /* tenta a próxima chave */ }
-  }
-  return null;
+  // Somente a chave isolada da empresa autenticada é importada. A chave global
+  // antiga (sem empresa) não é lida: num navegador compartilhado ela pode conter
+  // dados de outra empresa.
+  if (!scoped) return null;
+  const raw = window.localStorage.getItem(scoped);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as T; } catch { return null; }
 }
 
 export async function readRemoteModuleState<T>(module: string, fallback: T): Promise<T> {

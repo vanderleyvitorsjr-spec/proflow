@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth/context";
 import { formatCurrencyBRLFromCents } from "@/lib/br-formatters";
+import { calculateStock } from "@/app/dashboard/estoque/estoque-selectors";
+import type { StockItem, StockMovement } from "@/app/dashboard/estoque/estoque-types";
 
 type ModulePayload = Record<string, unknown> | unknown[] | null;
 
@@ -42,7 +44,13 @@ export async function askOperationalAssistantAction(question: string) {
       return !value.canceledAt && new Date(String(value.dueDate)) < new Date() && Array.isArray(value.payments) && value.payments.length === 0;
     });
   });
-  const lowStock = stockItems.filter((item) => Number(item.minimumQuantity ?? 0) > 0 && Number(item.initialQuantity ?? item.quantity ?? 0) <= Number(item.minimumQuantity ?? 0));
+  // A quantidade em estoque não é um campo do item: é calculada a partir das movimentações.
+  const stockMovements = arrayFrom(stock, "movements") as StockMovement[];
+  const lowStock = (stockItems as unknown as StockItem[]).filter((item) => {
+    if (item.archivedAt || Number(item.minimumQuantity ?? 0) <= 0) return false;
+    const { status } = calculateStock(item, stockMovements);
+    return status === "LOW_STOCK" || status === "OUT_OF_STOCK";
+  });
   const pipelineValue = (leads as Array<Record<string, unknown>>).filter((item) => !item.archivedAt && !item.convertedAt).reduce((sum, item) => sum + Number(item.estimatedValue ?? 0), 0);
 
   const summary = {

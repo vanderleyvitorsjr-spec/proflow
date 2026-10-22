@@ -1,5 +1,5 @@
 import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
-import { clients as initialClients, type ClientRecord } from "./clientes-data";
+import type { ClientRecord } from "./clientes-data";
 
 export interface ClientsStorageAdapter {
   list(): Promise<ClientRecord[]>;
@@ -8,7 +8,7 @@ export interface ClientsStorageAdapter {
 
 export class RemoteClientsStorageAdapter implements ClientsStorageAdapter {
   list() {
-    return readRemoteModuleState<ClientRecord[]>("clientes", initialClients);
+    return readRemoteModuleState<ClientRecord[]>("clientes", []);
   }
 
   async replace(records: ClientRecord[]) {

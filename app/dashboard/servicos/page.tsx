@@ -34,7 +34,7 @@ export default function ServicosPage() {
   const [area, setArea] = useState<"ALL" | ProFlowArea>("ALL");
   const [editing, setEditing] = useState<ProFlowServiceCatalogItem | null>(null);
 
-  useEffect(() => setItems(loadCatalog()), []);
+  useEffect(() => { queueMicrotask(() => setItems(loadCatalog())); }, []);
   function persist(next: ProFlowServiceCatalogItem[]) {
     setItems(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

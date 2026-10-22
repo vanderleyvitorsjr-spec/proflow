@@ -25,8 +25,25 @@ async function publishCompletionIntegrations(order: OrdemRecord) {
   const { ensureCompletedServiceOrderReceivableAction } = await import(
     "@/app/dashboard/financeiro/financeiro-actions"
   );
-  const financial = await ensureCompletedServiceOrderReceivableAction(order.id);
-  if (!financial.ok) throw new Error(financial.error.message);
+  let reason = "";
+  try {
+    const financial = await ensureCompletedServiceOrderReceivableAction(order.id);
+    if (!financial.ok) reason = financial.error.message;
+  } catch (error) {
+    reason = error instanceof Error ? error.message : "erro desconhecido";
+  }
+  // A Ordem já está concluída neste ponto. Uma falha no Financeiro (por exemplo,
+  // usuário sem acesso ao Financeiro ou sem conta cadastrada) não pode desfazer
+  // nem bloquear a conclusão; fica registrada na Ordem para lançamento manual.
+  if (reason) {
+    await service
+      .addWorkNote(
+        order.id,
+        "INTERNAL",
+        `Recebimento não lançado automaticamente no Financeiro (${reason}). Lance o recebimento manualmente no Financeiro.`,
+      )
+      .catch(() => undefined);
+  }
 }
 export const listOrdensAction = () => service.list();
 export const getOrdemAction = (id: string) => service.get(id);

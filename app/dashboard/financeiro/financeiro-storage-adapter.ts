@@ -126,7 +126,7 @@ export interface FinancialStorageAdapter {
 }
 export class RemoteFinancialStorageAdapter implements FinancialStorageAdapter {
   async read() {
-    const value = await readRemoteModuleState<unknown>("financeiro", initialFinancialState);
+    const value = await readRemoteModuleState<unknown>("financeiro", { ...initialFinancialState, nextSequence: 1, transactions: [] });
     const raw = JSON.stringify(value);
     const primary = this.parseV3(raw);
     if (primary) return primary;

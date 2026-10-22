@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Printer } from "lucide-react";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { documentIdentityFields, visibleDocumentFields, type DocumentField, type ProfessionalDocumentData } from "./professional-document-domain";
 
@@ -19,8 +19,9 @@ function FieldGrid({ fields, className = "" }: { fields?: DocumentField[]; class
 }
 
 export function ProfessionalDocument({ data }: { data: ProfessionalDocumentData }) {
-  const [logoFailed, setLogoFailed] = useState(false);
-  useEffect(() => setLogoFailed(false), [data.identity?.logoUrl]);
+  // Guarda a URL que falhou: ao trocar de logomarca o erro anterior deixa de valer.
+  const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
+  const logoFailed = Boolean(data.identity?.logoUrl) && failedLogoUrl === data.identity?.logoUrl;
   const accent = safeAccent(data.identity?.primaryColor);
   const style = { "--document-accent": accent, "--document-text": "#0f172a", "--document-muted": "#64748b", "--document-border": "#e2e8f0", "--document-surface": "#f8fafc", "--document-radius": "14px" } as CSSProperties;
   const identityFields = documentIdentityFields(data.identity).filter((field) => field.label !== "Empresa");
@@ -29,7 +30,7 @@ export function ProfessionalDocument({ data }: { data: ProfessionalDocumentData 
     <article className="document-print mx-auto min-h-[277mm] max-w-[210mm] overflow-hidden bg-white px-8 py-7 text-[var(--document-text)] shadow-[0_18px_50px_rgba(15,23,42,0.12)] print:min-h-0 print:max-w-none print:overflow-visible print:p-0 print:shadow-none sm:px-11 sm:py-9">
       <header className="document-keep grid grid-cols-[minmax(0,1fr)_auto] gap-8 border-b border-[var(--document-border)] pb-6">
         <div className="min-w-0 pr-2">
-          {data.identity?.logoUrl && !logoFailed ? <Image src={data.identity.logoUrl} alt="Logotipo da empresa" width={280} height={110} unoptimized onError={() => setLogoFailed(true)} className="mb-5 h-auto max-h-[100px] w-auto max-w-[260px] origin-left object-contain object-left" /> : <p className="mb-3 text-xl font-extrabold tracking-tight" style={{ color: accent }}>{data.identity?.companyName || data.identity?.legalName || "Empresa prestadora"}</p>}
+          {data.identity?.logoUrl && !logoFailed ? <Image src={data.identity.logoUrl} alt="Logotipo da empresa" width={280} height={110} unoptimized onError={() => setFailedLogoUrl(data.identity?.logoUrl ?? null)} className="mb-5 h-auto max-h-[100px] w-auto max-w-[260px] origin-left object-contain object-left" /> : <p className="mb-3 text-xl font-extrabold tracking-tight" style={{ color: accent }}>{data.identity?.companyName || data.identity?.legalName || "Empresa prestadora"}</p>}
           {data.identity?.companyName && data.identity.logoUrl && !logoFailed ? <p className="text-sm font-bold text-slate-900">{data.identity.companyName}</p> : null}
           <div className="mt-1 max-w-md space-y-0.5 text-[10px] leading-4 text-slate-600">{identityFields.map((field) => <p key={field.label}><span className="font-semibold text-slate-700">{field.label}:</span> {field.value}</p>)}</div>
         </div>

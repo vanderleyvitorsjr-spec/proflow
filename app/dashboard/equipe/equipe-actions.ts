@@ -37,6 +37,10 @@ export async function updateTeamMemberAction(id: string, role: AppRole, active: 
   if (!ROLES.includes(role)) throw new Error("Função inválida.");
   const target = await prisma.usuario.findFirst({ where: { id, companyId: context.companyId, deletedAt: null } });
   if (!target) throw new Error("Integrante não encontrado.");
+  if ((role === "OWNER" || target.role === "OWNER") && context.role !== "OWNER")
+    throw new Error("Somente um Proprietário pode conceder ou alterar a função Proprietário.");
+  if (target.id === context.internalUserId && context.role !== "OWNER" && role !== target.role)
+    throw new Error("Você não pode alterar a sua própria função.");
   if (target.role === "OWNER" && (!active || role !== "OWNER")) {
     const owners = await prisma.usuario.count({ where: { companyId: context.companyId, role: "OWNER", status: "ACTIVE", deletedAt: null } });
     if (owners <= 1) throw new Error("O último proprietário não pode ser removido ou desativado.");

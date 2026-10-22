@@ -111,6 +111,8 @@ export function OrdemFormDrawer({
         setTeam(configuration.team);
         setSettings(configuration.settings);
         setConfigurationWarning(configuration.warning ?? "");
+        if (order && !order.technician?.trim() && configuration.team.length === 1)
+          setValue("technician", configuration.team[0].name);
         if (!order)
           reset({
             ...defaults,
@@ -123,7 +125,7 @@ export function OrdemFormDrawer({
           });
       });
     }
-  }, [open, order, reset]);
+  }, [open, order, reset, setValue]);
   useEffect(() => {
     if (!open) return;
     const escape = (event: KeyboardEvent) => {

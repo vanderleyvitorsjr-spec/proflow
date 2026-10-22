@@ -290,7 +290,7 @@ export interface StockStorageAdapter {
 }
 export class RemoteStockStorageAdapter implements StockStorageAdapter {
   async read() {
-    const value = await readRemoteModuleState<unknown>("estoque", initialState());
+    const value = await readRemoteModuleState<unknown>("estoque", { ...initialState(), nextItemSequence: 1, items: [], movements: [] });
     const parsed = this.parse(JSON.stringify(value));
     if (!parsed) throw new StockStorageError("Os dados do Estoque armazenados no servidor estão inválidos.");
     if (parsed.migrated) await writeRemoteModuleState("estoque", parsed.state);

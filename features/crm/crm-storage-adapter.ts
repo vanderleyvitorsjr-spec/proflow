@@ -1,5 +1,4 @@
 import { readRemoteModuleState, writeRemoteModuleState } from "@/lib/module-state/remote-module-state";
-import { initialCrmLeads } from "./crm-data";
 import type { CrmLeadRecord } from "./crm-types";
 
 export interface CrmStorageAdapter {
@@ -9,7 +8,7 @@ export interface CrmStorageAdapter {
 
 export class RemoteCrmStorageAdapter implements CrmStorageAdapter {
   list() {
-    return readRemoteModuleState<CrmLeadRecord[]>("crm", initialCrmLeads);
+    return readRemoteModuleState<CrmLeadRecord[]>("crm", []);
   }
 
   async replace(records: CrmLeadRecord[]) {

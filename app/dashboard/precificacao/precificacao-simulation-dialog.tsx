@@ -429,22 +429,25 @@ export function PricingSimulationDialog({
 
   useEffect(() => {
     if (!open) return;
-    const p = simulation?.parameters;
-    setSegment(p?.segment ?? "CLIMATIZATION");
-    setServiceType(p?.serviceType ?? "");
-    setComplexity(p?.complexity ?? "SIMPLE");
-    setUrgency(p?.urgency ?? "NORMAL");
-    setRisk(p?.risk ?? "LOW");
-    setWarranty(p?.warranty ?? "NONE");
-    setBillingMode(p?.billingMode ?? "SERVICE");
-    setSla(p?.sla ?? "");
-    setTechnicalData(p?.technicalData ?? {});
-    setLines(
-      simulation?.costComponents
-        .filter((item) => !item.description.startsWith(AUTO_PREFIX))
-        .map((item) => ({ ...defaultLine(item.type), ...item, key: item.id })) ??
-        [defaultLine("MATERIAL"), defaultLine("LABOR"), defaultLine("TRAVEL")],
-    );
+    // Reinicia o formulário fora do corpo síncrono do efeito (evita renders em cascata).
+    queueMicrotask(() => {
+      const p = simulation?.parameters;
+      setSegment(p?.segment ?? "CLIMATIZATION");
+      setServiceType(p?.serviceType ?? "");
+      setComplexity(p?.complexity ?? "SIMPLE");
+      setUrgency(p?.urgency ?? "NORMAL");
+      setRisk(p?.risk ?? "LOW");
+      setWarranty(p?.warranty ?? "NONE");
+      setBillingMode(p?.billingMode ?? "SERVICE");
+      setSla(p?.sla ?? "");
+      setTechnicalData(p?.technicalData ?? {});
+      setLines(
+        simulation?.costComponents
+          .filter((item) => !item.description.startsWith(AUTO_PREFIX))
+          .map((item) => ({ ...defaultLine(item.type), ...item, key: item.id })) ??
+          [defaultLine("MATERIAL"), defaultLine("LABOR"), defaultLine("TRAVEL")],
+      );
+    });
     void Promise.all([getPricingConfiguration(), pricingEquipmentGateway.list()]).then(([config, equipmentItems]) => {
       setConfiguration(config.settings);
       setConfigurationWarning(config.warning ?? "");
