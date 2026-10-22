@@ -33,13 +33,35 @@ const normalizeOrder = (order: OrdemRecord): OrdemRecord => ({
 });
 export type OrdensRemoteState = { records: OrdemRecord[]; sequence: number };
 
+const orderSequence = (order: OrdemRecord) =>
+  Number(String(order.orderNumber ?? "").split("-").at(-1)) || 0;
+
+/** Aceita o formato atual ({ records, sequence }) e o antigo (lista de Ordens). */
+function toRemoteState(value: unknown): OrdensRemoteState {
+  if (Array.isArray(value)) {
+    const records = value as OrdemRecord[];
+    return { records, sequence: records.reduce((max, item) => Math.max(max, orderSequence(item)), 0) };
+  }
+  const candidate = (value ?? {}) as Partial<OrdensRemoteState>;
+  return {
+    records: Array.isArray(candidate.records) ? candidate.records : [],
+    sequence: Number.isFinite(candidate.sequence) ? Number(candidate.sequence) : 0,
+  };
+}
+
 export class RemoteOrdensStorageAdapter implements OrdensStorageAdapter {
   private async state(): Promise<OrdensRemoteState> {
-    return readRemoteModuleState<OrdensRemoteState>("ordens", {
+    const value = await readRemoteModuleState<unknown>("ordens", {
       // Empresa nova começa sem Ordens fictícias e com numeração a partir de 0001.
       records: [],
       sequence: 0,
     });
+    const state = toRemoteState(value);
+    // Formato antigo (lista simples de Ordens, importada do navegador): regrava
+    // já no formato atual, preservando todas as Ordens.
+    // Se outra tela regravar ao mesmo tempo, a gravação desta é dispensável.
+    if (Array.isArray(value)) await writeRemoteModuleState("ordens", state).catch(() => undefined);
+    return state;
   }
 
   async list() {
@@ -54,7 +76,7 @@ export class RemoteOrdensStorageAdapter implements OrdensStorageAdapter {
   async nextNumber() {
     const state = await this.state();
     const highest = state.records.reduce(
-      (max, item) => Math.max(max, Number(item.orderNumber.split("-").at(-1)) || 0),
+      (max, item) => Math.max(max, orderSequence(item)),
       state.sequence,
     );
     const next = highest + 1;
