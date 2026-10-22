@@ -177,8 +177,8 @@ export function PricingDetail({ simulationId }: { simulationId: string }) {
           actions={[
             {
               label: "Criar Ordem de Serviço",
-              description: "Abra a área de Ordens para continuar o atendimento.",
-              href: "/dashboard/ordens",
+              description: "Abre uma nova OS já preenchida com cliente, serviço, valor e materiais desta precificação.",
+              href: `/dashboard/ordens?precificacao=${encodeURIComponent(simulation.id)}`,
               icon: <ClipboardList className="h-4 w-4" />,
             },
           ]}

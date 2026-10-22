@@ -67,15 +67,38 @@ const fromOrder = (order?: OrdemRecord | null): OrdemFormInput =>
         materialsText: order.reservedMaterials.join("\n"),
       }
     : defaults;
+// Endereço completo do cadastro do cliente, no formato usado pela OS.
+function clientAddress(client?: ClientRecord | null) {
+  if (!client) return "";
+  const line = [client.street, client.number].map((part) => part?.trim()).filter(Boolean).join(", ");
+  const extras = [client.complement, client.district].map((part) => part?.trim()).filter(Boolean).join(" - ");
+  return [line, extras].filter(Boolean).join(" - ");
+}
+// Dados de local e origem que a OS herda do cliente selecionado.
+function clientDefaults(client: ClientRecord | undefined, leads: CrmLeadRecord[]) {
+  const related = client ? leads.filter((lead) => lead.convertedClientId === client.id) : [];
+  const lead = related.length === 1 ? related[0] : undefined;
+  // Sem endereço no cadastro do cliente, usa o da oportunidade de origem, se houver.
+  const address = clientAddress(client) || lead?.address?.trim() || "";
+  return {
+    address,
+    city: client?.city?.trim() || lead?.city?.trim() || "",
+    state: (client?.state?.trim() || lead?.state?.trim() || "").toUpperCase().slice(0, 2),
+    crmLeadId: lead?.id ?? "",
+  };
+}
 export function OrdemFormDrawer({
   open,
   order,
   saving,
   onClose,
   onSubmit,
+  prefill,
 }: {
   open: boolean;
   order?: OrdemRecord | null;
+  /** Valores iniciais de uma nova OS (ex.: vinda da Precificação). */
+  prefill?: Partial<OrdemFormInput> | null;
   saving: boolean;
   onClose: () => void;
   onSubmit: (values: OrdemFormValues) => Promise<void>;
@@ -86,7 +109,8 @@ export function OrdemFormDrawer({
     [settings, setSettings] = useState<OperationalPublicSettings["serviceOrder"] | null>(
       null,
     ),
-    [configurationWarning, setConfigurationWarning] = useState("");
+    [configurationWarning, setConfigurationWarning] = useState(""),
+    [customAddress, setCustomAddress] = useState(false);
   const {
     register,
     handleSubmit,
@@ -106,14 +130,18 @@ export function OrdemFormDrawer({
         listCrmLeadsAction(),
         getOrdersConfiguration(),
       ]).then(([clientItems, leadItems, configuration]) => {
+        const convertedLeads = leadItems.filter((lead) => Boolean(lead.convertedClientId));
         setClients(clientItems);
-        setLeads(leadItems.filter((lead) => Boolean(lead.convertedClientId)));
+        setLeads(convertedLeads);
+        setCustomAddress(false);
         setTeam(configuration.team);
         setSettings(configuration.settings);
         setConfigurationWarning(configuration.warning ?? "");
         if (order && !order.technician?.trim() && configuration.team.length === 1)
           setValue("technician", configuration.team[0].name);
-        if (!order)
+        if (!order) {
+          const client = clientItems.find((item) => item.id === prefill?.clientId);
+          const fromClient = client ? clientDefaults(client, convertedLeads) : null;
           reset({
             ...defaults,
             status: validStatus(configuration.settings.initialStatus),
@@ -122,10 +150,14 @@ export function OrdemFormDrawer({
             estimatedDurationMinutes: configuration.settings.defaultDurationMinutes,
             technician:
               configuration.team.length === 1 ? configuration.team[0].name : "",
+            ...(fromClient ?? {}),
+            ...(prefill ?? {}),
+            ...(fromClient && prefill?.crmLeadId === undefined ? { crmLeadId: fromClient.crmLeadId } : {}),
           });
+        }
       });
     }
-  }, [open, order, reset, setValue]);
+  }, [open, order, prefill, reset, setValue]);
   useEffect(() => {
     if (!open) return;
     const escape = (event: KeyboardEvent) => {
@@ -135,6 +167,33 @@ export function OrdemFormDrawer({
     return () => window.removeEventListener("keydown", escape);
   }, [onClose, open, saving]);
   const values = watch();
+  const selectedClient = clients.find((item) => item.id === values.clientId);
+  const clientLeads = selectedClient
+    ? leads.filter((lead) => lead.convertedClientId === selectedClient.id)
+    : [];
+  const clientLocation = selectedClient ? clientDefaults(selectedClient, leads) : null;
+  // O local só fica recolhido quando é exatamente o endereço herdado do cliente.
+  const usingClientAddress =
+    !customAddress &&
+    Boolean(clientLocation?.address) &&
+    values.address === clientLocation?.address &&
+    values.city === clientLocation?.city &&
+    values.state === clientLocation?.state;
+  const clientField = register("clientId");
+  function selectClient(clientId: string) {
+    const client = clients.find((item) => item.id === clientId);
+    const next = clientDefaults(client, leads);
+    // Troca o local quando o novo cliente tem endereço, ou quando o local atual
+    // era só o endereço herdado do cliente anterior (nunca apaga o que foi digitado).
+    const replaceLocation = Boolean(next.address) || usingClientAddress;
+    setCustomAddress(false);
+    if (replaceLocation) {
+      setValue("address", next.address, { shouldValidate: Boolean(next.address), shouldDirty: true });
+      setValue("city", next.city, { shouldValidate: Boolean(next.city), shouldDirty: true });
+      setValue("state", next.state, { shouldValidate: Boolean(next.state), shouldDirty: true });
+    }
+    setValue("crmLeadId", next.crmLeadId, { shouldDirty: true });
+  }
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/55">
@@ -173,7 +232,14 @@ export function OrdemFormDrawer({
               error={errors.clientId?.message}
               required
             >
-              <Select id="os-client" {...register("clientId")}>
+              <Select
+                id="os-client"
+                {...clientField}
+                onChange={(event) => {
+                  void clientField.onChange(event);
+                  selectClient(event.target.value);
+                }}
+              >
                 <option value="">Selecione um cliente</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
@@ -182,21 +248,23 @@ export function OrdemFormDrawer({
                 ))}
               </Select>
             </Field>
+            {clientLeads.length ? (
             <Field
-              label="Contato de origem no CRM"
-              description="Use este campo somente quando a ordem nasceu de uma oportunidade cadastrada no CRM."
+              label="Oportunidade de origem no CRM"
+              description="Preenchido automaticamente quando o cliente veio de uma oportunidade do CRM."
               htmlFor="os-lead"
               error={errors.crmLeadId?.message}
             >
               <Select id="os-lead" {...register("crmLeadId")}>
                 <option value="">Sem origem no CRM</option>
-                {leads.map((lead) => (
+                {clientLeads.map((lead) => (
                   <option key={lead.id} value={lead.id}>
-                    {lead.name}
+                    {lead.serviceInterest?.trim() || "Oportunidade"} · {new Date(lead.createdAt).toLocaleDateString("pt-BR")}
                   </option>
                 ))}
               </Select>
             </Field>
+            ) : null}
           </fieldset>
           <fieldset className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full text-sm font-semibold">Serviço</legend>
@@ -359,6 +427,26 @@ export function OrdemFormDrawer({
             <legend className="col-span-full text-sm font-semibold">
               Local e agenda
             </legend>
+            {usingClientAddress ? (
+              <div className="rounded-lg border bg-muted/40 p-3 text-sm md:col-span-2 xl:col-span-4">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Atendimento no endereço do cadastro do cliente
+                </p>
+                <p className="mt-1 font-medium">
+                  {values.address} · {values.city}/{values.state}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 h-auto px-0 text-xs"
+                  onClick={() => setCustomAddress(true)}
+                >
+                  Atender em outro endereço
+                </Button>
+              </div>
+            ) : (
+              <>
             <Field
               label="Endereço do atendimento"
               description="Informe o local exato onde o serviço será realizado."
@@ -400,6 +488,8 @@ export function OrdemFormDrawer({
                 }
               />
             </Field>
+              </>
+            )}
             <Field
               label="Data prevista do atendimento"
               description="Data combinada ou estimada para a execução."
